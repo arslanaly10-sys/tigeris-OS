@@ -6,6 +6,7 @@ import { authRoutes } from "./routes/auth";
 import { governanceRoutes } from "./routes/governance";
 import { adminRoutes } from "./routes/admin";
 import { demoRoutes } from "./routes/demo";
+import { evidenceRoutes } from "./routes/evidence";
 
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info", redact: ["req.headers.cookie"] } });
@@ -23,5 +24,6 @@ export async function buildApp() {
   await app.register(governanceRoutes);
   await app.register(adminRoutes);
   await app.register(demoRoutes);
+  await app.register(evidenceRoutes);
   return app;
 }

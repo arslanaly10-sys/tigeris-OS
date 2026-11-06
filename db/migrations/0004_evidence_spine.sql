@@ -116,6 +116,7 @@ CREATE TABLE evidence_facts (
   value_text         text,
   unit               text,
   period             text,                            -- "2024", "2025-03"
+  qualifier          text,                            -- e.g. "IMF projection", "estimate"
   claim_class        text NOT NULL CHECK (claim_class IN ('observed','sourced','inferred','assumed','synthetic','illustrative')),
   review_state       text NOT NULL DEFAULT 'accepted' CHECK (review_state IN ('accepted','needs_review','rejected')),
   locator            text,                            -- row, JSON path or page reference
@@ -153,7 +154,8 @@ BEGIN
   FOR inst IN SELECT id FROM institutions LOOP
     PERFORM set_config('app.institution_id', inst.id::text, true);
     SELECT id INTO j FROM ingestion_jobs
-     WHERE status = 'queued' AND run_after <= now()
+     WHERE (status = 'queued' AND run_after <= now())
+        OR (status = 'running' AND locked_at < now() - interval '5 minutes')  -- recover jobs from a crashed worker
      ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1;
     IF FOUND THEN
       UPDATE ingestion_jobs SET status = 'running', locked_at = now(), attempts = attempts + 1 WHERE id = j.id;

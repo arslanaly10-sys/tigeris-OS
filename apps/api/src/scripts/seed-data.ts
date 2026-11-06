@@ -2,6 +2,15 @@ import { ROLES, ROLE_LABELS, type Role } from "@tigeris/shared";
 import { ownerPool } from "../db";
 import { appendAudit } from "../audit";
 import { migrate } from "./migrate";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { createHash, createPublicKey } from "node:crypto";
+import { SOURCE_CATALOG } from "../evidence/catalog";
+import { enqueue, drainQueue } from "../evidence/jobs";
+import { latestBundledPackage } from "../routes/evidence";
+
+const PUBKEY = path.resolve(import.meta.dirname, "../../../../data/keys/collector-ed25519.pub.pem");
+const PACKAGES = path.resolve(import.meta.dirname, "../../../../data/packages");
 
 /**
  * Demo institutions are fictional (Q025). They are labelled by buyer category only (Q123).
@@ -59,7 +68,7 @@ export async function resetDemo() {
   const c = await pool.connect();
   try {
     await c.query("BEGIN");
-    await c.query("TRUNCATE audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
+    await c.query("TRUNCATE evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
     for (const r of ROLES) await c.query("INSERT INTO roles (key, label) VALUES ($1,$2)", [r, ROLE_LABELS[r]]);
     for (const inst of DEMO_INSTITUTIONS) {
       await c.query(
@@ -69,6 +78,7 @@ export async function resetDemo() {
       // Tables are under FORCE row-level security, so even the owner seeds inside the tenant scope.
       await c.query("SELECT set_config('app.institution_id', $1, true)", [inst.id]);
       const divIds = new Map<string, string>();
+      const peopleByRole = new Map<string, { id: string; name: string }>();
       for (const d of inst.divisions) {
         const r = await c.query("INSERT INTO divisions (institution_id, name) VALUES ($1,$2) RETURNING id", [inst.id, d]);
         divIds.set(d, r.rows[0].id);
@@ -81,6 +91,27 @@ export async function resetDemo() {
           [inst.id, divIds.get(division), `https://idp.${inst.domain}/saml (simulated)`, email, name, title, email],
         );
         await c.query("INSERT INTO principal_roles (institution_id, principal_id, role_key) VALUES ($1,$2,$3)", [inst.id, r.rows[0].id, role]);
+        peopleByRole.set(role, { id: r.rows[0].id, name });
+      }
+      // Each institution keeps its own source registry and its own list of trusted package signers.
+      for (const src of SOURCE_CATALOG) {
+        await c.query(
+          `INSERT INTO sources (institution_id, key, name, publisher, source_class, country, access_method, url, licence, owner_label, allowed_purposes, cadence, freshness_limit_hours, status, status_note)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+          [inst.id, src.key, src.name, src.publisher, src.sourceClass, src.country, src.accessMethod, src.url, src.licence, peopleByRole.get(src.ownerRole)?.name ?? "Unassigned",
+            src.purposes, src.cadence, src.freshnessLimitHours, src.status, src.statusNote ?? null],
+        );
+      }
+      const pub = await readFile(PUBKEY, "utf8").catch(() => undefined);
+      if (pub) {
+        const fp = createHash("sha256").update(createPublicKey(pub).export({ type: "spki", format: "der" })).digest("hex").slice(0, 32);
+        await c.query("INSERT INTO trusted_signers (institution_id, name, public_key_pem, fingerprint) VALUES ($1,$2,$3,$4)", [inst.id, "TIGERIS public-data collector (demonstration)", pub, fp]);
+      }
+      const pkg = await latestBundledPackage();
+      const admin = peopleByRole.get("administrator")!;
+      if (pkg) {
+        const bytes = await readFile(path.join(PACKAGES, pkg));
+        await enqueue(c, { institutionId: inst.id, kind: "package_import", label: pkg, bytes, actorId: admin.id, actorLabel: admin.name, actorRole: "administrator" });
       }
       await appendAudit(c, inst.id, {
         actorType: "service", actorId: "demo-seeder", actorLabel: "Demo seeder", action: "demo.reset",
@@ -88,6 +119,7 @@ export async function resetDemo() {
       });
     }
     await c.query("COMMIT");
+    await drainQueue();
   } catch (e) {
     await c.query("ROLLBACK");
     throw e;

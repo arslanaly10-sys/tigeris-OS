@@ -135,7 +135,7 @@ const collectors: Collector[] = [
       const url = "https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.CSV";
       const r = await get(url);
       const rows = parseCsv(r.body.toString("latin1")).filter((x) => x.length > 3);
-      const kept = rows.filter((x) => x[3]?.trim().toLowerCase() === "vessel");
+      const kept = rows.filter((x) => x[2]?.trim().toLowerCase() === "vessel");
       const header = ["ent_num", "sdn_name", "sdn_type", "program", "title", "call_sign", "vess_type", "tonnage", "grt", "vess_flag", "vess_owner", "remarks"];
       return [{ content: Buffer.from(toCsv([header, ...kept.map((x) => x.map((f) => f.trim()))])), file: { name: "ofac-sdn-vessels.csv", sourceKey: "ofac.sdn", title: "OFAC Specially Designated Nationals list · vessel entries", originalUrl: url, mediaType: "text/csv", eventTime: null, sourceVersion: r.lastModified, licence: "U.S. Government work, public domain", transformations: [{ step: "filter_rows", detail: "Kept entries whose SDN type is 'vessel'; added the published column names as a header row.", rowsBefore: rows.length, rowsAfter: kept.length }] } }];
     },
