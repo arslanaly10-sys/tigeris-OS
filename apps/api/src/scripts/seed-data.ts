@@ -8,6 +8,8 @@ import { createHash, createPublicKey } from "node:crypto";
 import { SOURCE_CATALOG } from "../evidence/catalog";
 import { enqueue, drainQueue } from "../evidence/jobs";
 import { allBundledPackages } from "../routes/evidence";
+import { withTenant } from "../db";
+import { seedStoryline } from "../workflow/storyline";
 
 const PUBKEY = path.resolve(import.meta.dirname, "../../../../data/keys/collector-ed25519.pub.pem");
 const PACKAGES = path.resolve(import.meta.dirname, "../../../../data/packages");
@@ -132,8 +134,16 @@ export async function resetDemo() {
         resourceType: "institution", resourceId: inst.id, details: { people: inst.people.length, divisions: inst.divisions.length },
       });
     }
+    await c.query("ALTER SEQUENCE case_number_seq RESTART WITH 1");
     await c.query("COMMIT");
     await drainQueue();
+    // Storyline after the graph exists: signals and cases link to entities and evidence.
+    for (const inst of DEMO_INSTITUTIONS) {
+      await withTenant(inst.id, async (tx) => {
+        const people = new Map((await tx.query("SELECT pr.role_key, p.id, p.display_name AS name FROM principals p JOIN principal_roles pr ON pr.principal_id = p.id")).rows.map((r) => [r.role_key, { id: r.id, name: r.name }]));
+        await seedStoryline(tx, inst.id, inst.shortName, people);
+      });
+    }
   } catch (e) {
     await c.query("ROLLBACK");
     throw e;
