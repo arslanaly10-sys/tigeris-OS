@@ -53,8 +53,9 @@ describe("bundled public snapshot import", () => {
   it("imports every file with facts and source lineage", async () => {
     const cookie = await signIn(GSF.id, "analyst");
     const jobs = (await app.inject({ method: "GET", url: "/jobs", headers: { cookie } })).json().jobs;
-    expect(jobs[0].status).toBe("succeeded");
-    expect(jobs[0].result.files.length).toBeGreaterThanOrEqual(15);
+    const snapshot = jobs.find((j: { label: string }) => j.label.startsWith("public-snapshot"));
+    expect(snapshot.status).toBe("succeeded");
+    expect(snapshot.result.files.length).toBeGreaterThanOrEqual(15);
     const ind = (await app.inject({ method: "GET", url: "/indicators", headers: { cookie } })).json();
     const gdp = ind.columns.find((c: { key: string }) => c.key === "gdp").rows.find((r: { subject: string }) => r.subject === "SAU");
     expect(gdp.value_num).toBeGreaterThan(5e11);
