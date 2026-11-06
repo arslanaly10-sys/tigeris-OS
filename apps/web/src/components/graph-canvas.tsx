@@ -30,7 +30,6 @@ export function GraphCanvas({ nodes, edges, origin, onSelect, height = 520 }: { 
     if (!ref.current) return;
     const css = getComputedStyle(document.documentElement);
     const v = (t: string) => css.getPropertyValue(t).trim();
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     cy.current?.destroy();
     cy.current = cytoscape({
       container: ref.current,
@@ -47,11 +46,18 @@ export function GraphCanvas({ nodes, edges, origin, onSelect, height = 520 }: { 
         ...Object.entries(EDGE_STYLE).map(([cls, s]) => ({ selector: `edge[cls = '${cls}']`, style: { "line-color": v(s.token), "target-arrow-color": v(s.token), "line-style": s.line } })),
         { selector: "edge:selected, node:selected", style: { "overlay-opacity": 0.12, "overlay-color": v("--primary") } },
       ],
-      layout: { name: "cose", animate: !reduce, animationDuration: 500, nodeRepulsion: () => 9000, idealEdgeLength: () => 80, padding: 20 } as cytoscape.LayoutOptions,
       wheelSensitivity: 0.2,
     });
+    const layout = cy.current.layout({ name: "cose", animate: false, nodeRepulsion: () => 9000, idealEdgeLength: () => 80, padding: 20 } as cytoscape.LayoutOptions);
+    layout.run();
     cy.current.on("tap", "node", (e) => onSelect?.(e.target.data("key")));
-    return () => cy.current?.destroy();
+    const instance = cy.current;
+    return () => {
+      // Stop the running layout before destroying, so its animation never touches a destroyed graph.
+      layout.stop();
+      instance.destroy();
+      if (cy.current === instance) cy.current = null;
+    };
   }, [nodes, edges, origin, onSelect, theme]);
 
   return <div ref={ref} style={{ height }} className="w-full rounded-md border border-line bg-bg" role="img" aria-label={`Graph of ${nodes.length} entities and ${edges.length} relationships. The same information is listed beside the graph.`} />;

@@ -92,7 +92,7 @@ export async function workflowRoutes(app: FastifyInstance) {
 
   /** Simulated live stream (Server-Sent Events): corridor transit counts, always labelled SIMULATED. */
   app.get("/signals/live", { preHandler: requirePermission("evidence.read") }, async (req, reply) => {
-    reply.raw.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" });
+    reply.raw.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache, no-transform", connection: "keep-alive", "x-accel-buffering": "no" });
     const corridors = [
       { key: "chokepoint:hormuz", name: "Strait of Hormuz", baseline: 92, unit: "tanker transits / 24 h" },
       { key: "chokepoint:bab-el-mandeb", name: "Bab el-Mandeb", baseline: 58, unit: "vessel transits / 24 h" },

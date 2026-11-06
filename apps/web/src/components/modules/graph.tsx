@@ -29,7 +29,7 @@ export function GraphModule() {
   const [hood, setHood] = useState<{ nodes: GNode[]; edges: GEdge[]; origin: string } | null>(null);
   const [detail, setDetail] = useState<EntityDetail | null>(null);
   const [paths, setPaths] = useState<Paths | null>(null);
-  const [depth, setDepth] = useState(2);
+  const [depth, setDepth] = useState(1);
   const [view, setView] = useState<"detail" | "paths">("detail");
 
   useEffect(() => { api<Stats>("/graph/stats").then((r) => r.ok && setStats(r.data)); }, []);
@@ -117,7 +117,7 @@ function EntityPanel({ d, onSelect }: { d: EntityDetail; onSelect: (k: string) =
         <Badge>{typeLabel(d.entity.type)}</Badge><ClaimBadge claim={d.entity.claim_class} />
         {d.entity.country && <Badge>{d.entity.country}</Badge>}
       </div>
-      <p className="text-ink-muted">From {d.entity.evidence_title ?? "—"}{d.entity.source_name ? ` (${d.entity.source_name})` : ""}.{d.entity.location_quality ? ` Location ${d.entity.location_quality}.` : ""}</p>
+      <p className="text-ink-muted">From {d.entity.source_name && !d.entity.evidence_title?.startsWith(d.entity.source_name) ? `${d.entity.source_name}: ` : ""}{d.entity.evidence_title ?? "—"}.{d.entity.location_quality ? ` Location ${d.entity.location_quality}.` : ""}</p>
       {attrs.length > 0 && (
         <dl className="grid gap-2">
           {attrs.map(([k, v]) => {

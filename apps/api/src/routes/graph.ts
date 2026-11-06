@@ -23,7 +23,7 @@ export async function graphRoutes(app: FastifyInstance) {
                 (SELECT count(*)::int FROM entity_relationships r WHERE r.subject_id = e.id OR r.object_id = e.id) AS degree
            FROM entities e
           WHERE ($1::text IS NULL OR e.name ILIKE '%' || $1 || '%' OR e.key ILIKE '%' || $1 || '%') AND ($2::text IS NULL OR e.type = $2)
-          ORDER BY (e.type = 'vessel'), degree DESC, e.name LIMIT $3`, [q.q ?? null, q.type ?? null, q.limit])).rows,
+          ORDER BY (e.type IN ('vessel','sanctions_regime','holding','mandate')), degree DESC, e.name LIMIT $3`, [q.q ?? null, q.type ?? null, q.limit])).rows,
     }));
   });
 

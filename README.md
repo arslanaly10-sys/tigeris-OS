@@ -31,6 +31,7 @@ The collector runs outside the sovereign boundary and writes a signed package to
 ```bash
 pnpm --filter @tigeris/collector collect
 pnpm --filter @tigeris/collector demo-docs   # regenerates the two synthetic demo PDFs
+pnpm --filter @tigeris/collector reference   # re-signs the reference geography and synthetic institution packages
 ```
 
 ## Tests
