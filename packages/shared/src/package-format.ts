@@ -25,6 +25,8 @@ export interface PackageFile {
   sourceVersion: string | null;
   licence: string;
   transformations: PackageTransformation[];
+  /** Institution slug this file is for; other institutions skip it (synthetic context). */
+  intendedInstitution?: string;
 }
 
 export interface CollectionAttempt {
