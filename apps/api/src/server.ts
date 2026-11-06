@@ -7,7 +7,7 @@ import { governanceRoutes } from "./routes/governance";
 import { adminRoutes } from "./routes/admin";
 import { demoRoutes } from "./routes/demo";
 import { evidenceRoutes } from "./routes/evidence";
-import { graphRoutes } from "./routes/graph";
+import { graphRoutes, mapRoutes } from "./routes/graph";
 import { workflowRoutes } from "./routes/workflow";
 
 export async function buildApp() {
@@ -28,6 +28,7 @@ export async function buildApp() {
   await app.register(demoRoutes);
   await app.register(evidenceRoutes);
   await app.register(graphRoutes);
+  await app.register(mapRoutes);
   await app.register(workflowRoutes);
   return app;
 }

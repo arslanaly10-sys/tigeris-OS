@@ -85,3 +85,22 @@ export async function graphRoutes(app: FastifyInstance) {
     return data ?? reply.code(404).send({ error: "not_found", message: "No such entity in this institution's graph." });
   });
 }
+
+/** Map layers (MAP §2–3): every located entity from the graph plus active signals placed at their entities. */
+export async function mapRoutes(app: FastifyInstance) {
+  app.get("/map/layers", { preHandler: requirePermission("evidence.read") }, async (req) => {
+    const p = req.principal!;
+    return withTenant(p.institutionId, async (tx) => ({
+      entities: (await tx.query(
+        `SELECT key, name, type, country, lat, lon, claim_class, location_quality, attributes FROM entities
+          WHERE lat IS NOT NULL AND type IN ('port','terminal','refinery','field','facility','pipeline','desalination','power_plant','airport','city','chokepoint','country')
+          ORDER BY type, name`)).rows,
+      signals: (await tx.query(
+        `SELECT s.id, s.title, s.urgency, s.data_mode, s.status, s.event_time, e.key AS entity_key, e.lat, e.lon
+           FROM signals s JOIN signal_entities se ON se.signal_id = s.id JOIN entities e ON e.id = se.entity_id
+          WHERE s.status <> 'dismissed' AND e.lat IS NOT NULL AND e.type IN ('chokepoint','port','terminal','desalination','route','city')
+          ORDER BY s.detected_at DESC`)).rows,
+      generatedAt: new Date().toISOString(),
+    }));
+  });
+}

@@ -1,0 +1,1 @@
+Base geography: Natural Earth (public domain), via world-atlas 2.0.2.
