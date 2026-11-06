@@ -7,7 +7,7 @@ import type { FactDraft, ParseResult } from "./types";
  */
 export async function parsePdf(bytes: Buffer): Promise<ParseResult> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: false, isEvalSupported: false, disableFontFace: true }).promise;
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: false, isEvalSupported: false, disableFontFace: true, verbosity: 0 }).promise;
   let text = "";
   let hiddenTextChars = 0;
   const facts: FactDraft[] = [];
