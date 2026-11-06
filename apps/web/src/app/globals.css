@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/*
+  TIGERIS design tokens.
+  Dark (default, Q009): deep navy structure, warm ivory text, restrained gold for primary action and focus,
+  teal-green for verified states. Light: the Foundation palette — warm ivory canvas, white panels,
+  deep emerald for primary actions, muted gold accents. Amber and red are for exceptions only.
+*/
+:root,
+[data-theme="dark"] {
+  --bg: #0a1220;
+  --surface: #101b2d;
+  --surface-2: #15243a;
+  --surface-3: #1b2d47;
+  --line: #22344f;
+  --line-strong: #2f4566;
+  --ink: #e8e6df;
+  --ink-muted: #9aa6b8;
+  --ink-faint: #6c7a90;
+  --primary: #c9a45c;
+  --primary-ink: #17120a;
+  --primary-soft: #2a2416;
+  --accent: #d9bd84;
+  --ok: #45b88c;
+  --ok-soft: #12302a;
+  --warn: #dc9a45;
+  --warn-soft: #33260f;
+  --crit: #d8645a;
+  --crit-soft: #3a1a19;
+  --info: #79a8de;
+  --info-soft: #152a45;
+  --pattern: rgba(201, 164, 92, 0.07);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg: #f7f6f0;
+  --surface: #ffffff;
+  --surface-2: #f0efe8;
+  --surface-3: #e7e6dd;
+  --line: #d9ddd5;
+  --line-strong: #c3c9bf;
+  --ink: #25312d;
+  --ink-muted: #5c6a64;
+  --ink-faint: #85918b;
+  --primary: #176348;
+  --primary-ink: #ffffff;
+  --primary-soft: #dde9df;
+  --accent: #b7995d;
+  --ok: #2f7a57;
+  --ok-soft: #dde9df;
+  --warn: #b86f24;
+  --warn-soft: #f6e8d6;
+  --crit: #a9443c;
+  --crit-soft: #f5dedb;
+  --info: #2f5f8c;
+  --info-soft: #e1eaf3;
+  --pattern: rgba(23, 99, 72, 0.06);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-soft: var(--primary-soft);
+  --color-accent: var(--accent);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-crit: var(--crit);
+  --color-crit-soft: var(--crit-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --font-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter Variable", "IBM Plex Sans Arabic", Arial, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+html[lang="ar"] {
+  --font-sans: "IBM Plex Sans Arabic", "Inter Variable", Arial, system-ui, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  text-wrap: balance;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Regional geometric pattern: eight-point star lattice. Sign-in and empty states only (Q014). */
+.geo-pattern {
+  position: relative;
+  isolation: isolate;
+}
+.geo-pattern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  opacity: 0.09;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='1'%3E%3Cpath d='M32 6 L39 25 L58 32 L39 39 L32 58 L25 39 L6 32 L25 25 Z'/%3E%3Crect x='17' y='17' width='30' height='30' transform='rotate(45 32 32)'/%3E%3Crect x='17' y='17' width='30' height='30'/%3E%3C/g%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='1'%3E%3Cpath d='M32 6 L39 25 L58 32 L39 39 L32 58 L25 39 L6 32 L25 25 Z'/%3E%3Crect x='17' y='17' width='30' height='30' transform='rotate(45 32 32)'/%3E%3Crect x='17' y='17' width='30' height='30'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-size: 64px 64px;
+  mask-size: 64px 64px;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Arabic letters join; letter-spacing and the mono face break them apart. */
+html[lang="ar"] .eyebrow {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 12px;
+}

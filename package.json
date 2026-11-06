@@ -1,0 +1,14 @@
+{
+  "name": "tigeris",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter ./apps/* dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:migrate": "pnpm --filter @tigeris/api migrate",
+    "db:seed": "pnpm --filter @tigeris/api seed",
+    "db:reset": "pnpm --filter @tigeris/api reset"
+  }
+}

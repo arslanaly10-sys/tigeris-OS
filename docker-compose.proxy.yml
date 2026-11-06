@@ -1,0 +1,18 @@
+# Overlay for build networks behind an HTTP(S) proxy:
+#   docker compose -f docker-compose.yml -f docker-compose.proxy.yml up --build
+x-proxy-build: &proxy-build
+  network: host
+  args:
+    HTTPS_PROXY: ${HTTPS_PROXY:-}
+    HTTP_PROXY: ${HTTP_PROXY:-}
+    NO_PROXY: ${NO_PROXY:-}
+services:
+  seed: { build: { <<: *proxy-build, context: ., dockerfile: apps/api/Dockerfile } }
+  api: { build: { <<: *proxy-build, context: ., dockerfile: apps/api/Dockerfile } }
+  reasoning: { build: { <<: *proxy-build, context: ., dockerfile: services/reasoning/Dockerfile } }
+  web:
+    build:
+      <<: *proxy-build
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args: { API_URL: "http://api:4000", HTTPS_PROXY: "${HTTPS_PROXY:-}", HTTP_PROXY: "${HTTP_PROXY:-}", NO_PROXY: "${NO_PROXY:-}" }
