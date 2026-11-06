@@ -25,8 +25,7 @@ export const MODULES: ModuleDef[] = [
     slug: "signals", nav: "nav.signals", group: "operate", icon: "RadioTower",
     purpose: "Validated, unvalidated, conflicting and dismissed signals, with source, freshness, corroboration and disposition.",
     arrives: [
-      { week: 2, items: ["Signals created from validated evidence", "Quarantine for failed checks, including a poisoned document"] },
-      { week: 3, items: ["Corroborate, challenge, monitor, dismiss or open a case", "Simulated live signal stream, clearly labelled"] },
+      { week: 4, items: ["Signals placed on the movement map"] },
     ],
     requirements: ["FR-09", "FR-10", "TR-009"],
   },

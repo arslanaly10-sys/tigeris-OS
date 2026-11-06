@@ -5,7 +5,12 @@ import { CommandCentre } from "@/components/modules/command-centre";
 import { GovernanceAudit } from "@/components/modules/governance-audit";
 import { Administration } from "@/components/modules/administration";
 import { About } from "@/components/modules/about";
+import { Suspense } from "react";
 import { DataSources } from "@/components/modules/data-sources";
+import { GraphModule } from "@/components/modules/graph";
+import { SignalsModule } from "@/components/modules/signals";
+import { CasesList } from "@/components/modules/cases";
+import { DomainsModule } from "@/components/modules/domains";
 
 const CUSTOM: Record<string, () => React.ReactNode> = {
   "command-centre": () => <CommandCentre />,
@@ -13,6 +18,10 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
   administration: () => <Administration />,
   about: () => <About />,
   sources: () => <DataSources />,
+  graph: () => <Suspense><GraphModule /></Suspense>,
+  signals: () => <Suspense><SignalsModule /></Suspense>,
+  cases: () => <CasesList />,
+  domains: () => <DomainsModule />,
 };
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {
