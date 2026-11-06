@@ -12,7 +12,7 @@ interface Job { id: string; institution_id: string; kind: string; label: string;
 interface SourceRow { id: string; key: string; status: string; allowed_purposes: string[]; freshness_limit_hours: number; source_class: string; name: string }
 
 export interface FileOutcome { name: string; title: string; sourceKey: string; outcome: string; facts: number; evidenceId?: string; reasons: string[] }
-export interface JobResult { summary: string; files: FileOutcome[]; conflicts: number; signer?: string; packageId?: string }
+export interface JobResult { summary: string; files: FileOutcome[]; conflicts: number; signer?: string; packageId?: string; graph?: { entities: number; relationships: number; hash: string } }
 
 const svc = (job: Job) => ({ actorType: "service" as const, actorId: "ingestion-worker", actorLabel: `Ingestion worker for ${job.created_by_label}` });
 
@@ -96,7 +96,7 @@ async function ingestOne(tx: Tx, job: Job, c: Candidate): Promise<FileOutcome> {
 
   const outcome = outcomeOf(checks);
   const stored = await putObject(job.institution_id, c.bytes);
-  const dataClass = c.dataClass ?? (facts.some((f) => f.claimClass === "synthetic") ? "synthetic" : src?.source_class ?? "public");
+  const dataClass = c.dataClass ?? (facts.some((f) => f.claimClass === "synthetic") ? "synthetic" : src?.source_class === "reference" ? "illustrative" : src?.source_class ?? "public");
   const ev = await tx.query<{ id: string }>(
     `INSERT INTO evidence_objects (institution_id, source_id, ingestion_job_id, external_key, title, original_url, media_type, size_bytes, sha256, vault_key,
        event_time, retrieved_at, source_version, data_class, classification, rights, transformations, validation_state, duplicate_of)
@@ -169,7 +169,12 @@ async function runPackage(tx: Tx, job: Job): Promise<JobResult> {
   await appendAudit(tx, job.institution_id, { ...svc(job), action: "package.signature_verified", resourceType: "package", resourceId: pkg.manifest.packageId, details: { signer: signer.name, fingerprint: pkg.signature.keyFingerprint, files: pkg.manifest.files.length } });
 
   const files: FileOutcome[] = [];
+  const slug = (await tx.query("SELECT slug FROM institutions WHERE id = $1", [job.institution_id])).rows[0]?.slug;
   for (const f of pkg.manifest.files) {
+    if (f.intendedInstitution && f.intendedInstitution !== slug) {
+      files.push({ name: f.name, title: f.title, sourceKey: f.sourceKey, outcome: "skipped", facts: 0, reasons: ["Intended for another institution; not opened"] });
+      continue;
+    }
     const b64 = pkg.files[f.name];
     const bytes = b64 ? Buffer.from(b64, "base64") : Buffer.alloc(0);
     const actual = sha256(bytes);
@@ -190,7 +195,7 @@ async function runPackage(tx: Tx, job: Job): Promise<JobResult> {
   for (const f of files) if (f.evidenceId && states.get(f.evidenceId) === "warning" && f.outcome === "accepted") { f.outcome = "warning"; f.reasons.push("Disagrees with another source beyond tolerance"); }
   const n = (o: string) => files.filter((x) => x.outcome === o).length;
   return {
-    summary: `${files.length} files: ${n("accepted")} accepted, ${n("warning")} with warnings, ${n("quarantined")} quarantined, ${n("rejected")} rejected. ${files.reduce((s, x) => s + x.facts, 0)} facts. ${conflicts} cross-source conflicts flagged.`,
+    summary: `${files.length - n("skipped")} files${n("skipped") ? ` (${n("skipped")} for another institution, skipped)` : ""}: ${n("accepted")} accepted, ${n("warning")} with warnings, ${n("quarantined")} quarantined, ${n("rejected")} rejected. ${files.reduce((s, x) => s + x.facts, 0)} facts. ${conflicts} cross-source conflicts flagged.`,
     files, conflicts, signer: signer.name, packageId: pkg.manifest.packageId,
   };
 }

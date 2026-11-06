@@ -7,7 +7,7 @@ export interface CatalogSource {
   key: string;
   name: string;
   publisher: string;
-  sourceClass: "public" | "third_party_derived" | "illustrative";
+  sourceClass: "public" | "third_party_derived" | "illustrative" | "reference" | "synthetic";
   country: string | null;
   accessMethod: "api" | "file_download" | "web_page" | "upload";
   url: string;
@@ -36,6 +36,8 @@ export const SOURCE_CATALOG: CatalogSource[] = [
   { key: "sama.statistics", name: "SAMA monthly statistics", publisher: "Saudi Central Bank", sourceClass: "public", country: "Saudi Arabia", accessMethod: "web_page", url: "https://www.sama.gov.sa/", licence: "To confirm", ownerRole: "analyst", purposes: ["macro_context", "banking_context"], cadence: "Monthly", freshnessLimitHours: 24 * 45, status: "unreachable", statusNote: "Statistics page returned HTTP 404 on 6 Nov 2026; new location to confirm." },
   { key: "cbuae.statistics", name: "CBUAE statistics", publisher: "Central Bank of the UAE", sourceClass: "public", country: "United Arab Emirates", accessMethod: "web_page", url: "https://www.centralbank.ae/", licence: "To confirm", ownerRole: "analyst", purposes: ["macro_context", "banking_context"], cadence: "Monthly", freshnessLimitHours: 24 * 45, status: "unreachable", statusNote: "No response from this network on 6 Nov 2026." },
   { key: "un.sanctions", name: "UN Security Council Consolidated List", publisher: "United Nations", sourceClass: "public", country: null, accessMethod: "file_download", url: "https://scsanctions.un.org/", licence: "UN terms", ownerRole: "analyst", purposes: ["sanctions_screening"], cadence: "As published", freshnessLimitHours: 24 * 7, status: "unreachable", statusNote: "No response from this network on 6 Nov 2026." },
+  { key: "tigeris.reference", name: "GCC reference geography and infrastructure", publisher: "Curated for this institution (demonstration)", sourceClass: "reference", country: null, accessMethod: "file_download", url: "", licence: "Curated from public knowledge; validate against institution GIS", ownerRole: "domain_expert", purposes: ["graph_context", "scenario_baseline"], cadence: "Reviewed quarterly", freshnessLimitHours: 24 * 120, status: "approved", statusNote: "Real place names and approximate coordinates. No operators named. Capacities are illustrative." },
+  { key: "tigeris.synthetic", name: "Synthetic institution context", publisher: "Generated for the demonstration", sourceClass: "synthetic", country: null, accessMethod: "file_download", url: "", licence: "Synthetic demonstration data", ownerRole: "administrator", purposes: ["institution_context", "scenario_baseline"], cadence: "Fixed for the demonstration", freshnessLimitHours: 24 * 365, status: "approved", statusNote: "Fictional mandates and holdings. Never presented as client data." },
   { key: "upload.documents", name: "Documents added by analysts", publisher: "Uploaded inside the institution", sourceClass: "illustrative", country: null, accessMethod: "upload", url: "", licence: "As stated in each document", ownerRole: "analyst", purposes: ["case_evidence"], cadence: "On demand", freshnessLimitHours: 24 * 30, status: "approved", statusNote: "Every upload passes the same validation, including the injection screen." },
 ];
 
@@ -43,4 +45,5 @@ export const SOURCE_CATALOG: CatalogSource[] = [
 export const IMPORT_PURPOSE: Record<string, string> = {
   "worldbank.wdi": "macro_context", "imf.weo": "macro_context", "jodi.oil": "energy_supply", "eia.chokepoints": "energy_supply",
   "ofac.sdn": "sanctions_screening", "uk.sanctions": "sanctions_screening", "upload.documents": "case_evidence",
+  "tigeris.reference": "graph_context", "tigeris.synthetic": "institution_context",
 };

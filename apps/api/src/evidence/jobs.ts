@@ -2,6 +2,7 @@ import { appPool, withTenant, type Tx } from "../db";
 import { appendAudit } from "../audit";
 import { PackageRejected, runJob } from "./pipeline";
 import { putObject } from "./vault";
+import { buildGraph } from "../graph/build";
 
 /** Queues a job. The idempotency key (content hash) makes a repeated upload return the existing job (TR-003). */
 export async function enqueue(tx: Tx, args: { institutionId: string; kind: "package_import" | "document_upload"; label: string; bytes: Buffer; actorId: string; actorLabel: string; actorRole: string }) {
@@ -30,6 +31,8 @@ export async function processNext(): Promise<boolean> {
     await withTenant(inst, async (tx) => {
       const job = (await tx.query("SELECT * FROM ingestion_jobs WHERE id = $1", [jobId])).rows[0];
       const result = await runJob(tx, job);
+      // New package evidence updates the institution's graph in the same transaction (TR-022).
+      if (job.kind === "package_import") result.graph = await buildGraph(tx, inst, "Graph builder (after import)");
       await tx.query("UPDATE ingestion_jobs SET status = 'succeeded', result = $2, finished_at = now(), error = NULL WHERE id = $1", [jobId, JSON.stringify(result)]);
       await appendAudit(tx, inst, { actorType: "service", actorId: "ingestion-worker", actorLabel: "Ingestion worker", action: `${job.kind}.completed`, resourceType: "ingestion_job", resourceId: jobId, details: { summary: result.summary } });
     });

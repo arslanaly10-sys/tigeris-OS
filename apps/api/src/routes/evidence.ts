@@ -17,8 +17,14 @@ const fileName = (h: unknown, fallback: string) => {
 };
 
 export async function latestBundledPackage(): Promise<string | undefined> {
-  const files = (await readdir(PACKAGES).catch(() => [])).filter((f) => f.endsWith(".tigpkg")).sort();
+  const files = (await readdir(PACKAGES).catch(() => [])).filter((f) => f.startsWith("public-snapshot") && f.endsWith(".tigpkg")).sort();
   return files.at(-1);
+}
+
+/** Every bundled package, in import order: public data, then reference geography, then synthetic context. */
+export async function allBundledPackages(): Promise<string[]> {
+  const order = (f: string) => (f.startsWith("public") ? 0 : f.startsWith("reference") ? 1 : 2);
+  return (await readdir(PACKAGES).catch(() => [])).filter((f) => f.endsWith(".tigpkg")).sort((a, b) => order(a) - order(b) || a.localeCompare(b));
 }
 
 export async function evidenceRoutes(app: FastifyInstance) {
