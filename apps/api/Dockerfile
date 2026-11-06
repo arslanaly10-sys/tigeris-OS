@@ -8,6 +8,9 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared packages/shared
 COPY apps/api apps/api
 COPY db db
+COPY data/packages data/packages
+COPY data/demo-documents data/demo-documents
+COPY data/keys/collector-ed25519.pub.pem data/keys/
 RUN pnpm install --frozen-lockfile --filter @tigeris/api...
 WORKDIR /repo/apps/api
 ENV NODE_ENV=production

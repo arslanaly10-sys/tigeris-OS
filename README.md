@@ -26,6 +26,13 @@ cd services/reasoning && python3 -m venv .venv && .venv/bin/pip install -r requi
 .venv/bin/uvicorn app.main:app --port 8000
 ```
 
+## Refresh the public data snapshot
+The collector runs outside the sovereign boundary and writes a signed package to `data/packages/`. Import it from Data & Sources, or run `pnpm db:seed` to reset and import.
+```bash
+pnpm --filter @tigeris/collector collect
+pnpm --filter @tigeris/collector demo-docs   # regenerates the two synthetic demo PDFs
+```
+
 ## Tests
 ```bash
 pnpm typecheck
@@ -39,6 +46,7 @@ cd services/reasoning && .venv/bin/pytest -q
 | `apps/web` | Next.js web app: sign-in, OS shell, modules |
 | `apps/api` | TypeScript API: identity, sessions, audit, governance |
 | `packages/shared` | Roles, permission matrix, shared labels |
+| `tools/collector` | External collector: fetches public sources and signs a transfer package |
 | `services/reasoning` | Python deterministic reasoning: horizons, propagation, scenarios |
 | `db/migrations` | SQL migrations with row-level security |
 | `docs/SCOPE.md` | Locked demo scope and the 8-week plan |

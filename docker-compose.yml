@@ -18,10 +18,13 @@ services:
   seed:
     build: { context: ., dockerfile: apps/api/Dockerfile }
     command: ["pnpm", "seed"]
+    volumes:
+      - vault-data:/vault
     environment: &api-env
       DATABASE_OWNER_URL: postgres://tigeris_owner:tigeris_owner@db:5432/tigeris
       DATABASE_APP_URL: postgres://tigeris_app:tigeris_app@db:5432/tigeris
       SESSION_SECRET: ${SESSION_SECRET:-change-me-demo-only}
+      VAULT_DIR: /vault
     depends_on:
       db: { condition: service_healthy }
 
@@ -30,6 +33,9 @@ services:
     environment:
       <<: *api-env
       API_PORT: "4000"
+      VAULT_DIR: /vault
+    volumes:
+      - vault-data:/vault
     depends_on:
       seed: { condition: service_completed_successfully }
 
@@ -49,3 +55,4 @@ services:
 
 volumes:
   db-data:
+  vault-data:

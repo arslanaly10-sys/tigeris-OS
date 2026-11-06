@@ -76,7 +76,7 @@ async function ingestOne(tx: Tx, job: Job, c: Candidate): Promise<FileOutcome> {
     try {
       const parsed = await parseEvidence(c.sourceKey, c.mediaType, c.bytes, c.retrievedAt);
       facts = parsed.facts;
-      checks.push({ rule: "schema", label: "Content matches the expected structure", result: "pass", detail: `${facts.length} facts extracted` });
+      checks.push({ rule: "schema", label: "Content matches the expected structure", result: "pass", detail: `${facts.length} ${facts.length === 1 ? "fact" : "facts"} extracted` });
       if (parsed.text !== undefined) {
         const inj = screenInjection(parsed.text);
         checks.push(inj.hits.length

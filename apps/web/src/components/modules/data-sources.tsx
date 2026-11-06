@@ -23,7 +23,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
-interface IndicatorRow { id: string; subject: string; value_num: number; unit: string; period: string; qualifier: string | null; source_name: string; validation_state: string }
+interface IndicatorRow { id: string; subject: string; value_num: number; unit: string; period: string; qualifier: string | null; source_name: string; validation_state: string; conflict: boolean }
 interface Indicators { countries: string[]; columns: { key: string; label: string; rows: IndicatorRow[] }[]; hormuz: { id: string; subject_label: string; predicate_label: string; value_num: number; unit: string; period: string; excerpt: string; source_name: string }[]; sanctions: { source_name: string; vessels: number }[] }
 interface Source { id: string; key: string; name: string; publisher: string; source_class: string; country: string | null; access_method: string; licence: string; owner_label: string; allowed_purposes: string[]; cadence: string; freshness_limit_hours: number; status: string; status_note: string | null; last_retrieved_at: string | null; evidence_count: number; quarantined_count: number; fact_count: number; freshness: "fresh" | "stale" | "no_data" }
 interface Job { id: string; kind: string; status: string; label: string; attempts: number; error: string | null; created_by_label: string; created_at: string; finished_at: string | null; result: { summary: string; files: { name: string; title: string; outcome: string; facts: number; evidenceId?: string; reasons: string[] }[]; signer?: string } | null }
@@ -47,7 +47,7 @@ export function DataSources() {
       </div>
       {tab === "indicators" && <IndicatorsView key={version} />}
       {tab === "registry" && <RegistryView key={version} />}
-      {tab === "imports" && <ImportsView key={version} onChanged={refresh} onOpenEvidence={setEvidenceId} />}
+      {tab === "imports" && <ImportsView onChanged={refresh} onOpenEvidence={setEvidenceId} />}
       {tab === "evidence" && <EvidenceView key={version} onOpen={setEvidenceId} />}
       {tab === "review" && <ReviewView key={version} />}
       <EvidenceDrawer id={evidenceId} onClose={() => setEvidenceId(null)} />
@@ -99,7 +99,7 @@ function IndicatorsView() {
                         {r ? (
                           <div className="flex flex-col items-end">
                             <FactValue id={r.id} value={r.value_num} unit={r.unit} qualifier={r.qualifier} />
-                            <span className={cn("text-[11px] tabular", r.validation_state === "warning" ? "text-warn" : "text-ink-faint")}>{r.period}{r.validation_state === "warning" ? " · conflict" : ""}</span>
+                            <span className={cn("text-[11px] tabular", r.conflict ? "text-warn" : "text-ink-faint")}>{r.period}{r.conflict ? " · conflict" : ""}</span>
                           </div>
                         ) : <span className="text-ink-faint" title="No value in the snapshot">—</span>}
                       </td>

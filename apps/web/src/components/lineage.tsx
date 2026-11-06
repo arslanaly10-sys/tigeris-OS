@@ -158,8 +158,9 @@ export function FactValue({ id, value, unit, qualifier, className }: { id: strin
   const open = useLineage();
   return (
     <button type="button" onClick={() => open(id)} title="Show where this number comes from"
-      className={cn("rounded px-1 py-0.5 text-start tabular underline decoration-line-strong decoration-dotted underline-offset-4 hover:bg-surface-2 hover:decoration-accent", className)}>
-      {formatValue(value, unit)}{qualifier ? <span className="ms-1 text-[10px] text-warn">proj.</span> : null}
+      className={cn("whitespace-nowrap rounded px-1 py-0.5 text-start tabular underline decoration-line-strong decoration-dotted underline-offset-4 hover:bg-surface-2 hover:decoration-accent", className)}>
+      {formatValue(value, unit)}
+      {qualifier ? <span className="ms-1 text-[10px] text-warn" title={qualifier}>{/projection/i.test(qualifier) ? "proj." : "caution"}</span> : null}
     </button>
   );
 }

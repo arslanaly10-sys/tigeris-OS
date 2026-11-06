@@ -113,7 +113,7 @@ Plus: Reports module · global search (signals, entities, cases, memory) · noti
 | # | Blocker | Needed by |
 |---|---|---|
 | B1 | GitHub access invalid in this session: reconnect at claude.ai/connect-github and create an empty private repo | ASAP (code lives only in this session until then) |
-| B2 | Network access to public data hosts (GCC-Stat, national portals, IMF, World Bank, EIA, JODI, sanctions lists) | Week 2 |
+| B2 | Network access to public data hosts — **done 6 Nov** (21 hosts allowed). Still unreachable from here: GCC-Stat (rate limited), UN list, SAMA, CBUAE | Week 2 |
 | B3 | Anthropic and OpenAI API keys | Week 6 |
 | B4 | Download of the local open-weight model and offline map tiles (Hugging Face / Ollama registry / tile source) | Weeks 4 and 6 |
 | B5 | Cloud VM for the hosted link (provider and account) | Week 8 |

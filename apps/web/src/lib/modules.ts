@@ -86,7 +86,7 @@ export const MODULES: ModuleDef[] = [
   {
     slug: "sources", nav: "nav.sources", group: "control", icon: "Database",
     purpose: "Source registry: owner, licence, purpose, refresh cadence, freshness, lineage and quarantine for every source.",
-    arrives: [{ week: 2, items: ["Public snapshots: GCC-Stat, national portals, central banks, JODI, EIA, IMF, World Bank, sanctions lists", "PDF upload with cited fact extraction", "Air-gap package import with signature and hash checks"] }],
+    arrives: [{ week: 3, items: ["Signals raised from validated evidence", "Simulated live signal stream, clearly labelled"] }],
     requirements: ["FR-06", "FR-08", "TR-017"],
   },
   {

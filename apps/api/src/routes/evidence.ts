@@ -153,7 +153,10 @@ export async function evidenceRoutes(app: FastifyInstance) {
     return withTenant(p.institutionId, async (tx) => {
       const latest = async (predicate: string, sourceKey: string, opts: { actualOnly?: boolean } = {}) =>
         (await tx.query(
-          `SELECT DISTINCT ON (f.subject) f.id, f.subject, f.subject_label, f.value_num, f.unit, f.period, f.qualifier, f.claim_class, s.name AS source_name, e.validation_state
+          `SELECT DISTINCT ON (f.subject) f.id, f.subject, f.subject_label, f.value_num, f.unit, f.period, f.qualifier, f.claim_class, s.name AS source_name, e.validation_state,
+                  EXISTS (SELECT 1 FROM evidence_facts o JOIN evidence_objects oe ON oe.id = o.evidence_id
+                           WHERE o.predicate = f.predicate AND o.subject = f.subject AND o.period = f.period AND oe.source_id <> e.source_id
+                             AND o.qualifier IS NULL AND abs(o.value_num - f.value_num) > greatest(0.5, 0.1 * greatest(abs(o.value_num), abs(f.value_num)))) AS conflict
              FROM evidence_facts f JOIN evidence_objects e ON e.id = f.evidence_id JOIN sources s ON s.id = e.source_id
             WHERE f.predicate = $1 AND s.key = $2 AND f.value_num IS NOT NULL AND ($3::bool IS FALSE OR f.qualifier IS NULL) AND e.duplicate_of IS NULL
             ORDER BY f.subject, f.period DESC`, [predicate, sourceKey, opts.actualOnly ?? false])).rows;
