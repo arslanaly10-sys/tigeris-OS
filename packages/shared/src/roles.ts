@@ -21,6 +21,7 @@ export const PERMISSIONS = [
   "case.comment",
   "evidence.read",
   "evidence.dispose", // corroborate / challenge / dismiss
+  "evidence.upload", // add a document or signal (Q052)
   "source.manage",
   "scenario.run",
   "recommendation.draft",
@@ -39,14 +40,14 @@ export type Permission = (typeof PERMISSIONS)[number];
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   executive: ["case.read", "case.comment", "evidence.read", "decision.approve", "export.create", "policy.read", "audit.read"],
   analyst: [
-    "case.read", "case.create", "case.edit", "case.comment", "evidence.read", "evidence.dispose",
+    "case.read", "case.create", "case.edit", "case.comment", "evidence.read", "evidence.dispose", "evidence.upload",
     "scenario.run", "recommendation.draft", "export.create", "policy.read",
   ],
-  domain_expert: ["case.read", "case.comment", "evidence.read", "evidence.dispose", "scenario.run", "policy.read"],
+  domain_expert: ["case.read", "case.comment", "evidence.read", "evidence.dispose", "evidence.upload", "scenario.run", "policy.read"],
   approver: ["case.read", "case.comment", "evidence.read", "decision.approve", "policy.read", "audit.read"],
   operations_owner: ["case.read", "case.comment", "evidence.read", "handoff.update"],
   administrator: [
-    "case.read", "evidence.read", "source.manage", "policy.read", "policy.edit", "admin.manage",
+    "case.read", "evidence.read", "evidence.upload", "source.manage", "policy.read", "policy.edit", "admin.manage",
     "audit.read", "sovereignty.control",
   ],
   auditor: ["case.read", "evidence.read", "policy.read", "audit.read", "audit.verify"],

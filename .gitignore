@@ -12,3 +12,4 @@ __pycache__/
 data/vault/
 docker/certs/*.crt
 docker/certs/*.pem
+data/keys/*.key.pem

@@ -13,6 +13,7 @@ const PERMISSION_TEXT: Record<Permission, string> = {
   "case.comment": "Comment and mention colleagues",
   "evidence.read": "Read evidence and lineage",
   "evidence.dispose": "Corroborate, challenge or dismiss evidence",
+  "evidence.upload": "Add documents and signals",
   "source.manage": "Register and approve sources",
   "scenario.run": "Run what-if scenarios",
   "recommendation.draft": "Draft recommended actions",

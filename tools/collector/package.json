@@ -1,0 +1,22 @@
+{
+  "name": "@tigeris/collector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "External collector: fetches public sources outside the sovereign boundary and writes a signed transfer package.",
+  "scripts": {
+    "collect": "tsx src/collect.ts",
+    "demo-docs": "tsx src/demo-docs.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tigeris/shared": "workspace:*",
+    "pdf-lib": "^1.17.1",
+    "undici": "^7.30.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
