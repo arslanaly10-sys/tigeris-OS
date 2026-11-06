@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import type { AuthContext } from "@/lib/api";
 import { SessionProvider } from "./session-context";
+import { LineageProvider } from "./lineage";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { usePrefs } from "./prefs";
@@ -15,6 +16,7 @@ export function Shell({ context, children }: { context: AuthContext; children: R
   useEffect(() => setOpen(false), [path]);
   return (
     <SessionProvider value={context}>
+      <LineageProvider>
       <div className="flex h-full" data-density={context.density}>
         <div className="hidden lg:block"><Sidebar /></div>
         {open && (
@@ -32,6 +34,7 @@ export function Shell({ context, children }: { context: AuthContext; children: R
           </footer>
         </div>
       </div>
+      </LineageProvider>
     </SessionProvider>
   );
 }

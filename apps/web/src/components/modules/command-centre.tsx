@@ -40,7 +40,7 @@ export function CommandCentre() {
             <Inbox className="size-7 text-accent" />
             <div className="font-semibold">No signals or cases yet</div>
             <p className="max-w-[48ch] text-[13px] text-ink-muted">
-              Validated signals start arriving when the evidence pipeline goes live in week 2. Cases, reviews and approvals join this queue in week 3.
+              Validated public evidence is already in Data & Sources. Signals, cases, reviews and approvals join this queue in week 3.
             </p>
           </div>
         </Panel>
