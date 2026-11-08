@@ -161,3 +161,15 @@ describe("search", () => {
     expect(r.entities.some((e: { key: string }) => e.key === "chokepoint:hormuz")).toBe(true);
   });
 });
+
+describe("map layers (FR-29, MAP §3)", () => {
+  it("returns located infrastructure and active signals placed at their entities", async () => {
+    const c = await signIn(GSF.id, "analyst");
+    const r = await get(c, "/map/layers");
+    expect(r.entities.length).toBeGreaterThan(100);
+    expect(r.entities.every((e: { lat: number; lon: number }) => Number.isFinite(e.lat) && Number.isFinite(e.lon))).toBe(true);
+    expect(r.entities.some((e: { key: string }) => e.key === "chokepoint:hormuz")).toBe(true);
+    expect(r.signals.some((s: { entity_key: string }) => s.entity_key === "chokepoint:hormuz")).toBe(true);
+    expect(r.entities.some((e: { type: string }) => e.type === "holding" || e.type === "vessel")).toBe(false);
+  });
+});

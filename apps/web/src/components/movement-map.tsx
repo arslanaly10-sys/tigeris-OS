@@ -267,7 +267,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       </div>
 
       <div className={cn("relative overflow-hidden rounded-lg border border-line", view === "table" && "hidden")} style={{ height: h }}>
-        <div ref={box} className="absolute inset-0" role="region" aria-label="Movement map of the GCC. A table view with the same data is available." />
+        <div ref={box} className="h-full w-full" role="region" aria-label="Movement map of the GCC. A table view with the same data is available." />
         {!compact && (
           <div className="absolute start-3 top-3 z-10 w-[220px] rounded-md border border-line bg-surface/95 text-[12.5px] shadow-lg backdrop-blur">
             <button type="button" className="flex w-full items-center gap-2 px-3 py-2 font-medium" onClick={() => setLayersOpen((v) => !v)} aria-expanded={layersOpen}><Layers className="size-4 text-accent" />Layers</button>
