@@ -17,6 +17,7 @@ import { ConfidenceBand, ModeBadge, URGENCY_TONE, type Confidence } from "./sign
 import { PathList, typeLabel, type Paths } from "./graph";
 import { ScenarioWorkspace } from "../scenarios";
 import { AgentAnalysis, AskPanel, OptionsPanel } from "../agents";
+import { DecisionPanel } from "../decisions-ui";
 import { cn } from "@/lib/cn";
 
 const STATE_LABEL: Record<CaseState, string> = { detected: "Detected", triaged: "Triaged", analysis: "Analysis", scenario: "Scenario", review: "Review", decision: "Decision", handoff: "Handoff", closed: "Closed" };
@@ -177,14 +178,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
       {tab === "Options" && <OptionsPanel caseKey={c.case_key} />}
       {tab === "Ask TIGERIS" && <AskPanel caseKey={c.case_key} />}
 
-      {tab === "Decision and memory" && (
-        <Panel className="geo-pattern grid gap-3 p-6 text-[14px]">
-          <div className="flex items-center gap-2 font-semibold"><CalendarClock className="size-5 text-accent" />Week 7</div>
-          <p className="max-w-[60ch] text-ink-muted">
-            {"Policy PASS/HOLD/BLOCK, the named decision with rationale, the operations handoff and an approved memory entry linked to this case."}
-          </p>
-        </Panel>
-      )}
+      {tab === "Decision and memory" && <DecisionPanel caseKey={c.case_key} onChange={load} />}
 
       {tab === "Discussion" && <Discussion d={d} onDone={load} />}
 

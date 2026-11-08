@@ -17,3 +17,10 @@ def test_chat_without_model_returns_error_not_exception(monkeypatch):
     monkeypatch.setattr(llm, "_model", None)
     r = llm.chat([{"role": "user", "content": "hello"}], max_tokens=10)
     assert r["ok"] is False and "not found" in r["error"]
+
+
+def test_embed_without_model_returns_error(monkeypatch):
+    monkeypatch.setattr(llm, "EMBED_PATH", Path("/nonexistent/embed.gguf"))
+    monkeypatch.setattr(llm, "_embedder", None)
+    r = llm.embed(["hello"])
+    assert r["ok"] is False and "not found" in r["error"]

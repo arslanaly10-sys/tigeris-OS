@@ -1,3 +1,5 @@
+import { DecisionsModule } from "@/components/decisions-ui";
+import { MemoryModule } from "@/components/memory-ui";
 import { notFound } from "next/navigation";
 import { moduleBySlug } from "@/lib/modules";
 import { ModulePlaceholder } from "@/components/module-placeholder";
@@ -26,6 +28,8 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
   domains: () => <DomainsModule />,
   map: () => <MapModule />,
   scenarios: () => <ScenariosModule />,
+  decisions: () => <DecisionsModule />,
+  memory: () => <MemoryModule />,
 };
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {

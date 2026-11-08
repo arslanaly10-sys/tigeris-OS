@@ -25,7 +25,7 @@ function wrap(text: string, font: PDFFont, size: number, width: number): string[
   return lines;
 }
 
-export async function briefPdf(b: BriefContent, meta: { caseKey: string; version: number; createdAt: string; hash: string; options: BriefOption[] }): Promise<Uint8Array> {
+export async function briefPdf(b: BriefContent, meta: { caseKey: string; version: number; createdAt: string; hash: string; options: BriefOption[]; audience?: { label: string; redactions: number; rules: string[] } }): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle(`${meta.caseKey} executive brief v${meta.version}`);
   doc.setProducer("TIGERIS Sovereign Intelligence OS");
@@ -57,7 +57,9 @@ export async function briefPdf(b: BriefContent, meta: { caseKey: string; version
   text("TIGERIS · Sovereign Intelligence OS", { font: sansBold, size: 9, color: green, gap: 4 });
   text(b.title, { font: serifBold, size: 20, gap: 2 });
   text(`Executive brief · ${meta.caseKey} · version ${meta.version} · ${new Date(meta.createdAt).toISOString().slice(0, 16).replace("T", " ")} UTC`, { size: 9, color: muted });
-  text(`Prepared by bounded agents for ${b.generatedFor}. Content hash ${meta.hash.slice(0, 16)}.`, { size: 9, color: muted, gap: 6 });
+  text(`Prepared by bounded agents for ${b.generatedFor}. Content hash ${meta.hash.slice(0, 16)}.`, { size: 9, color: muted, gap: 2 });
+  if (meta.audience) text(`Version: ${meta.audience.label}. ${meta.audience.redactions} item(s) withheld under the active policy${meta.audience.rules.length ? ` (${meta.audience.rules.join(", ").replace(/_/g, " ")})` : ""}.`, { size: 9, font: sansBold, color: meta.audience.redactions ? warn : muted, gap: 6 });
+  else y -= 4;
   need(30);
   page.drawRectangle({ x: M, y: y - 8, width: CW, height: 22, color: rgb(0.96, 0.91, 0.84) });
   page.drawText(winAnsi(b.status), { x: M + 8, y: y - 1, size: 9.5, font: sansBold, color: rgb(0.45, 0.28, 0.08) });

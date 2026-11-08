@@ -88,3 +88,30 @@ def chat(messages: list[dict], max_tokens: int = 256, json_schema: dict | None =
             "latency_ms": int((time.time() - t0) * 1000),
             "sha256": _file_hash,
         }
+
+
+# ---- Embeddings for institutional memory search (Q103) ----
+EMBED_PATH = Path(os.environ.get("EMBED_MODEL_PATH", str(DEFAULT_PATH.parent / "bge-small-en-v1.5-q8_0.gguf")))
+EMBED_NAME = os.environ.get("EMBED_MODEL_NAME", "bge-small-en-v1.5 (Q8_0, MIT, 384 dimensions)")
+_embedder: Any = None
+_embed_lock = threading.Lock()
+
+
+def embed_status() -> dict:
+    return {"model": EMBED_NAME, "file": EMBED_PATH.name, "present": EMBED_PATH.exists(), "dimensions": 384, "network": "none: weights read from local disk"}
+
+
+def embed(texts: list[str]) -> dict:
+    """Normalised sentence embeddings, so cosine distance is 1 minus the dot product."""
+    global _embedder
+    with _embed_lock:
+        if _embedder is None:
+            if not EMBED_PATH.exists():
+                return {"ok": False, "error": f"Embedding model not found at {EMBED_PATH.name}."}
+            try:
+                from llama_cpp import Llama
+            except ImportError:
+                return {"ok": False, "error": "llama.cpp runtime is not installed in this service."}
+            _embedder = Llama(model_path=str(EMBED_PATH), embedding=True, n_ctx=512, n_threads=THREADS, verbose=False)
+        vecs = _embedder.embed([t[:2000] for t in texts], normalize=True)
+        return {"ok": True, "model": EMBED_NAME, "dimensions": len(vecs[0]) if vecs else 384, "vectors": vecs}

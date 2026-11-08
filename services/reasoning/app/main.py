@@ -58,3 +58,14 @@ def llm_status() -> dict:
 def llm_chat(payload: dict[str, Any] = Body(...)) -> dict:
     """Bounded local completion for the API gateway. The gateway enforces policy before calling."""
     return llm.chat(payload.get("messages", []), int(payload.get("max_tokens", 256)), payload.get("json_schema"))
+
+
+@app.get("/embed/status")
+def embed_status() -> dict:
+    return llm.embed_status()
+
+
+@app.post("/embed")
+def embed(payload: dict[str, Any] = Body(...)) -> dict:
+    """Local embeddings for memory search. Input texts never leave this host."""
+    return llm.embed([str(t) for t in payload.get("texts", [])][:64])

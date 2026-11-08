@@ -9,6 +9,8 @@ import { AGENTS } from "../agents/registry";
 import { startCaseAnalysis } from "../agents/case-analysis";
 import { askCase, askGraph } from "../agents/ask";
 import { briefPdf, type BriefContent } from "../agents/brief-pdf";
+import { redactBrief, type Redaction } from "../agents/redact";
+import { activePolicy, brief, decide } from "../policy/store";
 
 const actorOf = (p: Principal) => ({ id: p.principalId, label: p.displayName, role: p.role });
 const providerSchema = z.enum(PROVIDER_KEYS as [ProviderKey, ...ProviderKey[]]).optional();
@@ -198,19 +200,32 @@ export async function aiRoutes(app: FastifyInstance) {
 
   app.get("/cases/:key/brief.pdf", { preHandler: requirePermission("export.create") }, async (req, reply) => {
     const { key } = z.object({ key: z.string().max(40) }).parse(req.params);
+    const { audience } = z.object({ audience: z.string().max(40).default("internal") }).parse(req.query);
     const p = req.principal!;
     const d = await withTenant(p.institutionId, async (tx) => {
-      const c = (await tx.query("SELECT id, case_key FROM cases WHERE case_key = $1", [key])).rows[0];
-      if (!c) return undefined;
+      const c = (await tx.query("SELECT id, case_key, sensitivity FROM cases WHERE case_key = $1", [key])).rows[0];
+      if (!c) return { status: 404, message: "No such case." } as const;
       const b = (await tx.query("SELECT id, version, content, content_hash, created_at, run_id FROM case_briefs WHERE case_id = $1 ORDER BY version DESC LIMIT 1", [c.id])).rows[0];
-      if (!b) return null;
-      const options = (await rankedRecommendations(tx, b.run_id)).map((r) => ({ title: r.title, score: r.score, band: r.effectiveBand, policy: r.governance.result, authority: r.authority }));
-      await appendAudit(tx, p.institutionId, { actorType: "human", actorId: p.principalId, actorLabel: p.displayName, actorRole: p.role, action: "export.created", resourceType: "case_brief", resourceId: b.id, caseId: c.id, details: { format: "pdf", version: b.version, contentHash: b.content_hash, classification: (b.content as BriefContent).classification } });
-      return { c, b, options };
+      if (!b) return { status: 404, message: "No brief yet. Run the agent analysis first." } as const;
+      // Export audience and redaction come from the active policy (Q100).
+      const active = await activePolicy(tx);
+      const aud = active.policy.redaction.audiences.find((x) => x.key === audience);
+      if (!aud) return { status: 400, message: `Unknown export audience "${audience}".` } as const;
+      const pol = await decide(tx, "export.create", { actor: { id: p.principalId, role: p.role }, audience, case: { sensitivity: c.sensitivity } });
+      const roleOk = aud.roles.includes(p.role);
+      if (pol.result !== "PASS" || !roleOk) {
+        const why = !roleOk ? `The ${aud.label} version can be exported by: ${aud.roles.join(", ").replace(/_/g, " ")}.` : pol.explanation;
+        await appendAudit(tx, p.institutionId, { actorType: "human", actorId: p.principalId, actorLabel: p.displayName, actorRole: p.role, action: "export.refused", resourceType: "case_brief", resourceId: b.id, caseId: c.id, details: { audience, reason: why, policy: brief(pol) } });
+        return { status: 403, message: why } as const;
+      }
+      const red = await redactBrief(tx, b.content as BriefContent, aud.redact as Redaction[]);
+      const options = (await rankedRecommendations(tx, b.run_id)).map((r) => ({ title: red.content.sections.length ? r.title : r.title, score: r.score, band: r.effectiveBand, policy: r.governance.result, authority: r.authority }));
+      await appendAudit(tx, p.institutionId, { actorType: "human", actorId: p.principalId, actorLabel: p.displayName, actorRole: p.role, action: "export.created", resourceType: "case_brief", resourceId: b.id, caseId: c.id,
+        details: { format: "pdf", audience, version: b.version, contentHash: b.content_hash, classification: (b.content as BriefContent).classification, redactions: red.count, rules: red.applied, policy: brief(pol) } });
+      return { status: 200, c, b, options, red, aud } as const;
     });
-    if (d === undefined) return reply.code(404).send({ error: "not_found", message: "No such case." });
-    if (d === null) return reply.code(404).send({ error: "not_found", message: "No brief yet. Run the agent analysis first." });
-    const bytes = await briefPdf(d.b.content as BriefContent, { caseKey: d.c.case_key, version: d.b.version, createdAt: new Date(d.b.created_at).toISOString(), hash: d.b.content_hash, options: d.options });
-    return reply.header("content-type", "application/pdf").header("content-disposition", `attachment; filename="${d.c.case_key}-brief-v${d.b.version}.pdf"`).send(Buffer.from(bytes));
+    if (d.status !== 200) return reply.code(d.status).send({ error: d.status === 404 ? "not_found" : d.status === 400 ? "invalid_request" : "block", message: d.message });
+    const bytes = await briefPdf(d.red.content, { caseKey: d.c.case_key, version: d.b.version, createdAt: new Date(d.b.created_at).toISOString(), hash: d.b.content_hash, options: d.options, audience: { label: d.aud.label, redactions: d.red.count, rules: d.red.applied } });
+    return reply.header("content-type", "application/pdf").header("content-disposition", `attachment; filename="${d.c.case_key}-brief-v${d.b.version}-${audience}.pdf"`).send(Buffer.from(bytes));
   });
 }

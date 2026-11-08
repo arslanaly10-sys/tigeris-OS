@@ -67,7 +67,8 @@ export async function appendAudit(tx: Tx, institutionId: string, input: AuditInp
     resource_type: input.resourceType,
     resource_id: input.resourceId ?? null,
     case_id: input.caseId ?? null,
-    details: input.details ?? {},
+    // Round-trip through JSON so the hash covers exactly what jsonb stores (undefined fields are dropped).
+    details: JSON.parse(JSON.stringify(input.details ?? {})),
   };
   const hash = chainHash(prevHash, fields);
   await tx.query(

@@ -384,7 +384,7 @@ export function BriefPanel({ caseKey }: { caseKey: string }) {
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setOpen((o) => !o)} aria-expanded={open}><FileText />{open ? "Hide brief" : "Read brief"}</Button>
-          {can("export.create") ? <Button asChild variant="primary"><a href={`/api/cases/${caseKey}/brief.pdf`}><Download />Download PDF</a></Button> : <Badge>Export needs the export permission</Badge>}
+          {can("export.create") ? <ExportMenu caseKey={caseKey} /> : <Badge>Export needs the export permission</Badge>}
         </div>
       </div>
       {open && (
@@ -488,5 +488,33 @@ export function GraphAsk() {
         </div>
       )}
     </Panel>
+  );
+}
+
+/** Export audiences come from the active policy; the server applies redaction and refuses audiences the role may not release. */
+function ExportMenu({ caseKey }: { caseKey: string }) {
+  const [audience, setAudience] = useState("internal");
+  const [err, setErr] = useState<string | null>(null);
+  async function download() {
+    setErr(null);
+    const res = await fetch(`/api/cases/${caseKey}/brief.pdf?audience=${audience}`, { credentials: "same-origin" });
+    if (!res.ok) { const b = await res.json().catch(() => ({})); setErr(b.message ?? "Export refused."); return; }
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a");
+    a.href = url; a.download = `${caseKey}-brief-${audience}.pdf`; a.click();
+    URL.revokeObjectURL(url);
+  }
+  return (
+    <div className="grid justify-items-end gap-1">
+      <div className="flex gap-2">
+        <select value={audience} onChange={(e) => setAudience(e.target.value)} aria-label="Export version" className="h-9 rounded-md border border-line bg-surface-2 px-2 text-[13px]">
+          <option value="internal">Internal (full)</option>
+          <option value="board">Board pack (values withheld)</option>
+          <option value="partner">External partner (redacted)</option>
+        </select>
+        <Button variant="primary" onClick={download}><Download />Download PDF</Button>
+      </div>
+      {err && <p role="alert" className="text-[12px] text-crit">{err}</p>}
+    </div>
   );
 }

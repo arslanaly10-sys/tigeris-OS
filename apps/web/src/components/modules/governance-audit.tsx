@@ -8,6 +8,7 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useCan } from "../session-context";
 import { AiGovernance } from "../ai-governance";
+import { PolicyEditor, SecurityPosture } from "../policy-ui";
 
 interface AuditEvent { seq: number; occurred_at: string; actor_type: string; actor_label: string; actor_role: string | null; action: string; resource_type: string; resource_id: string | null; details: Record<string, unknown>; hash: string; prev_hash: string }
 interface Verify { ok: boolean; checked: number; headHash: string; firstBrokenSeq: number | null; reason: string | null }
@@ -90,6 +91,8 @@ export function GovernanceAudit() {
         </Panel>
       </div>
 
+      <SecurityPosture />
+      <PolicyEditor />
       <AiGovernance />
 
       <Panel className="mt-5">

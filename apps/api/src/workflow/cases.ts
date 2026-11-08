@@ -2,11 +2,14 @@ import type { CaseState, PolicyResult, Role } from "@tigeris/shared";
 import type { Tx } from "../db";
 import { appendAudit } from "../audit";
 import { notifyPeople, notifyRole } from "./notify";
+import { brief, decide } from "../policy/store";
+import type { RuleTrace } from "../policy/engine";
 
 /**
  * Case lifecycle (App Flow §4, Q105). Transitions are enforced on the server and return a policy-style
  * result: PASS lets the move happen; HOLD names the missing condition; BLOCK explains why the role may not.
- * The full policy-as-code engine replaces these rules in week 7 without changing the contract.
+ * The lifecycle graph lives here; who may move a case, and under which conditions, is the active
+ * policy-as-code version (week 7), evaluated on the server for every move.
  */
 export interface Transition { to: CaseState; label: string; roles: Role[]; closure?: "resolved" | "dismissed" | "non_actionable"; needsRationale?: boolean; returnsToAnalysis?: boolean }
 
@@ -43,19 +46,32 @@ export const NEXT_ACTOR: Record<CaseState, Role[]> = {
   review: ["domain_expert", "approver"], decision: ["approver", "executive"], handoff: ["operations_owner"], closed: [],
 };
 
-export interface PolicyOutcome { result: PolicyResult; rule: string; explanation: string }
+export interface PolicyOutcome { result: PolicyResult; rule: string; explanation: string; trace?: RuleTrace[]; version?: number | null; hash?: string }
+
+/** Facts the policy may test for a case move. */
+export async function transitionContext(tx: Tx, c: { id: string; state: CaseState; created_by: string }, to: CaseState, t: Transition | undefined, actor: { id: string; role: Role }, rationale: string | undefined) {
+  const x = (await tx.query(
+    `SELECT c.owner_id, c.depth, c.sensitivity,
+            (SELECT count(*) FROM case_evidence WHERE case_id = c.id)::int + (SELECT count(*) FROM case_signals WHERE case_id = c.id)::int AS inputs,
+            EXISTS (SELECT 1 FROM agent_runs WHERE case_id = c.id AND kind = 'case_analysis' AND status = 'completed') AS analysed,
+            (SELECT status FROM decisions WHERE case_id = c.id ORDER BY created_at DESC LIMIT 1) AS decision_status,
+            (SELECT count(*) FROM handoffs WHERE case_id = c.id AND status <> 'done')::int AS open_handoffs,
+            (SELECT count(*) FROM handoffs WHERE case_id = c.id)::int AS handoffs
+       FROM cases c WHERE c.id = $1`, [c.id])).rows[0];
+  return {
+    from: c.state, to, actor: { id: actor.id, role: actor.role },
+    transition: { label: t?.label ?? to, needs_rationale: !!t?.needsRationale },
+    rationale: { length: rationale?.trim().length ?? 0 },
+    case: { created_by: c.created_by, owner_id: x.owner_id, depth: x.depth, sensitivity: x.sensitivity, inputs_count: x.inputs },
+    analysis: { completed: x.analysed }, decision: { status: x.decision_status ?? "none" }, handoff: { open_count: x.open_handoffs, total: x.handoffs },
+  };
+}
 
 export async function evaluateTransition(tx: Tx, c: { id: string; state: CaseState; created_by: string }, to: CaseState, actor: { id: string; role: Role }, rationale: string | undefined): Promise<PolicyOutcome & { transition?: Transition }> {
   const t = TRANSITIONS[c.state].find((x) => x.to === to);
   if (!t) return { result: "BLOCK", rule: "case.lifecycle", explanation: `A case cannot move from ${c.state} to ${to}.` };
-  if (!t.roles.includes(actor.role)) return { result: "BLOCK", rule: "case.authority", explanation: `"${t.label}" needs the ${t.roles.map((r) => r.replace("_", " ")).join(" or ")} role.` };
-  if (to === "handoff" && actor.id === c.created_by) return { result: "BLOCK", rule: "case.separation_of_duties", explanation: "The person who opened this case cannot approve it. Another approver must decide." };
-  if (t.needsRationale && !(rationale && rationale.trim().length >= 10)) return { result: "HOLD", rule: "case.rationale_required", explanation: "Add a rationale of at least 10 characters. It is kept in the case history and audit trail." };
-  if (to === "review") {
-    const n = (await tx.query("SELECT (SELECT count(*) FROM case_evidence WHERE case_id = $1)::int + (SELECT count(*) FROM case_signals WHERE case_id = $1)::int AS n", [c.id])).rows[0].n;
-    if (n === 0) return { result: "HOLD", rule: "case.evidence_required", explanation: "Attach at least one signal or evidence record before sending the case for review." };
-  }
-  return { result: "PASS", rule: "case.lifecycle", explanation: t.label, transition: t };
+  const e = await decide(tx, "case.transition", await transitionContext(tx, c, to, t, actor, rationale));
+  return { result: e.result, rule: e.rule, explanation: e.result === "PASS" ? t.label : e.explanation, trace: e.trace, version: e.version, hash: e.policyHash, transition: e.result === "PASS" ? t : undefined };
 }
 
 export async function applyTransition(tx: Tx, institutionId: string, caseId: string, to: CaseState, actor: { id: string; label: string; role: Role }, rationale?: string) {
@@ -64,14 +80,14 @@ export async function applyTransition(tx: Tx, institutionId: string, caseId: str
   const policy = await evaluateTransition(tx, c, to, actor, rationale);
   await appendAudit(tx, institutionId, {
     actorType: "human", actorId: actor.id, actorLabel: actor.label, actorRole: actor.role, action: policy.result === "PASS" ? "case.transitioned" : "case.transition_refused",
-    resourceType: "case", resourceId: caseId, caseId, details: { from: c.state, to, policy: { result: policy.result, rule: policy.rule } },
+    resourceType: "case", resourceId: caseId, caseId, details: { from: c.state, to, policy: policy.trace ? brief({ result: policy.result, rule: policy.rule, explanation: policy.explanation, trace: policy.trace, policyHash: policy.hash!, version: policy.version ?? null }) : { result: policy.result, rule: policy.rule } },
   });
   if (policy.result !== "PASS") return { status: 200 as const, policy };
   const t = policy.transition!;
   await tx.query("UPDATE cases SET state = $2, closure = $3, version = version + 1, last_activity_at = now() WHERE id = $1", [caseId, to, t.closure ?? null]);
   await tx.query(
     "INSERT INTO case_events (institution_id, case_id, kind, from_state, to_state, actor_id, actor_label, actor_role, rationale, payload) VALUES ($1,$2,'transition',$3,$4,$5,$6,$7,$8,$9)",
-    [institutionId, caseId, c.state, to, actor.id, actor.label, actor.role, rationale ?? null, JSON.stringify({ policy: { result: "PASS", rule: policy.rule }, label: t.label })],
+    [institutionId, caseId, c.state, to, actor.id, actor.label, actor.role, rationale ?? null, JSON.stringify({ policy: { result: "PASS", rule: policy.rule, version: policy.version, hash: policy.hash?.slice(0, 16) }, label: t.label })],
   );
   const link = `/cases/${c.case_key}`;
   if (NEXT_ACTOR[to].length) await notifyRole(tx, institutionId, NEXT_ACTOR[to], { kind: "case_action", title: `${c.case_key} needs ${to === "review" ? "expert review" : to === "decision" ? "a decision" : to === "handoff" ? "follow-through" : "analysis"}`, body: `${c.title} moved to ${to} by ${actor.label}.`, link }, actor.id);

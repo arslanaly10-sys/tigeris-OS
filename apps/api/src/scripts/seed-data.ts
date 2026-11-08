@@ -1,3 +1,6 @@
+import { compile, runTests } from "../policy/engine";
+import { DEFAULT_POLICY } from "../policy/default-policy";
+import { seedPrecedents } from "../memory/memory";
 import { ROLES, ROLE_LABELS, type Role } from "@tigeris/shared";
 import { ownerPool } from "../db";
 import { appendAudit } from "../audit";
@@ -82,7 +85,7 @@ export async function resetDemo() {
   const c = await pool.connect();
   try {
     await c.query("BEGIN");
-    await c.query("TRUNCATE case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
+    await c.query("TRUNCATE precedents, handoff_updates, handoffs, decision_approvals, decisions, policy_versions, case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
     for (const r of ROLES) await c.query("INSERT INTO roles (key, label) VALUES ($1,$2)", [r, ROLE_LABELS[r]]);
     for (const inst of DEMO_INSTITUTIONS) {
       await c.query(
@@ -124,6 +127,11 @@ export async function resetDemo() {
       const admin = peopleByRole.get("administrator")!;
       // Sovereignty defaults: foreign models cut, outbound off, local model and deterministic writer only (Q063).
       await c.query("INSERT INTO sovereignty_settings (institution_id) VALUES ($1)", [inst.id]);
+      await seedPrecedents(c, inst.id);
+      // Policy v1: the default rules, tested before activation like any later version (Q090).
+      const pol = compile(DEFAULT_POLICY);
+      await c.query("INSERT INTO policy_versions (institution_id, version, status, source, compiled, test_results, tests_passed, content_hash, note, created_by_label, activated_by_label, activated_at) VALUES ($1,1,'active',$2,$3,$4,$5,$6,$7,'System default','System default',now())",
+        [inst.id, DEFAULT_POLICY, JSON.stringify(pol.policy), JSON.stringify(runTests(pol.policy!, pol.hash)), runTests(pol.policy!, pol.hash).every((t) => t.pass), pol.hash, "Default rule set for the demonstration"]);
       for (const pkg of await allBundledPackages()) {
         const bytes = await readFile(path.join(PACKAGES, pkg));
         await enqueue(c, { institutionId: inst.id, kind: "package_import", label: pkg, bytes, actorId: admin.id, actorLabel: admin.name, actorRole: "administrator" });

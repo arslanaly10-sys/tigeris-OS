@@ -87,13 +87,27 @@ describe("case workflow (App Flow §4, Q026)", () => {
     const exec = await signIn(GSF.id, "executive");
     // GSF-2026-0003 was opened by the executive; move it to decision first.
     const analyst = await signIn(GSF.id, "analyst");
-    for (const to of ["triaged", "analysis", "scenario", "review"]) expect((await post(analyst, "/cases/GSF-2026-0003/transition", { to })).statusCode).toBe(200);
+    for (const to of ["triaged", "analysis", "scenario"]) expect((await post(analyst, "/cases/GSF-2026-0003/transition", { to })).statusCode).toBe(200);
+    // Full cases need the agent analysis before review (policy case.analysis_before_review_full).
+    const held = await post(analyst, "/cases/GSF-2026-0003/transition", { to: "review" });
+    expect(held.json().policy.rule).toBe("case.analysis_before_review_full");
+    expect((await post(analyst, "/cases/GSF-2026-0003/analysis", { provider: "deterministic" })).statusCode).toBe(202);
+    for (let i = 0; i < 120; i++) {
+      await new Promise((r) => setTimeout(r, 500));
+      if ((await get(analyst, "/cases/GSF-2026-0003/analysis")).run.status !== "running") break;
+    }
+    expect((await post(analyst, "/cases/GSF-2026-0003/transition", { to: "review" })).json().policy.result).toBe("PASS");
     const expert = await signIn(GSF.id, "domain_expert");
     await post(expert, "/cases/GSF-2026-0003/transition", { to: "decision", rationale: "Scenario assumptions reviewed and documented." });
     const sod = await post(exec, "/cases/GSF-2026-0003/transition", { to: "handoff", rationale: "Approve the defensive reallocation option." });
     expect(sod.statusCode).toBe(403);
     expect(sod.json().policy.rule).toBe("case.separation_of_duties");
     const approver = await signIn(GSF.id, "approver");
+    const early = await post(approver, "/cases/GSF-2026-0003/transition", { to: "handoff", rationale: "Approve the defensive reallocation option." });
+    expect(early.json().policy.rule).toBe("case.decision_before_handoff");
+    const opts = (await get(approver, "/cases/GSF-2026-0003/decision")).options as Array<{ id: string; approval: { required: number } }>;
+    const single = opts.find((o) => o.approval.required === 1)!;
+    expect((await post(approver, "/cases/GSF-2026-0003/decisions", { recommendationId: single.id, outcome: "approve", rationale: "Holding is the lowest-risk option until prices settle." })).statusCode).toBe(200);
     const ok = await post(approver, "/cases/GSF-2026-0003/transition", { to: "handoff", rationale: "Approve the defensive reallocation option." });
     expect(ok.json().policy.result).toBe("PASS");
     const ops = await signIn(GSF.id, "operations_owner");
@@ -107,7 +121,7 @@ describe("case workflow (App Flow §4, Q026)", () => {
     await post(c, "/cases/GSF-2026-0002/transition", { to: "analysis" });
     await post(c, "/cases/GSF-2026-0002/transition", { to: "scenario" });
     const r = await post(c, "/cases/GSF-2026-0002/transition", { to: "review" });
-    expect(r.json().policy.rule).toBe("case.evidence_required");
+    expect(r.json().policy.rule).toBe("case.evidence_before_review");
   });
 });
 
