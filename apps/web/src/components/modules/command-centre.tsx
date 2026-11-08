@@ -5,6 +5,7 @@ import { CheckCircle2, FolderKanban, Inbox, Map as MapIcon, MinusCircle, RadioTo
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { ModeBadge, URGENCY_TONE } from "./signals";
+import { MovementMapLazy } from "../movement-map-lazy";
 import { PERMISSIONS, ROLE_LABELS, type Permission } from "@tigeris/shared";
 import { PageHeader } from "../page-header";
 import { Panel, PanelHeader } from "../ui/panel";
@@ -72,13 +73,8 @@ export function CommandCentre() {
           <AttentionQueue />
         </Panel>
         <Panel>
-          <PanelHeader eyebrow="Gulf strategic view" title="Map" actions={<Badge tone="gold">Week 4</Badge>} />
-          <div className="geo-pattern m-4 grid min-h-[240px] place-items-center gap-3 rounded-md border border-dashed border-line px-6 py-10 text-center">
-            <MapIcon className="size-7 text-accent" />
-            <p className="max-w-[46ch] text-[13px] text-ink-muted">
-              A dark GCC map with ports, pipelines, refineries, desalination and power plants, shipping corridors and about 200 ships in replay. It works offline from packaged map tiles.
-            </p>
-          </div>
+          <PanelHeader eyebrow="Gulf strategic view" title="Movement and active signals" />
+          <div className="p-3"><MovementMapLazy compact /></div>
         </Panel>
         <Panel>
           <PanelHeader eyebrow="Signed in as" title={ROLE_LABELS[s.principal.role]} actions={<Badge tone="info">{s.density === "spacious" ? "Executive layout" : "Analyst layout"}</Badge>} />

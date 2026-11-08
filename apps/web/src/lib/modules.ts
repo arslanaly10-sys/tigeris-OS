@@ -49,6 +49,11 @@ export const MODULES: ModuleDef[] = [
     requirements: ["FR-13", "FR-16", "TR-021"],
   },
   {
+    slug: "map", nav: "nav.map", group: "operate", icon: "MapPinned",
+    purpose: "Ships, trucks, infrastructure and active signals across the GCC, with replay, simulated live mode and scenario overlays.",
+    arrives: [], requirements: ["MAP §2–9", "FR-29", "FR-30"],
+  },
+  {
     slug: "scenarios", nav: "nav.scenarios", group: "operate", icon: "LineChart",
     purpose: "Baseline and what-if comparisons across 72 hours, 90 days, one year and five years, with assumptions, ranges and replay.",
     arrives: [
