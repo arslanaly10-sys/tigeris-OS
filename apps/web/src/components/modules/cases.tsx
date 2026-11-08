@@ -110,7 +110,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-3xl">
-            <h1 className="text-[26px] font-semibold leading-tight">{c.title}</h1>
+            <h1 className="text-[30px] font-semibold leading-tight">{c.title}</h1>
             <p className="mt-1 text-ink-muted">{c.objective}</p>
           </div>
           <div className="flex flex-wrap gap-1.5"><Badge>{DEPTH_LABEL[c.depth]}</Badge><Badge tone="warn">{c.sensitivity}</Badge><Badge>v{c.version}</Badge></div>
@@ -126,9 +126,9 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
 
       <TransitionBar d={d} onDone={load} role={s.principal.role} />
 
-      <div role="tablist" aria-label="Case workspace" className="mb-5 mt-5 flex flex-wrap gap-1 border-b border-line">
+      <div role="tablist" aria-label="Case workspace" className="sticky top-[52px] z-10 -mx-1 mb-6 mt-6 flex flex-wrap gap-x-1 border-b border-line bg-bg/90 px-1 backdrop-blur-md">
         {TABS.map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-3 py-2 text-[13.5px]", tab === t ? "border-primary font-medium text-ink" : "border-transparent text-ink-muted hover:text-ink")}>
+          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-3 py-2.5 text-[13.5px] font-medium transition-colors", tab === t ? "border-primary text-ink" : "border-transparent text-ink-faint hover:border-line-strong hover:text-ink")}>
             {tr(`case.tab.${t}` as I18nKey)}{t === "Discussion" && d.comments.length ? ` (${d.comments.length})` : ""}
           </button>
         ))}

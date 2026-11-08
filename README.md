@@ -4,6 +4,11 @@ Demonstration build of an AI-native sovereign intelligence operating system: val
 
 Confidential · Client IP. All institutions and people in this build are fictional; data is public snapshots plus clearly labelled synthetic data.
 
+## Design
+The visual system is specified in [`DESIGN.md`](DESIGN.md) (the DESIGN.md format), adapted from the Linear and IBM analyses in
+[VoltAgent/awesome-design-md](https://github.com/voltagent/awesome-design-md) (MIT) and applied to TIGERIS's own brand.
+The previous look is tagged `pre-redesign`.
+
 ## Run it
 
 ### Docker (laptop or cloud VM)

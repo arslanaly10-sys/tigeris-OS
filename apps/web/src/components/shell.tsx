@@ -28,8 +28,8 @@ export function Shell({ context, children }: { context: AuthContext; children: R
         )}
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
           <Header onMenu={() => setOpen(true)} />
-          <main className={cn("flex-1 px-4 py-6 sm:px-6", context.density === "spacious" ? "lg:px-10 lg:py-9" : "lg:px-6")}>{children}</main>
-          <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-6 py-3 text-[11.5px] text-ink-faint">
+          <main className={cn("mx-auto w-full max-w-[1480px] flex-1 px-4 py-7 sm:px-6", context.density === "spacious" ? "lg:px-10 lg:py-9" : "lg:px-6")}>{children}</main>
+          <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-6 py-3 pe-36 text-[11.5px] text-ink-faint">
             <span>{t("footer.confidential")}</span>
             <span>TIGERIS · Sovereign Intelligence OS · Demonstration build · Fictional institutions and people</span>
           </footer>

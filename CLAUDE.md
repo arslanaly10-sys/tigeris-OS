@@ -5,7 +5,7 @@ An institution-owned intelligence and decision layer for sovereign institutions.
 Requirement IDs (FR-xx, TR-xxx, AC-xx, Qxxx) come from the requirements register and the build questionnaire. Reference one in every change.
 
 ## Layout
-- `apps/web` Next.js 15 + React 19 + Tailwind 4. Design tokens in `src/app/globals.css`. Dark is default.
+- `apps/web` Next.js 15 + React 19 + Tailwind 4. Follow `DESIGN.md` (surface ladder, scarce gold, Plex Sans UI, serif titles). Tokens in `src/app/globals.css`. Dark is default.
 - `apps/api` Fastify TypeScript core. Routes in `src/routes`. Guard every protected route with `requirePermission(...)`.
 - `packages/shared` roles, permission matrix, labels (data classes, classifications, case states).
 - `services/reasoning` Python FastAPI. All numbers are calculated here or in deterministic TS code, never by a model.

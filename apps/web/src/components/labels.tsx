@@ -13,7 +13,7 @@ const CLAIM: Record<string, { label: string; tone: "ok" | "info" | "warn" | "gol
 /** Persistent claim badges (FD §6). */
 export function ClaimBadge({ claim }: { claim: string }) {
   const c = CLAIM[claim] ?? { label: claim.toUpperCase(), tone: "neutral" as const };
-  return <Badge tone={c.tone} className="font-mono tracking-wide">{c.label}</Badge>;
+  return <Badge tone={c.tone} className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">{c.label}</Badge>;
 }
 
 const STATE: Record<string, { label: string; tone: "ok" | "warn" | "crit" | "neutral"; icon: React.ReactNode }> = {

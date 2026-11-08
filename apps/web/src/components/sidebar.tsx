@@ -25,23 +25,23 @@ export function Sidebar() {
           href={`/${m.slug}`}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13.5px] transition-colors",
-            active ? "bg-primary-soft font-medium text-ink shadow-[inset_2px_0_0_var(--primary)] rtl:shadow-[inset_-2px_0_0_var(--primary)]" : "text-ink-muted hover:bg-surface-2 hover:text-ink",
+            "flex items-center gap-2.5 rounded-[6px] px-2.5 py-[7px] text-[13.5px] transition-colors",
+            active ? "bg-surface-3 font-medium text-ink shadow-[inset_2px_0_0_var(--primary)] rtl:shadow-[inset_-2px_0_0_var(--primary)]" : "text-ink-muted hover:bg-surface-2 hover:text-ink",
           )}
         >
-          <Icon className={cn("size-4 shrink-0", active ? "text-accent" : "text-ink-faint")} />
+          <Icon strokeWidth={1.75} className={cn("size-4 shrink-0", active ? "text-primary" : "text-ink-faint")} />
           <span className="truncate">{t(m.nav)}</span>
         </Link>
       </li>
     );
   };
   return (
-    <nav aria-label="Main" className="flex h-full w-[248px] shrink-0 flex-col border-e border-line bg-surface">
-      <div className="px-5 pb-4 pt-5"><Wordmark /></div>
+    <nav aria-label="Main" className="flex h-full w-[244px] shrink-0 flex-col border-e border-line bg-bg">
+      <div className="flex h-[52px] items-center border-b border-line px-5"><Wordmark /></div>
       <div className="flex-1 overflow-y-auto px-3 pb-4">
         {GROUPS.map((g) => (
-          <div key={g.key} className="mt-3">
-            <div className="eyebrow px-2.5 pb-1.5 text-ink-faint">{t(g.label)}</div>
+          <div key={g.key} className="mt-4">
+            <div className="eyebrow px-2.5 pb-1.5 text-[10.5px] text-ink-faint">{t(g.label)}</div>
             <ul className="grid gap-0.5">{MODULES.filter((m) => m.group === g.key).map(link)}</ul>
           </div>
         ))}

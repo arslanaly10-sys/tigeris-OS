@@ -251,9 +251,9 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     <div className="grid gap-3">
       {/* Status strip: mode, time, data labels and key counts are always visible (MAP §2, §6). */}
       <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
-        <Badge tone={mode === "live" ? "ok" : "info"} className="font-mono">{mode === "live" ? "SIMULATED LIVE" : "REPLAY"}</Badge>
-        <Badge tone="gold" className="font-mono">SYNTHETIC MOVEMENT</Badge>
-        {scenario !== "baseline" && <Badge tone="warn" className="font-mono">SCENARIO · {SCENARIOS.find((s) => s.key === scenario)!.label}</Badge>}
+        <Badge tone={mode === "live" ? "ok" : "info"} className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">{mode === "live" ? "SIMULATED LIVE" : "REPLAY"}</Badge>
+        <Badge tone="gold" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">Synthetic movement</Badge>
+        {scenario !== "baseline" && <Badge tone="warn" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">SCENARIO · {SCENARIOS.find((s) => s.key === scenario)!.label}</Badge>}
         <span className="tabular text-ink-muted">{clock} Riyadh time</span>
         <span className="text-ink-muted">Hormuz transits (24 h): <b className={cn("tabular", transits.now < transits.base * 0.85 ? "text-crit" : "text-ink")}>{transits.now}</b> / {transits.base} baseline</span>
         {holding > 0 && <span className="text-warn">{holding} holding</span>}

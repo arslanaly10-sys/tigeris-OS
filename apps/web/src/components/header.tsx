@@ -73,7 +73,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
   }
 
   return (
-    <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex h-14 items-center gap-3 border-b border-line bg-surface/95 px-4 backdrop-blur">
+    <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex h-[52px] items-center gap-3 border-b border-line bg-bg/90 px-4 backdrop-blur-md sm:px-6">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenu} aria-label="Open navigation"><Menu /></Button>
 
       <Popover.Root open={results.length > 0}>
@@ -92,7 +92,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
           </label>
         </Popover.Anchor>
         <Popover.Portal>
-          <Popover.Content align="start" sideOffset={6} onOpenAutoFocus={(e) => e.preventDefault()} className="z-50 w-[min(420px,90vw)] rounded-lg border border-line bg-surface p-1.5 shadow-xl">
+          <Popover.Content align="start" sideOffset={6} onOpenAutoFocus={(e) => e.preventDefault()} className="z-50 w-[min(420px,90vw)] rounded-lg border border-line bg-surface p-1.5 shadow-[var(--overlay-shadow)]">
             {results.slice(0, 12).map((r, i) => (
               <Link key={i} href={r.href} onClick={() => setQ("")} className="block rounded px-2.5 py-2 hover:bg-surface-2">
                 <div className="line-clamp-1 text-[13px] font-medium">{r.title}</div>
@@ -119,7 +119,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
             </Button>
           </Popover.Trigger>
           <Popover.Portal>
-            <Popover.Content align="end" sideOffset={6} className="z-50 w-80 rounded-lg border border-line bg-surface p-2 shadow-xl">
+            <Popover.Content align="end" sideOffset={6} className="z-50 w-80 rounded-lg border border-line bg-surface p-2 shadow-[var(--overlay-shadow)]">
               <div className="flex items-center justify-between px-2 py-1.5"><span className="font-semibold">{t("header.notifications")}</span>
                 {notes?.unread ? <button type="button" className="text-[12px] text-accent hover:underline" onClick={async () => { await api("/notifications/read", { json: {} }); setNotes((n) => n && { ...n, unread: 0, notifications: n.notifications.map((x) => ({ ...x, read_at: x.read_at ?? new Date().toISOString() })) }); }}>Mark all read</button> : null}
               </div>
@@ -147,7 +147,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
             </button>
           </Dropdown.Trigger>
           <Dropdown.Portal>
-            <Dropdown.Content align="end" sideOffset={6} className="z-50 w-72 rounded-lg border border-line bg-surface p-1.5 shadow-xl">
+            <Dropdown.Content align="end" sideOffset={6} className="z-50 w-72 rounded-lg border border-line bg-surface p-1.5 shadow-[var(--overlay-shadow)]">
               <div className="px-2.5 py-2">
                 <div className="font-semibold">{s.principal.name}</div>
                 <div className="text-[12px] text-ink-muted">{s.principal.title}</div>

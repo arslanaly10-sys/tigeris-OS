@@ -8,28 +8,33 @@
 */
 :root,
 [data-theme="dark"] {
-  --bg: #0a1220;
-  --surface: #101b2d;
-  --surface-2: #15243a;
-  --surface-3: #1b2d47;
-  --line: #22344f;
-  --line-strong: #2f4566;
-  --ink: #e8e6df;
-  --ink-muted: #9aa6b8;
-  --ink-faint: #6c7a90;
-  --primary: #c9a45c;
-  --primary-ink: #17120a;
-  --primary-soft: #2a2416;
-  --accent: #d9bd84;
-  --ok: #45b88c;
-  --ok-soft: #12302a;
-  --warn: #dc9a45;
-  --warn-soft: #33260f;
+  /* Surface ladder: canvas → surface → surface-2 → surface-3 (DESIGN.md · Elevation). */
+  --bg: #070d18;
+  --surface: #0c1526;
+  --surface-2: #111c30;
+  --surface-3: #18253c;
+  --line: #1c2a41;
+  --line-strong: #2a3b57;
+  --ink: #ece8de;
+  --ink-muted: #a4aebd;
+  --ink-faint: #76839a;
+  /* Gold is scarce: primary action, active place, focus, links. */
+  --primary: #c8a35a;
+  --primary-hover: #d6b673;
+  --primary-ink: #16110a;
+  --primary-soft: #211b11;
+  --accent: #dcc088;
+  --ok: #3fae86;
+  --ok-soft: #0f2a24;
+  --warn: #d4974a;
+  --warn-soft: #2c2111;
   --crit: #d8645a;
-  --crit-soft: #3a1a19;
-  --info: #79a8de;
-  --info-soft: #152a45;
-  --pattern: rgba(201, 164, 92, 0.07);
+  --crit-soft: #321716;
+  --info: #7ba7dc;
+  --info-soft: #12253d;
+  --pattern: rgba(200, 163, 90, 0.07);
+  --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --overlay-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
   --series-1: #3987e5;
   --series-2: #d95926;
   --series-3: #199e70;
@@ -37,28 +42,31 @@
 }
 
 [data-theme="light"] {
-  --bg: #f7f6f0;
+  --bg: #f6f5f0;
   --surface: #ffffff;
-  --surface-2: #f0efe8;
-  --surface-3: #e7e6dd;
-  --line: #d9ddd5;
-  --line-strong: #c3c9bf;
-  --ink: #25312d;
-  --ink-muted: #5c6a64;
-  --ink-faint: #85918b;
-  --primary: #176348;
+  --surface-2: #f2f1eb;
+  --surface-3: #e9e8e0;
+  --line: #e3e2d9;
+  --line-strong: #cdcbc0;
+  --ink: #1d2925;
+  --ink-muted: #55625c;
+  --ink-faint: #737e79;
+  --primary: #14603f;
+  --primary-hover: #0f5235;
   --primary-ink: #ffffff;
-  --primary-soft: #dde9df;
-  --accent: #b7995d;
-  --ok: #2f7a57;
-  --ok-soft: #dde9df;
-  --warn: #b86f24;
-  --warn-soft: #f6e8d6;
+  --primary-soft: #e3eee6;
+  --accent: #8a6d2f;
+  --ok: #2b7653;
+  --ok-soft: #e1eee5;
+  --warn: #a8641c;
+  --warn-soft: #f7ebda;
   --crit: #a9443c;
-  --crit-soft: #f5dedb;
+  --crit-soft: #f6e1de;
   --info: #2f5f8c;
-  --info-soft: #e1eaf3;
-  --pattern: rgba(23, 99, 72, 0.06);
+  --info-soft: #e3ebf4;
+  --pattern: rgba(20, 96, 63, 0.06);
+  --panel-highlight: 0 1px 2px rgba(29, 41, 37, 0.04);
+  --overlay-shadow: 0 16px 40px rgba(29, 41, 37, 0.16), 0 2px 6px rgba(29, 41, 37, 0.08);
   --series-1: #2a78d6;
   --series-2: #eb6834;
   --series-3: #1baf7a;
@@ -76,6 +84,7 @@
   --color-ink-muted: var(--ink-muted);
   --color-ink-faint: var(--ink-faint);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
   --color-primary-ink: var(--primary-ink);
   --color-primary-soft: var(--primary-soft);
   --color-accent: var(--accent);
@@ -92,12 +101,13 @@
   --color-series-3: var(--series-3);
 
   --font-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
-  --font-sans: "Inter Variable", "IBM Plex Sans Arabic", Arial, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", "Segoe UI", Arial, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 
 html[lang="ar"] {
-  --font-sans: "IBM Plex Sans Arabic", "Inter Variable", Arial, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans Arabic", "IBM Plex Sans", Arial, system-ui, sans-serif;
+  --font-serif: "IBM Plex Sans Arabic", "Source Serif 4 Variable", serif;
 }
 
 html,
@@ -114,11 +124,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Serif for titles read as documents (page and section titles); everything operational is Plex Sans. */
 h1,
-h2,
-h3 {
+h2 {
   font-family: var(--font-serif);
   text-wrap: balance;
+  letter-spacing: -0.01em;
+}
+h3,
+h4 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.panel-title {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .tabular {
@@ -126,9 +150,10 @@ h3 {
 }
 
 .eyebrow {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -232,4 +257,43 @@ html[lang="ar"] .eyebrow {
 /* In Arabic mode, English case content keeps its own direction so punctuation sits at the right end. */
 html[dir="rtl"] :is(p, li, h1, h2, h3, h4, td, dd, dt, label, blockquote) {
   unicode-bidi: plaintext;
+}
+
+/* Tables follow DESIGN.md: surface-2 header band, hairline rows, tabular numbers. */
+main table thead tr {
+  background: var(--surface-2);
+}
+main table th {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+}
+main table tbody tr {
+  transition: background-color 120ms ease;
+}
+main table tbody tr:hover {
+  background: color-mix(in oklab, var(--surface-2) 70%, transparent);
+}
+main table td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Form fields: surface-2, strong hairline, gold focus ring. */
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+  border-color: var(--line-strong);
+  background-color: var(--surface-2);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+main :is(input, select, textarea):focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 30%, transparent);
+}
+:is(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--primary);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 35%, transparent);
 }

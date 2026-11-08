@@ -18,7 +18,7 @@ export interface Confidence { band: "low" | "medium" | "high"; components: { fac
 interface Signal { id: string; title: string; summary: string; domain: string; urgency: string; impact: string; data_mode: string; event_time: string; detected_at: string; status: string; why_surfaced: string; confidence: Confidence; corroborations: number; entities: { key: string; name: string }[] | null; cases: { caseKey: string; title: string }[] | null; disposition_note: string | null; disposition_by: string | null }
 
 export const URGENCY_TONE: Record<string, "crit" | "warn" | "info" | "neutral"> = { critical: "crit", high: "warn", medium: "info", low: "neutral" };
-export const ModeBadge = ({ mode }: { mode: string }) => <Badge tone={mode === "observed" ? "ok" : "gold"} className="font-mono tracking-wide">{mode === "observed" ? "OBSERVED" : mode === "simulated" ? "SIMULATED" : "SYNTHETIC"}</Badge>;
+export const ModeBadge = ({ mode }: { mode: string }) => <Badge tone={mode === "observed" ? "ok" : "gold"} className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">{mode === "observed" ? "OBSERVED" : mode === "simulated" ? "SIMULATED" : "SYNTHETIC"}</Badge>;
 
 export function ConfidenceBand({ c, compact }: { c: Confidence; compact?: boolean }) {
   const steps = { low: 1, medium: 2, high: 3 }[c.band];
@@ -106,7 +106,7 @@ function LivePanel({ onInjected }: { onInjected: () => void }) {
   }
   return (
     <Panel className="h-fit">
-      <PanelHeader eyebrow="Movement stream" title="Simulated live feed" actions={<><Badge tone="gold" className="font-mono">SIMULATED</Badge><Button size="sm" variant="ghost" onClick={() => setOn((v) => !v)} aria-pressed={on}>{on ? "Pause" : "Resume"}</Button></>} />
+      <PanelHeader eyebrow="Movement stream" title="Simulated live feed" actions={<><Badge tone="gold" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">Simulated</Badge><Button size="sm" variant="ghost" onClick={() => setOn((v) => !v)} aria-pressed={on}>{on ? "Pause" : "Resume"}</Button></>} />
       <div className="grid gap-3 p-4">
         <p className="text-[12px] text-ink-muted">A labelled simulation of corridor transit counts. It is not live AIS. Licensed feeds connect in the pilot stage.</p>
         {tick?.corridors.map((c) => (

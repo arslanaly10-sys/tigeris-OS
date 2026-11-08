@@ -41,12 +41,12 @@ export function Guide() {
   const [title, body] = lang === "ar" ? s.ar : s.en;
   const here = path === s.href.split("?")[0];
   if (!st.open) return (
-    <button type="button" onClick={() => save({ ...st, open: true })} className="fixed bottom-5 end-5 z-30 flex items-center gap-2 rounded-full border border-primary/50 bg-surface px-4 py-2 text-[13px] font-medium text-ink shadow-lg hover:border-primary print:hidden">
+    <button type="button" onClick={() => save({ ...st, open: true })} className="fixed bottom-5 end-5 z-30 flex items-center gap-2 rounded-full border border-primary/50 bg-surface px-4 py-2 text-[13px] font-medium text-ink shadow-[var(--overlay-shadow)] hover:border-primary print:hidden">
       <Compass className="size-4 text-accent" />{t("guide.button")}
     </button>
   );
   return (
-    <aside aria-label={t("guide.title")} className="fixed bottom-5 end-5 z-30 w-[min(360px,calc(100vw-2.5rem))] rounded-lg border border-primary/50 bg-surface p-4 shadow-2xl print:hidden">
+    <aside aria-label={t("guide.title")} className="fixed bottom-5 end-5 z-30 w-[min(360px,calc(100vw-2.5rem))] rounded-lg border border-primary/50 bg-surface p-4 shadow-[var(--overlay-shadow)] print:hidden">
       <div className="flex items-center gap-2">
         <Compass className="size-4 text-accent" />
         <span className="eyebrow text-ink-faint">{t("guide.step")} {st.step + 1} {t("guide.of")} {STEPS.length}</span>

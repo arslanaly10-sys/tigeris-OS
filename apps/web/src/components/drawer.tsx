@@ -17,7 +17,7 @@ export function Drawer({ open, onClose, title, eyebrow, children }: { open: bool
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={typeof title === "string" ? title : "Details"}>
       <button type="button" aria-label="Close" className="absolute inset-0 bg-black/45" onClick={onClose} />
-      <div ref={ref} tabIndex={-1} className="absolute inset-y-0 end-0 flex w-[min(560px,100vw)] flex-col border-s border-line bg-surface pt-[env(safe-area-inset-top,0px)] shadow-2xl outline-none">
+      <div ref={ref} tabIndex={-1} className="absolute inset-y-0 end-0 flex w-[min(560px,100vw)] flex-col border-s border-line bg-surface pt-[env(safe-area-inset-top,0px)] shadow-[var(--overlay-shadow)] outline-none">
         <header className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
           <div className="min-w-0">
             {eyebrow && <div className="eyebrow text-ink-faint">{eyebrow}</div>}
