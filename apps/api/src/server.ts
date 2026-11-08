@@ -13,6 +13,8 @@ import { scenarioRoutes } from "./routes/scenarios";
 import { aiRoutes } from "./routes/ai";
 import { decisionRoutes } from "./routes/decisions";
 import { securityRoutes } from "./routes/security";
+import { backtestRoutes } from "./routes/backtests";
+import { reportRoutes } from "./routes/reports";
 
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info", redact: ["req.headers.cookie"] } });
@@ -38,5 +40,7 @@ export async function buildApp() {
   await app.register(aiRoutes);
   await app.register(decisionRoutes);
   await app.register(securityRoutes);
+  await app.register(backtestRoutes);
+  await app.register(reportRoutes);
   return app;
 }

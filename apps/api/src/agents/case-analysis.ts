@@ -7,6 +7,7 @@ import type { ProviderKey } from "../ai/providers";
 import type { CheckedSentence, Source } from "../ai/verify";
 import { impactPaths } from "../graph/traverse";
 import { buildPayload, engine, persistRun, type EngineResult } from "../routes/scenarios";
+import { adoptedCalibration } from "../routes/backtests";
 import { AGENT_NAME, SECTOR_LENS } from "./registry";
 import { finishRun, fmtNum, fmtUsd, sourceList, startRun, step, type RunCtx } from "./runtime";
 
@@ -169,7 +170,11 @@ export async function runCaseAnalysis(ctx: RunCtx) {
   });
 
   const financial = await step(ctx, { agent: "financial_impact", phase: "analyse", title: "Read value at risk and revenue effects from the engine" }, async (tx, tools) => {
-    let group = (await tx.query("SELECT group_id FROM scenario_runs WHERE case_id = $1 ORDER BY created_at DESC LIMIT 1", [caseId])).rows[0]?.group_id as string | undefined;
+    const latest = (await tx.query("SELECT group_id, payload->'calibration'->>'id' AS cal FROM scenario_runs WHERE case_id = $1 AND variant = 'baseline' ORDER BY created_at DESC LIMIT 1", [caseId])).rows[0];
+    let group = latest?.group_id as string | undefined;
+    // A calibration adopted after the latest baseline makes that baseline stale: re-run it with the calibration.
+    const adopted = await tools.run("calibration.adopted", {}, () => adoptedCalibration(tx), (c) => (c ? `adopted back-test ${c.id.slice(0, 8)}` : "none adopted"));
+    if (group && adopted && latest.cal !== adopted.id) group = undefined;
     let ranBaseline = false;
     if (!group) {
       const c = await caseRow(tx, caseId);
@@ -179,7 +184,7 @@ export async function runCaseAnalysis(ctx: RunCtx) {
         const t0 = Date.now();
         const input = { ...payload, drivers: {} };
         const r = await engine<EngineResult>("/scenarios/run", input);
-        await persistRun(tx, ctx.inst, caseId, g, "baseline", "Baseline (run by the agents)", input, snapshot, r, Date.now() - t0, { id: ctx.actor.id, label: `Agents for ${ctx.actor.label}` });
+        await persistRun(tx, ctx.inst, caseId, g, "baseline", latest ? "Baseline (re-run with the adopted calibration)" : "Baseline (run by the agents)", input, snapshot, r, Date.now() - t0, { id: ctx.actor.id, label: `Agents for ${ctx.actor.label}` });
         await tx.query("INSERT INTO case_events (institution_id, case_id, kind, actor_id, actor_label, actor_role, payload) VALUES ($1,$2,'scenario_run',$3,$4,$5,$6)", [ctx.inst, caseId, ctx.actor.id, `Agents for ${ctx.actor.label}`, ctx.actor.role, JSON.stringify({ groupId: g, variants: ["Baseline (run by the agents)"] })]);
         await appendAudit(tx, ctx.inst, { actorType: "service", actorId: ctx.actor.id, actorLabel: `Financial impact agent (for ${ctx.actor.label})`, actorRole: ctx.actor.role, action: "scenario.run", resourceType: "scenario_group", resourceId: g, caseId, details: { variants: 1, template: c.scenario_template, by: "agent_run", runId: ctx.runId } });
         return g;
@@ -241,7 +246,9 @@ export async function runCaseAnalysis(ctx: RunCtx) {
     const topSignal = triage.output.ranked[0];
     if (topSignal && topSignal.data_mode !== "observed") add({ challenger: "noise_moderation", target: "signal_triage", claim: `"${topSignal.title}" ranks first.`, contention: `It is ${topSignal.data_mode} data, not a live observation.`, response: "Accepted. It stays as context but cannot be the only basis for a decision; evidence quality is capped at medium.", status: "accepted", effect: "Evidence quality capped at medium" });
     const param = await tools.run("scenario.assumptions", { run: financial.output.baselineRunId }, async () => (await tx.query("SELECT label, value_num, unit, basis FROM scenario_assumptions WHERE run_id = $1 AND key = 'param.price_premium_usd_per_pct'", [financial.output.baselineRunId])).rows[0], (r) => (r ? `price response ${r.value_num} ${r.unit}` : "no price parameter"));
-    if (param) add({ challenger: "sector", target: "financial_impact", claim: "Value at risk and revenue figures are reported.", contention: `They depend on the price response of ${param.value_num} ${param.unit}, which is ${String(param.basis).toLowerCase()}.`, response: "Accepted. Figures are shown as scenario outputs with their P10–P90 range, and model calibration is rated low until back-testing.", status: "accepted", effect: "Model calibration rated low" });
+    const calibrated = !!param && String(param.basis).startsWith("Calibrated");
+    if (param && !calibrated) add({ challenger: "sector", target: "financial_impact", claim: "Value at risk and revenue figures are reported.", contention: `They depend on the price response of ${param.value_num} ${param.unit}, which is ${String(param.basis).toLowerCase()}.`, response: "Accepted. Figures are shown as scenario outputs with their P10–P90 range, and model calibration is rated low until back-testing.", status: "accepted", effect: "Model calibration rated low" });
+    if (param && calibrated) add({ challenger: "sector", target: "financial_impact", claim: "The price response is calibrated.", contention: `The calibration rests on a handful of historical episodes whose supply losses are estimates: ${String(param.basis).split(":").slice(1).join(":").split(";")[0]!.trim()}.`, response: "Accepted. Model calibration is rated medium, not high, and the P10–P90 range stays on every figure.", status: "accepted", effect: "Model calibration rated medium" });
     if (causal.output.weakShare > 0.3) add({ challenger: "governance_checker", target: "causal_impact", claim: `${causal.output.holdings} holdings are reachable from ${causal.output.origin.name}.`, contention: `${Math.round(causal.output.weakShare * 100)}% of the links on these paths are inferred, assumed or synthetic rather than sourced.`, response: "Accepted in part. Sourced links carry the strongest paths; weaker links are shown with their class and lower graph support.", status: "accepted", effect: "Graph support lowered one step" });
     const v = financial.output.var90 as { value: number; p10: number | null; p90: number | null } | undefined;
     if (v && v.p10 !== null && v.p90 !== null && Math.abs(v.p90) > 2 * Math.max(1, Math.abs(v.p10))) add({ challenger: "scenario_analyst", target: "financial_impact", claim: `90-day value at risk is ${fmtUsd(v.value)}.`, contention: `The P10–P90 range runs from ${fmtUsd(v.p10)} to ${fmtUsd(v.p90)}, so the single value is fragile.`, response: "Rebutted for ranking purposes. Options are compared on the same draws, and each option's effect is reported at the deterministic value with the range shown.", status: "rebutted", effect: "Range shown with every option" });
@@ -261,6 +268,7 @@ export async function runCaseAnalysis(ctx: RunCtx) {
   const signalBand: Level = triage.output.ranked[0]?.band ?? "low";
   const evidenceQ: Level = challenges.some((c) => c.effect === "Evidence quality capped at medium") ? (LEVELS[Math.min(1, RANK[signalBand])] as Level) : signalBand;
   const calibration: Level = challenges.some((c) => c.effect === "Model calibration rated low") ? "low" : "medium";
+  const calibrationBasis = challenges.some((c) => c.effect === "Model calibration rated medium") ? "Price response calibrated by an adopted back-test" : null;
   const graphSupport: Level = causal.output.weakShare > 0.3 ? "medium" : "high";
 
   // ---------------- recommend ----------------
@@ -283,7 +291,7 @@ export async function runCaseAnalysis(ctx: RunCtx) {
       const robust: Level = pb.p10 !== null && po.p10 !== null && pb.p90 !== null && po.p90 !== null ? (Math.sign(Math.abs(pb.p10) - Math.abs(po.p10)) === Math.sign(vb - vo) && Math.sign(Math.abs(pb.p90) - Math.abs(po.p90)) === Math.sign(vb - vo) ? "high" : "medium") : "medium";
       const components = [
         { key: "evidence", label: "Evidence quality", level: evidenceQ, basis: `Top signal confidence is ${signalBand}${evidenceQ !== signalBand ? "; capped after a challenge" : ""}` },
-        { key: "calibration", label: "Model calibration", level: calibration, basis: calibration === "low" ? "Price response is an analyst assumption until back-testing" : "Parameters recorded with their basis" },
+        { key: "calibration", label: "Model calibration", level: calibration, basis: calibration === "low" ? "Price response is an analyst assumption until back-testing" : calibrationBasis ?? "Parameters recorded with their basis" },
         { key: "graph", label: "Graph support", level: graphSupport, basis: `${Math.round(causal.output.weakShare * 100)}% of path links are inferred, assumed or synthetic` },
         { key: "robustness", label: "Effect robustness", level: k === "hold" ? "high" : robust, basis: k === "hold" ? "No change against the baseline" : robust === "high" ? "Effect has the same direction at P10 and P90" : "Effect direction differs across the range" },
       ];

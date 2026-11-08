@@ -1,0 +1,18 @@
+# Hosted demo VM overlay (ADR-0003): the same package behind a TLS reverse proxy.
+#   TIGERIS_DOMAIN=demo.example.org docker compose -f docker-compose.yml -f docker-compose.vm.yml up -d
+# Caddy obtains and renews a certificate for TIGERIS_DOMAIN; only ports 80 and 443 are published.
+services:
+  web:
+    ports: !reset []
+  proxy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      TIGERIS_DOMAIN: ${TIGERIS_DOMAIN:?Set TIGERIS_DOMAIN to the DNS name of the VM}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on: [web]
+volumes:
+  caddy-data:

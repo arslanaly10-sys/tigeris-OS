@@ -14,6 +14,7 @@ from typing import Any
 from fastapi import Body
 
 from . import llm
+from .backtest import MODEL_VERSION as BACKTEST_VERSION, run_backtest
 from .engine import DRIVERS, MODEL_VERSION, PARAMETERS, TEMPLATES, run_scenario
 from .horizons import HORIZONS, horizon_windows
 
@@ -69,3 +70,9 @@ def embed_status() -> dict:
 def embed(payload: dict[str, Any] = Body(...)) -> dict:
     """Local embeddings for memory search. Input texts never leave this host."""
     return llm.embed([str(t) for t in payload.get("texts", [])][:64])
+
+
+@app.post("/backtest/run")
+def backtest(payload: dict[str, Any] = Body(...)) -> dict:
+    """Fits the price response on historical episodes; deterministic for the same input."""
+    return run_backtest(payload)

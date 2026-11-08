@@ -1,6 +1,7 @@
 import { compile, runTests } from "../policy/engine";
 import { DEFAULT_POLICY } from "../policy/default-policy";
 import { seedPrecedents } from "../memory/memory";
+import { RESET_LOCK } from "../evidence/jobs";
 import { ROLES, ROLE_LABELS, type Role } from "@tigeris/shared";
 import { ownerPool } from "../db";
 import { appendAudit } from "../audit";
@@ -85,7 +86,8 @@ export async function resetDemo() {
   const c = await pool.connect();
   try {
     await c.query("BEGIN");
-    await c.query("TRUNCATE precedents, handoff_updates, handoffs, decision_approvals, decisions, policy_versions, case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
+    await c.query("SELECT pg_advisory_xact_lock($1)", [RESET_LOCK]); // waits for any running import, then keeps the worker out
+    await c.query("TRUNCATE backtest_runs, precedents, handoff_updates, handoffs, decision_approvals, decisions, policy_versions, case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
     for (const r of ROLES) await c.query("INSERT INTO roles (key, label) VALUES ($1,$2)", [r, ROLE_LABELS[r]]);
     for (const inst of DEMO_INSTITUTIONS) {
       await c.query(

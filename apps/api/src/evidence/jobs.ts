@@ -24,12 +24,29 @@ export async function enqueue(tx: Tx, args: { institutionId: string; kind: "pack
 }
 
 /** Claims and processes one due job. Returns false when the queue is empty. */
+/** Advisory lock key shared by the demo reset (exclusive) and the ingestion worker (shared). */
+export const RESET_LOCK = 7_420_001;
+
 export async function processNext(): Promise<boolean> {
-  const claimed = (await appPool.query("SELECT * FROM claim_next_ingestion_job()")).rows[0];
+  // A demo reset holds this lock exclusively; the worker stays out while it runs (no lock-order deadlock).
+  const c = await appPool.connect();
+  let claimed: { job_id: string; institution_id: string } | undefined;
+  try {
+    await c.query("BEGIN");
+    const free = (await c.query("SELECT pg_try_advisory_xact_lock_shared($1) AS ok", [RESET_LOCK])).rows[0].ok;
+    if (free) claimed = (await c.query("SELECT * FROM claim_next_ingestion_job()")).rows[0];
+    await c.query("COMMIT");
+  } catch (e) {
+    await c.query("ROLLBACK").catch(() => {});
+    throw e;
+  } finally {
+    c.release();
+  }
   if (!claimed) return false;
   const { job_id: jobId, institution_id: inst } = claimed;
   try {
     await withTenant(inst, async (tx) => {
+      await tx.query("SELECT pg_advisory_xact_lock_shared($1)", [RESET_LOCK]);
       const job = (await tx.query("SELECT * FROM ingestion_jobs WHERE id = $1", [jobId])).rows[0];
       const result = await runJob(tx, job);
       // New package evidence updates the institution's graph in the same transaction (TR-022).

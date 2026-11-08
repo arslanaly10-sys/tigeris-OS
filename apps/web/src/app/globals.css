@@ -228,3 +228,8 @@ html[lang="ar"] .eyebrow {
 .maplibregl-ctrl-group { background: #101b2d !important; }
 .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(0.85); }
 .maplibregl-ctrl-attrib { background: rgba(10, 18, 32, 0.8) !important; color: #6c7a90 !important; font-size: 10px; }
+
+/* In Arabic mode, English case content keeps its own direction so punctuation sits at the right end. */
+html[dir="rtl"] :is(p, li, h1, h2, h3, h4, td, dd, dt, label, blockquote) {
+  unicode-bidi: plaintext;
+}

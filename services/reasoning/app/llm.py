@@ -14,7 +14,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-DEFAULT_PATH = Path(__file__).resolve().parents[3] / "data" / "models" / "qwen2.5-1.5b-instruct-q4_k_m.gguf"
+_parents = Path(__file__).resolve().parents
+# Repository checkout: <repo>/data/models; container: /models (mounted read-only by docker compose).
+_MODELS_DIR = _parents[3] / "data" / "models" if len(_parents) > 3 and (_parents[3] / "data" / "models").is_dir() else Path("/models")
+DEFAULT_PATH = _MODELS_DIR / "qwen2.5-1.5b-instruct-q4_k_m.gguf"
 MODEL_PATH = Path(os.environ.get("LOCAL_MODEL_PATH", str(DEFAULT_PATH)))
 MODEL_NAME = os.environ.get("LOCAL_MODEL_NAME", "Qwen2.5 1.5B Instruct (Q4_K_M, Apache-2.0)")
 THREADS = int(os.environ.get("LOCAL_MODEL_THREADS", str(min(8, os.cpu_count() or 4))))

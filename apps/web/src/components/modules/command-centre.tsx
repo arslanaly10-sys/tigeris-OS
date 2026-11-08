@@ -8,6 +8,7 @@ import { ModeBadge, URGENCY_TONE } from "./signals";
 import { MovementMapLazy } from "../movement-map-lazy";
 import { PERMISSIONS, ROLE_LABELS, type Permission } from "@tigeris/shared";
 import { PageHeader } from "../page-header";
+import { usePrefs } from "../prefs";
 import { Panel, PanelHeader } from "../ui/panel";
 import { Badge } from "../ui/badge";
 import { useSession } from "../session-context";
@@ -64,16 +65,17 @@ function AttentionQueue() {
 
 export function CommandCentre() {
   const s = useSession();
+  const { t } = usePrefs();
   return (
     <>
       <PageHeader nav="nav.command-centre" description={`Good to see you, ${s.principal.name.split(" ")[0]}. This is where items that need your attention will appear, with the reason each one is surfaced.`} />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <Panel>
-          <PanelHeader eyebrow="Attention queue" title="Needs attention" />
+          <PanelHeader eyebrow={t("cc.attentionEyebrow")} title={t("cc.attention")} />
           <AttentionQueue />
         </Panel>
         <Panel>
-          <PanelHeader eyebrow="Gulf strategic view" title="Movement and active signals" />
+          <PanelHeader eyebrow={t("cc.mapEyebrow")} title={t("cc.map")} />
           <div className="p-3"><MovementMapLazy compact /></div>
         </Panel>
         <Panel>

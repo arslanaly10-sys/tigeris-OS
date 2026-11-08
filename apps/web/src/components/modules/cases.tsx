@@ -19,17 +19,20 @@ import { ScenarioWorkspace } from "../scenarios";
 import { AgentAnalysis, AskPanel, OptionsPanel } from "../agents";
 import { DecisionPanel } from "../decisions-ui";
 import { cn } from "@/lib/cn";
+import { usePrefs } from "../prefs";
+import type { I18nKey } from "@/lib/i18n";
 
 const STATE_LABEL: Record<CaseState, string> = { detected: "Detected", triaged: "Triaged", analysis: "Analysis", scenario: "Scenario", review: "Review", decision: "Decision", handoff: "Handoff", closed: "Closed" };
 const DEPTH_LABEL: Record<string, string> = { full: "Full case", medium: "Medium case", short: "Short case" };
 
 export function StateTrack({ state }: { state: CaseState }) {
+  const { t } = usePrefs();
   const idx = CASE_STATES.indexOf(state);
   return (
     <ol className="flex flex-wrap items-center gap-1" aria-label={`Case state: ${STATE_LABEL[state]}`}>
       {CASE_STATES.map((s, i) => (
         <li key={s} className="flex items-center gap-1">
-          <span className={cn("rounded px-2 py-0.5 text-[11.5px]", i < idx ? "bg-surface-3 text-ink-muted" : i === idx ? "bg-primary font-semibold text-primary-ink" : "text-ink-faint")} aria-current={i === idx ? "step" : undefined}>{STATE_LABEL[s]}</span>
+          <span className={cn("rounded px-2 py-0.5 text-[11.5px]", i < idx ? "bg-surface-3 text-ink-muted" : i === idx ? "bg-primary font-semibold text-primary-ink" : "text-ink-faint")} aria-current={i === idx ? "step" : undefined}>{t(`case.state.${s}` as I18nKey)}</span>
           {i < CASE_STATES.length - 1 && <ChevronRight className="size-3 text-ink-faint rtl:rotate-180" aria-hidden="true" />}
         </li>
       ))}
@@ -89,6 +92,7 @@ type Tab = (typeof TABS)[number];
 
 export function CaseWorkspace({ caseKey }: { caseKey: string }) {
   const s = useSession();
+  const { t: tr } = usePrefs();
   const [d, setD] = useState<CaseDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const params = useSearchParams();
@@ -125,7 +129,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
       <div role="tablist" aria-label="Case workspace" className="mb-5 mt-5 flex flex-wrap gap-1 border-b border-line">
         {TABS.map((t) => (
           <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-3 py-2 text-[13.5px]", tab === t ? "border-primary font-medium text-ink" : "border-transparent text-ink-muted hover:text-ink")}>
-            {t}{t === "Discussion" && d.comments.length ? ` (${d.comments.length})` : ""}
+            {tr(`case.tab.${t}` as I18nKey)}{t === "Discussion" && d.comments.length ? ` (${d.comments.length})` : ""}
           </button>
         ))}
       </div>

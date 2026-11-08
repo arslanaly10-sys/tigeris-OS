@@ -3,6 +3,7 @@ import { parseEiaArticle, parseJodi } from "./energy";
 import { parseOfacVessels, parseUkShips } from "./sanctions";
 import { parsePdf } from "./pdf";
 import { parseReference, parseSynthetic } from "./context";
+import { parseBrentDaily, parseEpisodes } from "./backtest";
 import type { ParseResult } from "./types";
 
 export type { FactDraft, ParseResult } from "./types";
@@ -19,6 +20,8 @@ export async function parseEvidence(sourceKey: string, mediaType: string, bytes:
     case "uk.sanctions": return parseUkShips(bytes);
     case "tigeris.reference": return parseReference(bytes);
     case "tigeris.synthetic": return parseSynthetic(bytes);
+    case "eia.brent": return parseBrentDaily(bytes);
+    case "tigeris.episodes": return parseEpisodes(bytes);
     default: return { facts: [] };
   }
 }

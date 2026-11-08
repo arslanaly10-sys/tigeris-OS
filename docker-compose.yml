@@ -16,6 +16,7 @@ services:
       retries: 20
 
   seed:
+    image: tigeris-api:${TIGERIS_VERSION:-demo}
     build: { context: ., dockerfile: apps/api/Dockerfile }
     command: ["pnpm", "seed"]
     volumes:
@@ -25,10 +26,13 @@ services:
       DATABASE_APP_URL: postgres://tigeris_app:tigeris_app@db:5432/tigeris
       SESSION_SECRET: ${SESSION_SECRET:-change-me-demo-only}
       VAULT_DIR: /vault
+      REASONING_URL: http://reasoning:8000
     depends_on:
       db: { condition: service_healthy }
+      reasoning: { condition: service_healthy }
 
   api:
+    image: tigeris-api:${TIGERIS_VERSION:-demo}
     build: { context: ., dockerfile: apps/api/Dockerfile }
     environment:
       <<: *api-env
@@ -45,14 +49,20 @@ services:
       seed: { condition: service_completed_successfully }
 
   reasoning:
+    image: tigeris-reasoning:${TIGERIS_VERSION:-demo}
     build: { context: ., dockerfile: services/reasoning/Dockerfile }
     environment:
       LOCAL_MODEL_PATH: /models/qwen2.5-1.5b-instruct-q4_k_m.gguf
       EMBED_MODEL_PATH: /models/bge-small-en-v1.5-q8_0.gguf
     volumes:
       - ./data/models:/models:ro   # open-weight model file, imported once (air-gap friendly)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      retries: 30
 
   web:
+    image: tigeris-web:${TIGERIS_VERSION:-demo}
     build:
       context: .
       dockerfile: apps/web/Dockerfile

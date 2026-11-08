@@ -201,6 +201,15 @@ def run_scenario(payload: dict[str, Any]) -> dict[str, Any]:
     for k, spec in DRIVERS.items():
         drivers[k] = float(min(spec["max"], max(spec["min"], drivers[k])))
     params = {k: float(v["value"]) for k, v in PARAMETERS.items()}
+    # An adopted back-test calibration replaces the analyst assumption for the price response (TR-039).
+    param_basis: dict[str, str] = {}
+    cal = payload.get("calibration")
+    if cal and cal.get("response_pct_per_pct") is not None:
+        r = float(cal["response_pct_per_pct"])
+        params["price_premium_usd_per_pct"] = r / 100 * drivers["oil_price_usd"]
+        param_basis["price_premium_usd_per_pct"] = (f"Calibrated by back-test {str(cal.get('id', ''))[:8]}: {r:.2f}% price move per 1% of world supply lost, "
+                                                    f"fitted on {cal.get('episodes')} historical episodes (error {cal.get('mae_pp')} pp, leave-one-out {cal.get('loo_mae_pp')} pp); "
+                                                    f"converted at this run's base price of USD {drivers['oil_price_usd']:.0f}")
     facts = payload.get("facts", {})
     kind = template["kind"]
 
@@ -296,7 +305,7 @@ def run_scenario(payload: dict[str, Any]) -> dict[str, Any]:
     sens.sort(key=lambda x: -x["spread"])
 
     assumptions = [{"key": f"driver.{k}", "label": spec["label"], "kind": "driver", "value": drivers[k], "unit": spec["unit"], "basis": "Set for this run"} for k, spec in DRIVERS.items()]
-    assumptions += [{"key": f"param.{k}", "label": v["label"], "kind": "parameter", "value": v["value"], "unit": v["unit"], "basis": v["basis"]} for k, v in PARAMETERS.items()]
+    assumptions += [{"key": f"param.{k}", "label": v["label"], "kind": "parameter", "value": round(params[k], 4), "unit": v["unit"], "basis": param_basis.get(k, v["basis"])} for k, v in PARAMETERS.items()]
     assumptions.append({"key": "param.sector_sensitivity", "label": "Sector sensitivities to disruption, price and rates", "kind": "parameter", "value": None, "unit": "table", "basis": json.dumps({"disruption": SECTOR_SENSITIVITY, "price_beta": PRICE_BETA, "rate_beta_per_100bp": RATE_BETA})})
 
     top = sorted(payload.get("exposures", []), key=lambda e: -e["value_usd"] * e["path_strength"])[:10]

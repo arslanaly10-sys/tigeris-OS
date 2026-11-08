@@ -6,6 +6,7 @@ import { SessionProvider } from "./session-context";
 import { LineageProvider } from "./lineage";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
+import { Guide } from "./guide";
 import { usePrefs } from "./prefs";
 import { cn } from "@/lib/cn";
 
@@ -34,6 +35,7 @@ export function Shell({ context, children }: { context: AuthContext; children: R
           </footer>
         </div>
       </div>
+      <Guide />
       </LineageProvider>
     </SessionProvider>
   );

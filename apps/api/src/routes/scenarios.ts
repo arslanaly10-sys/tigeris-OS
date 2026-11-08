@@ -7,6 +7,7 @@ import { appendAudit } from "../audit";
 import { config } from "../config";
 import { requirePermission } from "../session";
 import { impactPaths } from "../graph/traverse";
+import { adoptedCalibration } from "./backtests";
 
 const DRIVER_KEYS = ["duration_days", "oil_price_usd", "route_availability_pct", "insurance_premium_pct", "reserve_buffer_days", "rate_shock_bps", "demand_change_pct"] as const;
 const driversSchema = z.object(Object.fromEntries(DRIVER_KEYS.map((k) => [k, z.number().optional()]))).strict();
@@ -49,7 +50,8 @@ export async function buildPayload(tx: Tx, caseRow: { id: string; scenario_templ
     });
   const portfolio = holdings.reduce((s, h) => s + (typeof h.attributes.value_usd === "object" ? h.attributes.value_usd.value : h.attributes.value_usd), 0);
   const snapshot = (await tx.query("SELECT id FROM graph_snapshots WHERE scope = 'institution' ORDER BY created_at DESC LIMIT 1")).rows[0]?.id ?? null;
-  return { payload: { template: caseRow.scenario_template, facts, exposures, portfolio_value_usd: portfolio, origin, monte_carlo_runs: 200, seed: 7 }, snapshot };
+  const calibration = await adoptedCalibration(tx);
+  return { payload: { template: caseRow.scenario_template, facts, exposures, portfolio_value_usd: portfolio, origin, monte_carlo_runs: 200, seed: 7, ...(calibration ? { calibration } : {}) }, snapshot };
 }
 
 export interface EngineResult {

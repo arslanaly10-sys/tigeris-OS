@@ -44,6 +44,14 @@ use the deterministic writer. Foreign models are optional and off by default: se
 `OPENAI_API_KEY` (plus `OPENAI_MODEL`) in the deployment environment, then an administrator must put the provider on
 the allowlist, switch foreign models on, allow outbound access and set the classification ceiling in Governance & Audit.
 
+## Offline package (laptop or VM)
+```
+TIGERIS_VERSION=demo docker compose build
+scripts/package.sh demo          # → dist/tigeris-demo/ (images, models, data, install.sh)
+```
+Copy the folder to the target machine and run `./install.sh` (laptop) or `TIGERIS_DOMAIN=… ./install.sh vm`.
+See `deploy/README-package.md` and the demo talk track in `docs/demo-script.md`.
+
 ## Refresh the public data snapshot
 The collector runs outside the sovereign boundary and writes a signed package to `data/packages/`. Import it from Data & Sources, or run `pnpm db:seed` to reset and import.
 ```bash

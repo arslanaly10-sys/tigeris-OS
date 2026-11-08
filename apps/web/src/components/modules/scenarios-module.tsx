@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/format";
 import { PageHeader } from "../page-header";
 import { Panel, PanelHeader } from "../ui/panel";
 import { Badge } from "../ui/badge";
+import { BacktestPanel } from "../backtest-ui";
 
 interface Group { group_id: string; case_key: string; title: string; created_at: string; variants: number; by: string; baseline_resilience: number | null }
 
@@ -30,6 +31,7 @@ export function ScenariosModule() {
           ))}
         </ul>
       </Panel>
+      <BacktestPanel />
     </>
   );
 }
