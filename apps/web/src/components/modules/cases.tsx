@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CalendarClock, CheckCircle2, ChevronRight, MessageSquare, ShieldAlert } from "lucide-react";
 import { CASE_STATES, ROLE_LABELS, type CaseState, type Role } from "@tigeris/shared";
@@ -14,6 +15,7 @@ import { FactValue } from "../lineage";
 import { useSession } from "../session-context";
 import { ConfidenceBand, ModeBadge, URGENCY_TONE, type Confidence } from "./signals";
 import { PathList, typeLabel, type Paths } from "./graph";
+import { ScenarioWorkspace } from "../scenarios";
 import { cn } from "@/lib/cn";
 
 const STATE_LABEL: Record<CaseState, string> = { detected: "Detected", triaged: "Triaged", analysis: "Analysis", scenario: "Scenario", review: "Review", decision: "Decision", handoff: "Handoff", closed: "Closed" };
@@ -87,7 +89,8 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
   const s = useSession();
   const [d, setD] = useState<CaseDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("Situation");
+  const params = useSearchParams();
+  const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(params.get("tab") ?? "") ? (params.get("tab") as Tab) : "Situation");
   const load = useCallback(() => api<CaseDetail>(`/cases/${caseKey}`).then((r) => (r.ok ? setD(r.data) : setErr(r.message))), [caseKey]);
   useEffect(() => { load(); }, [load]);
   if (err) return <Panel role="alert" className="border-crit/40 bg-crit-soft p-4 text-crit">{err}</Panel>;
@@ -168,11 +171,12 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
         </Panel>
       )}
 
-      {(tab === "Scenarios" || tab === "Options" || tab === "Decision and memory") && (
+      {tab === "Scenarios" && <ScenarioWorkspace caseKey={c.case_key} />}
+
+      {(tab === "Options" || tab === "Decision and memory") && (
         <Panel className="geo-pattern grid gap-3 p-6 text-[14px]">
-          <div className="flex items-center gap-2 font-semibold"><CalendarClock className="size-5 text-accent" />{tab === "Scenarios" ? "Week 5" : tab === "Options" ? "Week 6" : "Week 7"}</div>
+          <div className="flex items-center gap-2 font-semibold"><CalendarClock className="size-5 text-accent" />{tab === "Options" ? "Week 6" : "Week 7"}</div>
           <p className="max-w-[60ch] text-ink-muted">
-            {tab === "Scenarios" && "Baseline and up to two alternatives across 72 hours, 90 days, one year and five years, with the seven drivers, Monte Carlo ranges and the day-by-day Hormuz cascade."}
             {tab === "Options" && "Ranked next actions drafted by bounded agents, each with evidence, assumptions, confidence components, constraints, owner and the authority required."}
             {tab === "Decision and memory" && "Policy PASS/HOLD/BLOCK, the named decision with rationale, the operations handoff and an approved memory entry linked to this case."}
           </p>

@@ -12,6 +12,7 @@ import { SignalsModule } from "@/components/modules/signals";
 import { CasesList } from "@/components/modules/cases";
 import { DomainsModule } from "@/components/modules/domains";
 import { MapModule } from "@/components/modules/map";
+import { ScenariosModule } from "@/components/modules/scenarios-module";
 
 const CUSTOM: Record<string, () => React.ReactNode> = {
   "command-centre": () => <CommandCentre />,
@@ -24,6 +25,7 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
   cases: () => <CasesList />,
   domains: () => <DomainsModule />,
   map: () => <MapModule />,
+  scenarios: () => <ScenariosModule />,
 };
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {

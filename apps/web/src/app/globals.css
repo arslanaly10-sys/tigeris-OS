@@ -30,6 +30,9 @@
   --info: #79a8de;
   --info-soft: #152a45;
   --pattern: rgba(201, 164, 92, 0.07);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
   color-scheme: dark;
 }
 
@@ -56,6 +59,9 @@
   --info: #2f5f8c;
   --info-soft: #e1eaf3;
   --pattern: rgba(23, 99, 72, 0.06);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
   color-scheme: light;
 }
 
@@ -81,6 +87,9 @@
   --color-crit-soft: var(--crit-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
 
   --font-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
   --font-sans: "Inter Variable", "IBM Plex Sans Arabic", Arial, system-ui, sans-serif;
