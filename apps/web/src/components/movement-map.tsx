@@ -3,25 +3,30 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { type GeoJSONSource, type Map as MLMap } from "maplibre-gl";
 import Link from "next/link";
-import { Globe2, Layers, Map as MapIcon, Pause, Play, Radio, Rows3, SkipBack } from "lucide-react";
+import { Crosshair, Globe2, Layers, Map as MapIcon, Pause, Play, Radio, Rows3, SkipBack } from "lucide-react";
 import {
-  CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
-  type MovingPoint, type Scenario,
+  AIS_CATEGORY_LABEL, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
+  type AisCategory, type MovingPoint, type Scenario,
 } from "@tigeris/shared";
 import { api } from "@/lib/api";
-import { num } from "@/lib/format";
+import { formatDate, num } from "@/lib/format";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Drawer, Field } from "./drawer";
 import { ClaimBadge } from "./labels";
-import { FactValue } from "./lineage";
+import { FactValue, useLineage } from "./lineage";
 import { cn } from "@/lib/cn";
 
 interface MapEntity { key: string; name: string; type: string; country: string | null; lat: number; lon: number; claim_class: string; location_quality: string | null; attributes: Record<string, unknown> }
+interface ObservedFact { id: string; num: number | null; text: string | null; unit: string | null }
+interface ObservedVessel { key: string; mmsi: string; name: string; observedAt: string | null; category: AisCategory; typeLabel: string; lat: number; lon: number; facts: Record<string, ObservedFact | undefined> }
+interface ObservedData { capture: { evidenceId: string; validation: string; retrievedAt: string; window: string; summary: string | null; countFactId: string | null } | null; vessels: ObservedVessel[] }
+type Selection = { kind: "entity"; key: string } | { kind: "mover"; id: string } | { kind: "observed"; key: string };
 interface MapSignal { id: string; title: string; urgency: string; data_mode: string; entity_key: string; lat: number; lon: number }
 
 const LAYERS = [
-  { key: "vessels", label: "Ships", group: "Movement" },
+  { key: "observed", label: "Observed ships (AIS)", group: "Movement" },
+  { key: "vessels", label: "Simulated ships", group: "Movement" },
   { key: "trucks", label: "Trucks", group: "Movement" },
   { key: "lanes", label: "Shipping corridors", group: "Movement" },
   { key: "roads", label: "Road corridors", group: "Movement" },
@@ -41,6 +46,8 @@ type LayerKey = (typeof LAYERS)[number]["key"];
 const ENTITY_LAYER: Record<string, LayerKey> = { port: "ports", terminal: "ports", refinery: "refineries", field: "refineries", facility: "refineries", desalination: "desal", power_plant: "power", airport: "airports", chokepoint: "chokepoints" };
 const ASSET_COLOR: Record<string, string> = { ports: "#79a8de", refineries: "#dc9a45", desal: "#5cc8d6", power: "#c792ea", airports: "#9aa6b8", chokepoints: "#d8645a" };
 const MOVER_COLOR: Record<string, string> = { crude_tanker: "#dc9a45", product_tanker: "#e8b86a", lng_carrier: "#79a8de", container: "#45b88c", bulk_grain: "#c9a45c", truck: "#e8e6df" };
+const OBSERVED_COLOR: Record<AisCategory, string> = { tanker: "#dc9a45", cargo: "#45b88c", passenger: "#c792ea", service: "#9aa6b8", fishing: "#5cc8d6", other: "#e8e6df" };
+const HORMUZ_VIEW = { center: [56.45, 26.35] as [number, number], zoom: 7.4 };
 const SCENARIOS: { key: Scenario; label: string; note: string }[] = [
   { key: "baseline", label: "Baseline", note: "Normal simulated traffic" },
   { key: "hormuz_disruption", label: "Hormuz disruption", note: "About 40% of vessels on Hormuz lanes hold at anchorages either side of the strait" },
@@ -73,6 +80,23 @@ function arrowImage(color: string, holding: boolean, rerouted: boolean, truck: b
   return g.getImageData(0, 0, s, s);
 }
 
+/** Observed ships: a solid ivory ring around the mark, so they read differently from simulated arrows without relying on colour. */
+function observedImage(color: string, moving: boolean): ImageData {
+  const s = 26;
+  const c = document.createElement("canvas");
+  c.width = c.height = s;
+  const g = c.getContext("2d")!;
+  g.translate(s / 2, s / 2);
+  g.beginPath(); g.arc(0, 0, 11, 0, Math.PI * 2); g.fillStyle = "rgba(7,16,28,0.85)"; g.fill();
+  g.lineWidth = 1.6; g.strokeStyle = "#ece8de"; g.stroke();
+  if (moving) { g.beginPath(); g.moveTo(0, -8); g.lineTo(5, 6); g.lineTo(0, 3); g.lineTo(-5, 6); g.closePath(); g.fillStyle = color; g.fill(); }
+  else { g.beginPath(); g.rect(-3.5, -3.5, 7, 7); g.fillStyle = color; g.fill(); }
+  return g.getImageData(0, 0, s, s);
+}
+
+const vesselBearing = (v: ObservedVessel) => v.facts.heading?.num ?? v.facts.course_over_ground?.num ?? 0;
+const isMoving = (v: ObservedVessel) => (v.facts.speed_over_ground?.num ?? 0) >= 0.5 && (v.facts.heading?.num != null || v.facts.course_over_ground?.num != null);
+
 export function MovementMap({ compact = false, height }: { compact?: boolean; height?: number }) {
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<MLMap | null>(null);
@@ -89,7 +113,8 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const [globe, setGlobe] = useState(false);
   const [view, setView] = useState<"map" | "table">("map");
   const [layersOpen, setLayersOpen] = useState(!compact);
-  const [selected, setSelected] = useState<{ kind: "entity"; key: string } | { kind: "mover"; id: string } | null>(null);
+  const [selected, setSelected] = useState<Selection | null>(null);
+  const [observed, setObserved] = useState<ObservedData | null>(null);
 
   const fleet = useMemo(() => makeFleet(), []);
   const trucks = useMemo(() => makeTrucks(), []);
@@ -97,6 +122,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const transits = useMemo(() => ({ base: hormuzTransits(fleet, 0, 1440), now: hormuzTransits(fleet, 0, 1440, scenario) }), [fleet, scenario]);
 
   useEffect(() => { api<{ entities: MapEntity[]; signals: MapSignal[] }>("/map/layers").then((r) => r.ok && setData(r.data)); }, []);
+  useEffect(() => { api<ObservedData>("/map/observed-vessels").then((r) => r.ok && setObserved(r.data)); }, []);
 
   // Clock: replay advances by the chosen speed; simulated live follows the wall clock (Riyadh time).
   useEffect(() => {
@@ -136,15 +162,17 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       renderWorldCopies: false,
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
-    m.addControl(new maplibregl.AttributionControl({ customAttribution: "Natural Earth · TIGERIS curated reference (approximate) · simulated movement" }), "bottom-right");
+    m.addControl(new maplibregl.AttributionControl({ customAttribution: "Natural Earth · TIGERIS curated reference (approximate) · simulated movement · AIS snapshot via aisstream.io" }), "bottom-right");
     m.on("load", () => {
       for (const [type, color] of Object.entries(MOVER_COLOR)) {
         for (const status of ["underway", "holding", "rerouted"]) m.addImage(`${type}-${status}`, arrowImage(color, status === "holding", status === "rerouted", type === "truck"), { pixelRatio: 2 });
       }
+      for (const [cat, color] of Object.entries(OBSERVED_COLOR)) { m.addImage(`obs-${cat}-moving`, observedImage(color, true), { pixelRatio: 2 }); m.addImage(`obs-${cat}-still`, observedImage(color, false), { pixelRatio: 2 }); }
       m.addSource("lanes", { type: "geojson", data: fc([]) });
       m.addSource("pipelines", { type: "geojson", data: fc(Object.entries(PIPELINE_PATHS).map(([k, p]) => line(p, { key: k }))) });
       m.addSource("assets", { type: "geojson", data: fc([]) });
       m.addSource("movers", { type: "geojson", data: fc([]) });
+      m.addSource("observed", { type: "geojson", data: fc([]) });
       m.addLayer({ id: "lanes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "sea"], paint: { "line-color": "#2f5f8f", "line-width": 1.2, "line-opacity": 0.55 } });
       m.addLayer({ id: "cape", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "scenario"], paint: { "line-color": "#d9bd84", "line-width": 1.6, "line-dasharray": [3, 2] } });
       m.addLayer({ id: "roads", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "road"], paint: { "line-color": "#6d6247", "line-width": 1.4, "line-dasharray": [2, 1.5] } });
@@ -158,8 +186,12 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         "icon-image": ["concat", ["get", "type"], "-", ["get", "status"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
         "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.75, 7, 1.15],
       } });
+      m.addLayer({ id: "observed", type: "symbol", source: "observed", layout: {
+        "icon-image": ["concat", "obs-", ["get", "category"], "-", ["get", "motion"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
+        "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.7, 8, 1.15],
+      } });
       const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "tigeris-popup", offset: 10 });
-      for (const id of ["assets", "movers"]) {
+      for (const id of ["assets", "movers", "observed"]) {
         m.on("mousemove", id, (e) => {
           m.getCanvas().style.cursor = "pointer";
           const f = e.features?.[0];
@@ -169,7 +201,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         m.on("click", id, (e) => {
           const f = e.features?.[0];
           if (!f) return;
-          setSelected(id === "assets" ? { kind: "entity", key: String(f.properties.key) } : { kind: "mover", id: String(f.properties.id) });
+          setSelected(id === "assets" ? { kind: "entity", key: String(f.properties.key) } : id === "observed" ? { kind: "observed", key: String(f.properties.key) } : { kind: "mover", id: String(f.properties.id) });
         });
       }
       setReady(true);
@@ -200,6 +232,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     m.setFilter("assets", ["in", ["get", "layer"], ["literal", assetLayers]]);
     const kinds = [on.has("vessels") ? "vessel" : "", on.has("trucks") ? "truck" : ""].filter(Boolean);
     m.setFilter("movers", ["in", ["get", "kind"], ["literal", kinds]]);
+    vis("observed", on.has("observed"));
     markers.current.forEach((x) => x.remove());
     markers.current = on.has("labels") ? LABELS.map(([t, lon, lat, gcc]) => {
       const el = document.createElement("div");
@@ -234,6 +267,16 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     (m.getSource("movers") as GeoJSONSource).setData(fc(movers.map((p) => ({ type: "Feature", properties: { id: p.id, name: p.name, kind: p.kind, type: p.type, status: p.status, bearing: p.bearing, sub: `${p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"} · ${p.speedLabel} · SYNTHETIC` }, geometry: { type: "Point", coordinates: p.lngLat } }))));
   }, [ready, movers]);
 
+  // Observed ships from the imported AIS snapshot (positions as broadcast; they do not move with the replay clock).
+  useEffect(() => {
+    const m = map.current;
+    if (!ready || !m || !observed) return;
+    (m.getSource("observed") as GeoJSONSource).setData(fc(observed.vessels.map((v) => ({ type: "Feature", properties: {
+      key: v.key, name: v.name, category: v.category, motion: isMoving(v) ? "moving" : "still", bearing: vesselBearing(v),
+      sub: `${v.typeLabel} · ${v.facts.speed_over_ground?.num != null ? `${num(v.facts.speed_over_ground.num, 1)} kn` : "speed not reported"} · OBSERVED (AIS)`,
+    }, geometry: { type: "Point", coordinates: [v.lon, v.lat] } }))));
+  }, [ready, observed]);
+
   useEffect(() => {
     const m = map.current;
     if (!ready || !m) return;
@@ -254,6 +297,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
         <Badge tone={mode === "live" ? "ok" : "info"} className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">{mode === "live" ? "SIMULATED LIVE" : "REPLAY"}</Badge>
         <Badge tone="gold" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">Synthetic movement</Badge>
+        {observed?.capture && <Badge tone="info" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" title={observed.capture.summary ?? undefined}>Observed AIS · {observed.vessels.length} ships · {formatDate(observed.capture.retrievedAt, true)}</Badge>}
         {scenario !== "baseline" && <Badge tone="warn" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">SCENARIO · {SCENARIOS.find((s) => s.key === scenario)!.label}</Badge>}
         <span className="tabular text-ink-muted">{clock} Riyadh time</span>
         <span className="text-ink-muted">Hormuz transits (24 h): <b className={cn("tabular", transits.now < transits.base * 0.85 ? "text-crit" : "text-ink")}>{transits.now}</b> / {transits.base} baseline</span>
@@ -282,17 +326,25 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
                     ))}
                   </fieldset>
                 ))}
+                {on.has("observed") && (
+                  <div className="grid gap-1 border-t border-line pt-2">
+                    <div className="eyebrow text-ink-faint">Observed ship types</div>
+                    {(Object.keys(OBSERVED_COLOR) as AisCategory[]).map((c) => <div key={c} className="flex items-center gap-2 text-ink-muted"><span aria-hidden className="size-2.5 rounded-sm" style={{ background: OBSERVED_COLOR[c] }} />{AIS_CATEGORY_LABEL[c]}</div>)}
+                    <div className="text-[11px] text-ink-faint">Arrow: under way · square: stopped or not reported</div>
+                  </div>
+                )}
               </div>
             )}
           </div>
         )}
         <div className="absolute bottom-3 start-3 z-10 flex gap-1">
+          {!compact && <Button size="sm" variant="secondary" onClick={() => { setGlobe(false); map.current?.easeTo({ ...HORMUZ_VIEW, duration: 800 }); }}><Crosshair />Hormuz</Button>}
           <Button size="sm" variant={globe ? "primary" : "secondary"} onClick={() => setGlobe((g) => !g)} aria-pressed={globe}><Globe2 />{globe ? "Flat map" : "Globe"}</Button>
           {compact && <Button size="sm" variant="secondary" asChild><Link href="/map">Open full map</Link></Button>}
         </div>
       </div>
 
-      {view === "table" && <MoversTable movers={movers} entities={data?.entities ?? []} onSelect={setSelected} />}
+      {view === "table" && <MoversTable movers={movers} observed={observed?.vessels ?? []} entities={data?.entities ?? []} onSelect={setSelected} />}
 
       {!compact && (
         <div className="grid gap-3 rounded-lg border border-line bg-surface p-3 lg:grid-cols-[minmax(0,1fr)_auto]">
@@ -317,26 +369,44 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
           </div>
         </div>
       )}
-      {!compact && <p className="text-[12px] text-ink-faint">Ships and trucks are fictional and their movement is simulated; no real vessel is tracked. Coordinates are approximate. Live AIS and fleet telemetry connect only after rights and deployment approval (pilot stage).</p>}
+      {!compact && (
+        <p className="text-[12px] text-ink-faint">
+          {observed?.capture
+            ? <>Ringed marks are real ships observed by AIS in the Strait of Hormuz and its approaches (including Dubai and Fujairah anchorages), captured {formatDate(observed.capture.retrievedAt, true)} by the collector and imported as a signed snapshot. They show where each ship was at capture time and do not move with the replay. Coverage depends on shore stations, and AIS is self-reported, so ships can be missing or misreported. </>
+            : <>No AIS snapshot has been imported, so only simulated ships are shown. Run the AIS collector and import its package from Data &amp; Sources to add observed ships near Hormuz. </>}
+          Arrows without a ring are fictional ships and trucks from the movement simulation.
+        </p>
+      )}
 
-      <SelectionDrawer selected={selected} movers={movers} onClose={() => setSelected(null)} />
+      <SelectionDrawer selected={selected} movers={movers} observed={observed} onClose={() => setSelected(null)} />
     </div>
   );
 }
 
-function MoversTable({ movers, entities, onSelect }: { movers: MovingPoint[]; entities: MapEntity[]; onSelect: (s: { kind: "entity"; key: string } | { kind: "mover"; id: string }) => void }) {
+function MoversTable({ movers, observed, entities, onSelect }: { movers: MovingPoint[]; observed: ObservedVessel[]; entities: MapEntity[]; onSelect: (s: Selection) => void }) {
   const [showAll, setShowAll] = useState(false);
-  const [tab, setTab] = useState<"movers" | "assets">("movers");
+  const [tab, setTab] = useState<"observed" | "movers" | "assets">(observed.length ? "observed" : "movers");
+  const rowKeys = (ev: React.KeyboardEvent<HTMLTableRowElement>) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.currentTarget.click(); } };
+  const total = tab === "observed" ? observed.length : tab === "movers" ? movers.length : entities.filter((e) => ENTITY_LAYER[e.type]).length;
   return (
     <div className="rounded-lg border border-line bg-surface">
       <div role="tablist" aria-label="Table view" className="flex border-b border-line">
-        {(["movers", "assets"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-4 py-2 text-[13px]", tab === t ? "border-primary font-medium" : "border-transparent text-ink-muted hover:text-ink")}>{t === "movers" ? `Ships and trucks (${movers.length})` : `Infrastructure (${entities.filter((e) => ENTITY_LAYER[e.type]).length})`}</button>)}
+        {(["observed", "movers", "assets"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => { setTab(t); setShowAll(false); }} className={cn("-mb-px border-b-2 px-4 py-2 text-[13px]", tab === t ? "border-primary font-medium" : "border-transparent text-ink-muted hover:text-ink")}>{t === "observed" ? `Observed ships (${observed.length})` : t === "movers" ? `Simulated ships and trucks (${movers.length})` : `Infrastructure (${entities.filter((e) => ENTITY_LAYER[e.type]).length})`}</button>)}
       </div>
       <div className="max-h-[560px] overflow-auto">
         <table className="w-full min-w-[720px] text-[12.5px]">
-          <thead className="sticky top-0 bg-surface"><tr className="border-b border-line text-ink-faint">{(tab === "movers" ? ["Name", "Type", "Status", "Route", "Speed", "Position"] : ["Name", "Type", "Country", "Position", "Class"]).map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr></thead>
+          <thead className="sticky top-0 bg-surface"><tr className="border-b border-line text-ink-faint">{(tab === "observed" ? ["Name", "Type", "Status", "Destination", "Speed", "Position", "Seen"] : tab === "movers" ? ["Name", "Type", "Status", "Route", "Speed", "Position"] : ["Name", "Type", "Country", "Position", "Class"]).map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr></thead>
           <tbody>
-            {tab === "movers" ? movers.slice(0, showAll ? undefined : 50).map((p) => (
+            {tab === "observed" && !observed.length && <tr><td colSpan={7} className="px-3 py-4 text-ink-muted">No AIS snapshot imported yet.</td></tr>}
+            {tab === "observed" ? observed.slice(0, showAll ? undefined : 50).map((v) => (
+              <tr key={v.key} role="button" tabIndex={0} aria-label={`Show details for ${v.name}`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "observed", key: v.key })} onKeyDown={rowKeys}>
+                <td className="px-3 py-1.5">{v.name} <span translate="no" className="font-mono text-[10.5px] text-ink-faint">{v.mmsi}</span></td><td className="px-3 py-1.5">{v.typeLabel}</td>
+                <td className="px-3 py-1.5 text-ink-muted">{v.facts.nav_status?.text ?? "—"}</td><td className="px-3 py-1.5 text-ink-muted">{v.facts.destination?.text ?? "—"}</td>
+                <td className="px-3 py-1.5 tabular">{v.facts.speed_over_ground?.num != null ? `${num(v.facts.speed_over_ground.num, 1)}\u00a0kn` : "—"}</td>
+                <td className="px-3 py-1.5 font-mono text-[11px] tabular text-ink-faint">{num(v.lat, 3)}, {num(v.lon, 3)}</td>
+                <td className="px-3 py-1.5 tabular text-ink-faint">{v.observedAt ? formatDate(v.observedAt, true) : "—"}</td>
+              </tr>
+            )) : tab === "movers" ? movers.slice(0, showAll ? undefined : 50).map((p) => (
               <tr key={p.id} role="button" tabIndex={0} aria-label={`Show ${p.name} on the map`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "mover", id: p.id })} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.currentTarget.click(); } }}>
                 <td className="px-3 py-1.5">{p.name} <span translate="no" className="font-mono text-[10.5px] text-ink-faint">{p.id}</span></td><td className="px-3 py-1.5">{p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"}</td>
                 <td className="px-3 py-1.5"><Badge tone={p.status === "holding" ? "warn" : p.status === "rerouted" ? "gold" : "neutral"}>{p.status}</Badge></td><td className="px-3 py-1.5 text-ink-muted">{p.laneName}</td>
@@ -350,9 +420,9 @@ function MoversTable({ movers, entities, onSelect }: { movers: MovingPoint[]; en
             ))}
           </tbody>
         </table>
-        {!showAll && (tab === "movers" ? movers.length : entities.filter((e) => ENTITY_LAYER[e.type]).length) > 50 && (
+        {!showAll && total > 50 && (
           <button type="button" onClick={() => setShowAll(true)} className="w-full border-t border-line px-3 py-2 text-[12.5px] text-accent hover:bg-surface-2">
-            Show all {tab === "movers" ? movers.length : entities.filter((e) => ENTITY_LAYER[e.type]).length} rows
+            Show all {total} rows
           </button>
         )}
       </div>
@@ -360,7 +430,27 @@ function MoversTable({ movers, entities, onSelect }: { movers: MovingPoint[]; en
   );
 }
 
-function SelectionDrawer({ selected, movers, onClose }: { selected: { kind: "entity"; key: string } | { kind: "mover"; id: string } | null; movers: MovingPoint[]; onClose: () => void }) {
+function ObservedDetails({ v, capture }: { v: ObservedVessel; capture: NonNullable<ObservedData["capture"]> }) {
+  const open = useLineage();
+  const n = (k: string, digits = 1) => { const f = v.facts[k]; return f && f.num != null ? <FactValue id={f.id} value={Math.round(f.num * 10 ** digits) / 10 ** digits} unit={f.unit} /> : <span className="text-ink-faint">Not reported</span>; };
+  const t = (k: string) => { const f = v.facts[k]; return f?.text ? <button type="button" onClick={() => open(f.id)} title="Show where this value comes from" className="rounded px-1 py-0.5 text-start underline decoration-line-strong decoration-dotted underline-offset-4 hover:bg-surface-2 hover:decoration-accent">{f.text}</button> : <span className="text-ink-faint">Not reported</span>; };
+  return (
+    <div className="grid gap-4 text-[13px]">
+      <div className="flex flex-wrap gap-1.5"><ClaimBadge claim="observed" /><Badge tone="info">AIS</Badge><Badge>{v.typeLabel}</Badge></div>
+      <dl className="grid grid-cols-2 gap-3">
+        <Field label="MMSI"><span translate="no" className="font-mono">{v.mmsi}</span></Field><Field label="IMO number">{t("imo_number")}</Field>
+        <Field label="Position at capture">{n("position_lat", 4)}, {n("position_lon", 4)}</Field><Field label="Seen">{v.observedAt ? formatDate(v.observedAt, true) : "—"}</Field>
+        <Field label="Speed over ground">{n("speed_over_ground")}</Field><Field label="Course / heading">{n("course_over_ground", 0)} / {n("heading", 0)}</Field>
+        <Field label="Navigational status">{t("nav_status")}</Field><Field label="Reported destination">{t("destination")}</Field>
+        <Field label="Length">{n("length_m", 0)}</Field><Field label="Draught">{n("draught_m")}</Field>
+        <Field label="Call sign">{t("call_sign")}</Field><Field label="Capture">{capture.window}</Field>
+      </dl>
+      <p className="rounded-md border border-line bg-surface-2 p-3 text-ink-muted">Real ship, observed by AIS and imported as a signed snapshot. Values are what the ship broadcast at capture time; destination is typed by the crew and can be out of date. TIGERIS draws no conclusion about cargo, owner or intent from this record.</p>
+    </div>
+  );
+}
+
+function SelectionDrawer({ selected, movers, observed, onClose }: { selected: Selection | null; movers: MovingPoint[]; observed: ObservedData | null; onClose: () => void }) {
   const [entity, setEntity] = useState<{ entity: { key: string; name: string; type: string; claim_class: string; location_quality: string | null; attributes: Record<string, unknown>; source_name: string | null }; edges: { id: string; predicate_label: string; other_name: string; other_key: string; relationship_class: string; direction: string }[] } | null>(null);
   useEffect(() => {
     if (selected?.kind !== "entity") return;
@@ -368,8 +458,10 @@ function SelectionDrawer({ selected, movers, onClose }: { selected: { kind: "ent
     api<NonNullable<typeof entity>>(`/graph/entity?key=${encodeURIComponent(selected.key)}`).then((r) => r.ok && setEntity(r.data));
   }, [selected]);
   const mover = selected?.kind === "mover" ? movers.find((m) => m.id === selected.id) : undefined;
+  const ship = selected?.kind === "observed" ? observed?.vessels.find((v) => v.key === selected.key) : undefined;
   return (
-    <Drawer open={!!selected} onClose={onClose} eyebrow={selected?.kind === "mover" ? (mover?.kind === "truck" ? "Truck · synthetic" : "Vessel · synthetic") : "Infrastructure"} title={mover?.name ?? entity?.entity.name ?? "Loading"}>
+    <Drawer open={!!selected} onClose={onClose} eyebrow={selected?.kind === "observed" ? "Vessel · observed (AIS)" : selected?.kind === "mover" ? (mover?.kind === "truck" ? "Truck · synthetic" : "Vessel · synthetic") : "Infrastructure"} title={ship?.name ?? mover?.name ?? entity?.entity.name ?? "Loading"}>
+      {ship && observed?.capture && <ObservedDetails v={ship} capture={observed.capture} />}
       {mover && (
         <div className="grid gap-4 text-[13px]">
           <div className="flex flex-wrap gap-1.5"><Badge tone="gold" className="font-mono">SYNTHETIC</Badge><Badge tone={mover.status === "holding" ? "warn" : mover.status === "rerouted" ? "gold" : "neutral"}>{mover.status}</Badge></div>

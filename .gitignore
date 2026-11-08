@@ -14,3 +14,6 @@ docker/certs/*.crt
 docker/certs/*.pem
 data/keys/*.key.pem
 data/models/*.gguf
+
+# AIS snapshots: third-party terms; captured locally, not committed
+data/packages/ais-hormuz-*.tigpkg

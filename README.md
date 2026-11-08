@@ -17,7 +17,7 @@ TIGERIS follows a question from the first signal to a recorded decision:
 
 1. **Signals and early warning.** Public sources and simulated feeds raise signals. Each one says why it was surfaced and how confident it is.
 2. **Intelligence cases.** A signal becomes a case with an owner, a state machine (detected → triaged → analysis → scenario → review → decision → handoff → closed) and a policy-checked next step.
-3. **Intelligence graph and movement map.** Entities, dependencies and exposures form one graph. Shipping, trucking, pipelines and lanes are drawn on an offline basemap of the Gulf.
+3. **Intelligence graph and movement map.** Entities, dependencies and exposures form one graph. An offline basemap of the Gulf shows real ships observed by AIS near Hormuz, plus simulated shipping, trucking, pipelines and lanes, each clearly labelled.
 4. **Scenarios and foresight.** A deterministic Python engine runs multi-horizon scenarios. Every number traces back to a fact or a labelled assumption, and the price response is calibrated by a back-test on real EIA Brent history.
 5. **Bounded agents.** Ten agents analyse a case on a local open-weight model. They get numbers only from tools; their text is checked against the evidence or marked UNVERIFIED.
 6. **Options and decisions.** Recommendations are scored and policy-checked, but nothing executes. A named human decides, a second person approves where policy requires it, and the decision can be replayed and checked for drift.
@@ -139,6 +139,16 @@ pnpm --filter @tigeris/collector collect
 ```
 
 Then import the new package from **Data & Sources**, or run `pnpm db:seed` to reset and import.
+
+### Real ships in the Strait of Hormuz (AIS)
+
+The map can show real ships observed by AIS near Hormuz, next to the simulated traffic. The collector listens to [aisstream.io](https://aisstream.io) for a fixed window and writes a signed snapshot. TIGERIS never connects to the feed itself. You need a free aisstream.io key:
+
+```bash
+AISSTREAM_API_KEY=your-key pnpm --filter @tigeris/collector ais -- --minutes 10
+```
+
+Then import the `ais-hormuz-*.tigpkg` package from **Data & Sources**, or run `pnpm db:seed`. Observed ships have a solid ring on the map, each value links to its capture, and **Hormuz** zooms to the strait. AIS packages are not committed to this repository, because the data stays under aisstream.io's terms. Pleasure craft and sailing yachts are dropped at capture.
 
 ## Tests
 

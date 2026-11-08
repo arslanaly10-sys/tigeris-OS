@@ -4,6 +4,7 @@ import { parseOfacVessels, parseUkShips } from "./sanctions";
 import { parsePdf } from "./pdf";
 import { parseReference, parseSynthetic } from "./context";
 import { parseBrentDaily, parseEpisodes } from "./backtest";
+import { parseAisSnapshot } from "./ais";
 import type { ParseResult } from "./types";
 
 export type { FactDraft, ParseResult } from "./types";
@@ -22,6 +23,7 @@ export async function parseEvidence(sourceKey: string, mediaType: string, bytes:
     case "tigeris.synthetic": return parseSynthetic(bytes);
     case "eia.brent": return parseBrentDaily(bytes);
     case "tigeris.episodes": return parseEpisodes(bytes);
+    case "aisstream.hormuz": return parseAisSnapshot(bytes);
     default: return { facts: [] };
   }
 }

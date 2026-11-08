@@ -9,7 +9,8 @@
     "demo-docs": "tsx src/demo-docs.ts",
     "reference": "tsx src/reference.ts",
     "typecheck": "tsc --noEmit",
-    "backtest": "tsx src/backtest.ts"
+    "backtest": "tsx src/backtest.ts",
+    "ais": "tsx src/ais.ts"
   },
   "dependencies": {
     "@tigeris/shared": "workspace:*",

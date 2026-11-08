@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withTenant } from "../db";
 import { requirePermission } from "../session";
 import { impactPaths } from "../graph/traverse";
+import { shipType } from "@tigeris/shared";
 
 export async function graphRoutes(app: FastifyInstance) {
   app.get("/graph/stats", { preHandler: requirePermission("evidence.read") }, async (req) => {
@@ -102,5 +103,32 @@ export async function mapRoutes(app: FastifyInstance) {
           ORDER BY s.detected_at DESC`)).rows,
       generatedAt: new Date().toISOString(),
     }));
+  });
+
+  /** Observed vessels from the latest imported AIS snapshot. Each value carries its fact id for lineage. */
+  app.get("/map/observed-vessels", { preHandler: requirePermission("evidence.read") }, async (req) => {
+    const p = req.principal!;
+    return withTenant(p.institutionId, async (tx) => {
+      const ev = (await tx.query<{ id: string; retrieved_at: string; source_version: string; validation_state: string }>(
+        `SELECT e.id, e.retrieved_at, e.source_version, e.validation_state FROM evidence_objects e JOIN sources s ON s.id = e.source_id
+          WHERE s.key = 'aisstream.hormuz' AND e.duplicate_of IS NULL AND e.validation_state IN ('accepted','warning') ORDER BY e.retrieved_at DESC LIMIT 1`)).rows[0];
+      if (!ev) return { capture: null, vessels: [] };
+      const rows = (await tx.query<{ id: string; subject: string; subject_label: string; predicate: string; value_num: number | null; value_text: string | null; unit: string | null; period: string | null; excerpt: string | null }>(
+        "SELECT id, subject, subject_label, predicate, value_num, value_text, unit, period, excerpt FROM evidence_facts WHERE evidence_id = $1 AND review_state <> 'rejected'", [ev.id])).rows;
+      const capture = rows.find((r) => r.subject === "ais:hormuz");
+      const by = new Map<string, { name: string; observedAt: string | null; facts: Record<string, { id: string; num: number | null; text: string | null; unit: string | null }> }>();
+      for (const r of rows) {
+        if (!r.subject.startsWith("vessel:mmsi:")) continue;
+        const v = by.get(r.subject) ?? { name: r.subject_label, observedAt: r.period, facts: {} };
+        v.facts[r.predicate] = { id: r.id, num: r.value_num, text: r.value_text, unit: r.unit };
+        by.set(r.subject, v);
+      }
+      const vessels = [...by.entries()].filter(([, v]) => v.facts.position_lat && v.facts.position_lon).map(([key, v]) => {
+        const t = shipType(v.facts.ship_type?.num ?? null);
+        return { key, mmsi: key.slice("vessel:mmsi:".length), name: v.name, observedAt: v.observedAt, category: t.category, typeLabel: v.facts.ship_type?.text ?? t.label,
+          lat: v.facts.position_lat!.num!, lon: v.facts.position_lon!.num!, facts: v.facts };
+      });
+      return { capture: { evidenceId: ev.id, validation: ev.validation_state, retrievedAt: ev.retrieved_at, window: ev.source_version, summary: capture?.excerpt ?? null, countFactId: capture?.id ?? null }, vessels };
+    });
   });
 }
