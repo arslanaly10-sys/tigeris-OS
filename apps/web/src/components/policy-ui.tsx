@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, FileCode2, FlaskConical, Play, Save, ShieldAlert, ShieldCheck, TriangleAlert, XCircle } from "lucide-react";
 import { api } from "@/lib/api";
+import { requireText, clearInvalid, useUnsavedWarning } from "@/lib/forms";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { Panel, PanelHeader } from "./ui/panel";
@@ -36,6 +37,7 @@ export function PolicyEditor() {
   const [note, setNote] = useState("");
   const [reason, setReason] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [action, setAction] = useState("case.transition");
   const [ctx, setCtx] = useState(SAMPLE["case.transition"]!);
   const [evalRes, setEvalRes] = useState<{ result: string; explanation: string; trace: Parameters<typeof TraceList>[0]["trace"] } | { error: string } | null>(null);
@@ -62,11 +64,20 @@ export function PolicyEditor() {
     if (r.ok) { setSource(r.data.source); setBaseline(r.data.source); setViewing(ver); setMsg(null); }
   }
   async function saveDraft() {
+    if (!dirty) { setMsg({ ok: false, text: "There are no edits to save. Change the policy first." }); return; }
+    if (!v?.ok) { setMsg({ ok: false, text: "The policy does not compile. Fix the errors listed under the editor, then save." }); return; }
+    const bad = requireText(note, 3, "policy-note", "The change note");
+    if (bad) { setMsg({ ok: false, text: bad }); return; }
+    clearInvalid("policy-note");
     const r = await api<{ version: number; tests: TestResult[] }>("/policy/drafts", { json: { source, note } });
     if (r.ok) { setMsg({ ok: true, text: `Saved as draft v${r.data.version}; ${r.data.tests.filter((t) => t.pass).length}/${r.data.tests.length} tests pass.` }); setNote(""); await load(); setBaseline(source); }
     else setMsg({ ok: false, text: r.message });
   }
   async function activate(ver: Version) {
+    if (!ver.tests_passed) { setMsg({ ok: false, text: `Version ${ver.version} fails its tests. Fix the failing tests and save a new draft.` }); return; }
+    const bad = requireText(reason, 5, `activate-${ver.id}`, "The reason to activate");
+    if (bad) { setMsg({ ok: false, text: bad }); return; }
+    clearInvalid(`activate-${ver.id}`);
     const r = await api<{ version: number; previous: number; added: string[]; removed: string[]; changed: string[] }>(`/policy/versions/${ver.id}/activate`, { json: { reason } });
     if (r.ok) { setMsg({ ok: true, text: `Policy v${r.data.version} is active (was v${r.data.previous}). Added ${r.data.added.length}, removed ${r.data.removed.length}, changed ${r.data.changed.length} rule(s).` }); setReason(""); load(); }
     else setMsg({ ok: false, text: r.message });
@@ -78,6 +89,7 @@ export function PolicyEditor() {
     setEvalRes(r.ok ? r.data : { error: r.message });
   }
   const dirty = source !== baseline;
+  useUnsavedWarning(dirty);
   const lines = source.split("\n").length;
   return (
     <section className="mt-5 grid gap-5" aria-labelledby="policy-heading">
@@ -86,16 +98,16 @@ export function PolicyEditor() {
         <Panel>
           <PanelHeader eyebrow={viewing ? `Version ${viewing.version} · ${viewing.status}${dirty ? " · edited" : ""}` : "Policy"} title="Rules, approvals, redaction and tests" actions={v && <Badge tone={v.ok ? "ok" : "crit"}>{v.ok ? <CheckCircle2 /> : <XCircle />}{v.ok ? `${v.rules} rules compile` : `${v.errors.length} error(s)`}</Badge>} />
           <div className="grid gap-3 p-4">
-            <div className="flex overflow-hidden rounded-md border border-line bg-[var(--bg)] font-mono text-[12px] leading-[1.55]">
+            <div className="flex overflow-hidden rounded-md border border-line bg-[var(--bg)] font-mono text-[12px] leading-[1.55] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/30">
               <pre aria-hidden="true" className="select-none border-e border-line px-2 py-2 text-end text-ink-faint">{Array.from({ length: lines }, (_, i) => i + 1).join("\n")}</pre>
-              <textarea value={source} onChange={(e) => setSource(e.target.value)} readOnly={!editable} spellCheck={false} aria-label="Policy source (YAML)" rows={Math.min(30, Math.max(16, lines))} className="min-h-[360px] w-full resize-y whitespace-pre bg-transparent px-3 py-2 text-ink outline-none" style={{ tabSize: 2 }} />
+              <textarea autoComplete="off" value={source} onChange={(e) => setSource(e.target.value)} readOnly={!editable} spellCheck={false} aria-label="Policy source (YAML)" rows={Math.min(30, Math.max(16, lines))} className="min-h-[360px] w-full resize-y whitespace-pre bg-transparent px-3 py-2 text-ink outline-none" style={{ tabSize: 2 }} />
             </div>
             {v && !v.ok && <ul className="grid gap-1 rounded-md border border-crit/40 bg-crit-soft p-3 text-[12.5px] text-crit">{v.errors.map((e) => <li key={e}>{e}</li>)}</ul>}
             {editable ? (
               <div className="flex flex-wrap items-end gap-2">
-                <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Change note<input value={note} onChange={(e) => setNote(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" placeholder="What changed and why" /></label>
-                <Button variant="primary" disabled={!dirty || !v?.ok || note.trim().length < 3} onClick={saveDraft}><Save />Save as draft</Button>
-                <Button variant="ghost" disabled={!dirty} onClick={() => setSource(baseline)}>Discard edits</Button>
+                <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Change note<input autoComplete="off" id="policy-note" value={note} onChange={(e) => setNote(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" placeholder="e.g. Raise the rationale minimum for decisions…" /></label>
+                <Button variant="primary" onClick={saveDraft}><Save />Save as draft</Button>
+                <Button variant="ghost" disabled={!dirty} onClick={() => { if (confirmDiscard) { setSource(baseline); setConfirmDiscard(false); } else { setConfirmDiscard(true); setTimeout(() => setConfirmDiscard(false), 4000); } }}>{confirmDiscard ? "Press again to discard" : "Discard edits"}</Button>
               </div>
             ) : <p className="text-[12.5px] text-ink-muted">Read only. Administrators edit the policy; every version is tested before it can be activated.</p>}
             {msg && <p role="status" className={cn("text-[12.5px]", msg.ok ? "text-ok" : "text-warn")}>{msg.text}</p>}
@@ -127,7 +139,7 @@ export function PolicyEditor() {
                   <div className="text-ink-muted">{x.note}</div>
                   <div className="text-ink-faint">{x.created_by_label} · {formatDate(x.created_at, true)}{x.activated_at ? ` · activated by ${x.activated_by_label}` : ""}</div>
                   {editable && x.status === "draft" && x.id !== activeId && (
-                    <div className="flex gap-2"><input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason to activate" aria-label="Reason to activate" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2" /><Button size="sm" variant="primary" disabled={!x.tests_passed || reason.trim().length < 5} onClick={() => activate(x)}>Activate</Button></div>
+                    <div className="flex gap-2"><input autoComplete="off" id={`activate-${x.id}`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Approved by the governance committee…" aria-label="Reason to activate" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2" /><Button size="sm" variant="primary" onClick={() => activate(x)}>Activate</Button></div>
                   )}
                 </li>
               ))}
@@ -140,7 +152,7 @@ export function PolicyEditor() {
         <div className="grid gap-4 p-4 lg:grid-cols-2">
           <div className="grid gap-2">
             <label className="grid gap-1 text-[12.5px] text-ink-muted">Action<select value={action} onChange={(e) => { setAction(e.target.value); setCtx(SAMPLE[e.target.value]!); setEvalRes(null); }} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink">{Object.keys(SAMPLE).map((a) => <option key={a}>{a}</option>)}</select></label>
-            <label className="grid gap-1 text-[12.5px] text-ink-muted">Context (JSON)<textarea value={ctx} onChange={(e) => setCtx(e.target.value)} rows={12} spellCheck={false} className="rounded-md border border-line bg-[var(--bg)] p-2 font-mono text-[12px] text-ink" /></label>
+            <label className="grid gap-1 text-[12.5px] text-ink-muted">Context (JSON)<textarea autoComplete="off" value={ctx} onChange={(e) => setCtx(e.target.value)} rows={12} spellCheck={false} className="rounded-md border border-line bg-[var(--bg)] p-2 font-mono text-[12px] text-ink" /></label>
             <Button variant="secondary" className="justify-self-start" onClick={tryIt}><Play />Evaluate with the rules in the editor</Button>
           </div>
           <div className="grid content-start gap-2">

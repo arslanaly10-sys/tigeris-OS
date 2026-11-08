@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useUnsavedWarning } from "@/lib/forms";
 import Link from "next/link";
 import { CalendarClock, CheckCircle2, ChevronRight, MessageSquare, ShieldAlert } from "lucide-react";
 import { CASE_STATES, ROLE_LABELS, type CaseState, type Role } from "@tigeris/shared";
@@ -58,7 +59,7 @@ export function CasesList() {
             <tbody>
               {rows?.map((c) => (
                 <tr key={c.id} className="border-b border-line/60 last:border-0 hover:bg-surface-2">
-                  <td className="px-4 py-3"><Link href={`/cases/${c.case_key}`} className="font-medium hover:underline">{c.title}</Link><div className="flex flex-wrap items-center gap-1.5 text-[11.5px] text-ink-faint"><span className="font-mono">{c.case_key}</span> · {DEPTH_LABEL[c.depth]} · {c.domain.replace(/_/g, " ")}</div></td>
+                  <td className="px-4 py-3"><Link href={`/cases/${c.case_key}`} className="font-medium hover:underline">{c.title}</Link><div className="flex flex-wrap items-center gap-1.5 text-[11.5px] text-ink-faint"><span translate="no" className="font-mono">{c.case_key}</span> · {DEPTH_LABEL[c.depth]} · {c.domain.replace(/_/g, " ")}</div></td>
                   <td className="px-4 py-3"><Badge tone={c.state === "closed" ? "neutral" : c.state === "decision" ? "warn" : "info"}>{STATE_LABEL[c.state]}{c.closure ? ` · ${c.closure.replace("_", " ")}` : ""}</Badge></td>
                   <td className="px-4 py-3 text-ink-muted">{(next[c.state] ?? []).map((r) => ROLE_LABELS[r]).join(" or ") || "—"}</td>
                   <td className="px-4 py-3 text-ink-muted">{c.owner_label}</td>
@@ -96,6 +97,9 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
   const [d, setD] = useState<CaseDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const openTab = (t: Tab) => { setTab(t); router.replace(t === "Situation" ? pathname : `${pathname}?tab=${encodeURIComponent(t)}`, { scroll: false }); };
   const [tab, setTab] = useState<Tab>((TABS as readonly string[]).includes(params.get("tab") ?? "") ? (params.get("tab") as Tab) : "Situation");
   const load = useCallback(() => api<CaseDetail>(`/cases/${caseKey}`).then((r) => (r.ok ? setD(r.data) : setErr(r.message))), [caseKey]);
   useEffect(() => { load(); }, [load]);
@@ -106,7 +110,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
     <>
       <div className="mb-5 grid gap-3">
         <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-faint">
-          <Link href="/cases" className="hover:underline">Intelligence Cases</Link><ChevronRight className="size-3 rtl:rotate-180" /><span className="font-mono">{c.case_key}</span>
+          <Link href="/cases" className="hover:underline">Intelligence Cases</Link><ChevronRight className="size-3 rtl:rotate-180" /><span translate="no" className="font-mono">{c.case_key}</span>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-3xl">
@@ -128,7 +132,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
 
       <div role="tablist" aria-label="Case workspace" className="sticky top-[52px] z-10 -mx-1 mb-6 mt-6 flex flex-wrap gap-x-1 border-b border-line bg-bg/90 px-1 backdrop-blur-md">
         {TABS.map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-3 py-2.5 text-[13.5px] font-medium transition-colors", tab === t ? "border-primary text-ink" : "border-transparent text-ink-faint hover:border-line-strong hover:text-ink")}>
+          <button key={t} role="tab" aria-selected={tab === t} onClick={() => openTab(t)} className={cn("-mb-px border-b-2 px-3 py-2.5 text-[13.5px] font-medium transition-colors", tab === t ? "border-primary text-ink" : "border-transparent text-ink-faint hover:border-line-strong hover:text-ink")}>
             {tr(`case.tab.${t}` as I18nKey)}{t === "Discussion" && d.comments.length ? ` (${d.comments.length})` : ""}
           </button>
         ))}
@@ -227,7 +231,7 @@ function TransitionBar({ d, onDone, role }: { d: CaseDetail; onDone: () => void;
         <span>Next step needs: <b>{d.nextActor.map((r) => ROLE_LABELS[r]).join(" or ")}</b>{d.nextActor.includes(role) ? " — that is you." : ""}</span>
         <span className="text-[12px] text-ink-faint">Moves are checked on the server and recorded in the audit trail.</span>
       </div>
-      {needsRationale && <textarea id="case-rationale" aria-label="Rationale" rows={2} value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder="Rationale for this step" className="rounded-md border border-line bg-surface-2 p-2 text-[13px]" />}
+      {needsRationale && <textarea autoComplete="off" id="case-rationale" aria-label="Rationale" rows={2} value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder="e.g. Scenario assumptions reviewed with the energy team…" className="rounded-md border border-line bg-surface-2 p-2 text-[13px]" />}
       <div className="flex flex-wrap gap-2">
         {d.transitions.map((t) => (
           <Button key={t.to + t.label} size="sm" variant={t.allowed ? (t.to === "closed" && t.label !== "Record outcome and close" ? "secondary" : "primary") : "ghost"} disabled={busy} onClick={() => move(t.to)} title={t.allowed ? undefined : `Needs ${t.roles.map((r) => ROLE_LABELS[r]).join(" or ")}`}>
@@ -248,6 +252,7 @@ function TransitionBar({ d, onDone, role }: { d: CaseDetail; onDone: () => void;
 function Discussion({ d, onDone }: { d: CaseDetail; onDone: () => void }) {
   const s = useSession();
   const [body, setBody] = useState("");
+  useUnsavedWarning(body.trim().length > 0);
   const [mentions, setMentions] = useState<string[]>([]);
   const [err, setErr] = useState<string | null>(null);
   async function send() {
@@ -264,7 +269,7 @@ function Discussion({ d, onDone }: { d: CaseDetail; onDone: () => void }) {
       </Panel>
       <Panel className="grid h-fit gap-3 p-4">
         <label htmlFor="comment-body" className="font-medium">Add a comment</label>
-        <textarea id="comment-body" rows={4} value={body} onChange={(e) => setBody(e.target.value)} className="rounded-md border border-line bg-surface-2 p-2 text-[13px]" />
+        <textarea autoComplete="off" id="comment-body" rows={4} value={body} onChange={(e) => setBody(e.target.value)} className="rounded-md border border-line bg-surface-2 p-2 text-[13px]" />
         <fieldset className="grid gap-1">
           <legend className="mb-1 text-[12px] text-ink-muted">Mention colleagues (they are notified)</legend>
           {s.roleSwitch.filter((p) => p.id !== s.principal.id).map((p) => (

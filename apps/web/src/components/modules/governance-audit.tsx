@@ -27,6 +27,7 @@ export function GovernanceAudit() {
   const [verify, setVerify] = useState<Verify | { error: string } | null>(null);
   const [iso, setIso] = useState<Isolation | { error: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [showAllEvents, setShowAllEvents] = useState(false);
 
   const load = useCallback(async () => {
     const r = await api<{ events: AuditEvent[] }>("/audit/events?limit=100");
@@ -108,7 +109,7 @@ export function GovernanceAudit() {
                 </tr>
               </thead>
               <tbody>
-                {events.map((e) => (
+                {events.slice(0, showAllEvents ? undefined : 50).map((e) => (
                   <tr key={e.seq} className="border-b border-line/60 last:border-0">
                     <td className="px-4 py-2 font-mono tabular text-ink-faint">{e.seq}</td>
                     <td className="whitespace-nowrap px-4 py-2 tabular text-ink-muted">{fmt(e.occurred_at)}</td>
@@ -120,6 +121,7 @@ export function GovernanceAudit() {
                 ))}
               </tbody>
             </table>
+            {!showAllEvents && events.length > 50 && <button type="button" onClick={() => setShowAllEvents(true)} className="w-full border-t border-line px-4 py-2 text-[12.5px] text-accent hover:bg-surface-2">Show all {events.length} events</button>}
           </div>
         )}
       </Panel>

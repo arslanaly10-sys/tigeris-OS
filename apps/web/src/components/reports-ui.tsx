@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Download, FileText, FlaskConical, Printer, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, num } from "@/lib/format";
 import { PageHeader } from "./page-header";
 import { Panel, PanelHeader } from "./ui/panel";
 import { Badge } from "./ui/badge";
@@ -25,7 +25,7 @@ export function ReportsModule() {
   useEffect(() => { api<Reports>("/reports").then((r) => (r.ok ? setD(r.data) : setErr(r.message))); }, []);
   async function download(caseKey: string, audience: string) {
     const res = await fetch(`/api/cases/${caseKey}/brief.pdf?audience=${audience}`, { credentials: "same-origin" });
-    if (!res.ok) { setErr((await res.json().catch(() => ({}))).message ?? "Export refused."); return; }
+    if (!res.ok) { setErr((await res.json().catch(() => ({}))).message ?? "Export refused. Choose a version your role may release, or ask an executive."); return; }
     const a = document.createElement("a"); a.href = URL.createObjectURL(await res.blob()); a.download = `${caseKey}-${audience}.pdf`; a.click();
   }
   return (
@@ -43,7 +43,7 @@ export function ReportsModule() {
                   <tbody>{d.briefs.map((b) => (
                     <tr key={b.id} className="border-b border-line/60">
                       <td className="px-4 py-2"><Link href={`/cases/${b.case_key}?tab=Options`} className="font-mono text-[12px] text-accent hover:underline">{b.case_key}</Link><div className="text-ink-muted">{b.title}</div></td>
-                      <td className="px-4 py-2 tabular">v{b.version} of {b.versions}<div className="font-mono text-[11px] text-ink-faint">{b.content_hash.slice(0, 12)}</div></td>
+                      <td className="px-4 py-2 tabular">v{b.version} of {b.versions}<div translate="no" className="font-mono text-[11px] text-ink-faint">{b.content_hash.slice(0, 12)}</div></td>
                       <td className="px-4 py-2"><Badge tone="warn">{b.classification}</Badge></td>
                       <td className="px-4 py-2 text-ink-muted">{formatDate(b.created_at, true)}</td>
                       <td className="px-4 py-2">{can("export.create") ? <div className="flex flex-wrap gap-1">{["internal", "board", ...(s.principal.role === "executive" ? ["partner"] : [])].map((a) => <Button key={a} size="sm" variant="ghost" onClick={() => download(b.case_key, a)}><Download />{a}</Button>)}</div> : <span className="text-[12px] text-ink-faint">Needs export permission</span>}</td>
@@ -60,8 +60,8 @@ export function ReportsModule() {
                 {!d.backtests.length && <li className="text-ink-muted">No back-test yet. Run one from Scenarios &amp; Foresight.</li>}
                 {d.backtests.map((b) => (
                   <li key={b.id} className="grid gap-0.5 rounded-md border border-line p-3">
-                    <div className="flex flex-wrap items-center gap-2"><span className="font-medium tabular">{b.fitted.response_pct_per_pct.toFixed(2)}% per 1% of supply</span><Badge tone={b.status === "adopted" ? "ok" : b.status === "proposed" ? "warn" : "neutral"}>{b.status}</Badge></div>
-                    <div className="text-[12.5px] text-ink-muted tabular">{b.metrics.episodes} episodes · error {b.metrics.mae_pp.toFixed(1)} pp (assumption {b.metrics.prior_mae_pp.toFixed(1)} pp) · leave-one-out {b.metrics.loo_mae_pp.toFixed(1)} pp</div>
+                    <div className="flex flex-wrap items-center gap-2"><span className="font-medium tabular">{num(b.fitted.response_pct_per_pct, 2)}% per 1% of supply</span><Badge tone={b.status === "adopted" ? "ok" : b.status === "proposed" ? "warn" : "neutral"}>{b.status}</Badge></div>
+                    <div className="text-[12.5px] text-ink-muted tabular">{b.metrics.episodes} episodes · error {num(b.metrics.mae_pp, 1)} pp (assumption {num(b.metrics.prior_mae_pp, 1)} pp) · leave-one-out {num(b.metrics.loo_mae_pp, 1)} pp</div>
                     <div className="text-[12px] text-ink-faint">Run by {b.run_by_label}{b.adopted_by_label ? ` · adopted by ${b.adopted_by_label}` : ""} · {formatDate(b.created_at, true)}</div>
                   </li>
                 ))}

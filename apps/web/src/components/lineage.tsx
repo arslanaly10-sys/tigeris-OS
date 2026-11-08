@@ -121,7 +121,7 @@ function LineageBody({ d }: { d: Lineage }) {
         <Step icon={<ArrowDown />} title="Validation">
           {d.validations.map((v, i) => (
             <div key={i} className="mb-3">
-              <div className="mb-1.5 flex items-center gap-2"><ValidationBadge state={v.outcome} /><span className="font-mono text-[11px] text-ink-faint">{v.rule_set_version}</span></div>
+              <div className="mb-1.5 flex items-center gap-2"><ValidationBadge state={v.outcome} /><span translate="no" className="font-mono text-[11px] text-ink-faint">{v.rule_set_version}</span></div>
               <ul className="grid gap-1">
                 {v.checks.map((c, j) => (
                   <li key={j} className="flex gap-2 text-[12.5px]"><CheckIcon result={c.result} /><span><span className="text-ink">{c.label}.</span> <span className="text-ink-muted">{c.detail}</span></span></li>

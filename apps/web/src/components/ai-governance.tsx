@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Bot, CircleSlash, Globe2, HardDrive, Lock, ShieldAlert, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { requireText, clearInvalid, useUnsavedWarning } from "@/lib/forms";
+import { formatDate, num } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { Panel, PanelHeader } from "./ui/panel";
 import { Badge } from "./ui/badge";
@@ -43,6 +44,9 @@ export function AiGovernance() {
   const s = { ...status.settings, ...pending };
   const change = (p: Partial<Settings>) => setPending({ ...pending, ...p });
   async function save() {
+    const bad = requireText(reason, 3, "sov-reason", "The reason for the change");
+    if (bad) { setMsg(bad); return; }
+    clearInvalid("sov-reason");
     const r = await api<{ settings: Settings }>("/ai/settings", { method: "PUT", json: { ...pending, reason } });
     if (!r.ok) { setMsg(r.message); return; }
     setMsg("Saved and recorded on the audit trail.");
@@ -74,8 +78,8 @@ export function AiGovernance() {
         </div>
         {pending && (
           <div className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
-            <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Reason for the change (required, audited)<input value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label>
-            <Button variant="primary" disabled={reason.trim().length < 3} onClick={save}>Save change</Button>
+            <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Reason for the change (required, audited)<input autoComplete="off" id="sov-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label>
+            <Button variant="primary" onClick={save}>Save change</Button>
             <Button variant="ghost" onClick={() => setPending(null)}>Cancel</Button>
           </div>
         )}
@@ -94,7 +98,7 @@ export function AiGovernance() {
             <p className="text-[12.5px] text-ink-muted">{p.vendor} · {p.model}</p>
             <p className="text-[12px] text-ink-faint">{p.residency}{p.hosts.length ? ` · host ${p.hosts.join(", ")}` : ""}</p>
             {p.reason && <p className="text-[12px] text-warn">{p.reason}</p>}
-            {p.local && <p className="break-all text-[11.5px] text-ink-faint">File {p.local.file} · {p.local.size_bytes ? `${(p.local.size_bytes / 1e9).toFixed(2)} GB` : "missing"} · {p.local.threads} CPU threads{p.local.sha256 ? ` · sha256 ${p.local.sha256.slice(0, 16)}…` : ""} · {p.local.network}</p>}
+            {p.local && <p className="break-all text-[11.5px] text-ink-faint">File {p.local.file} · {p.local.size_bytes ? `${num((p.local.size_bytes / 1e9), 2)} GB` : "missing"} · {p.local.threads} CPU threads{p.local.sha256 ? ` · sha256 ${p.local.sha256.slice(0, 16)}…` : ""} · {p.local.network}</p>}
             <div className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[12px]">
               <label className="flex items-center gap-1.5"><input type="checkbox" checked={s.allowed_providers.includes(p.key)} disabled={!editable || p.key === "deterministic"} onChange={(e) => change({ allowed_providers: e.target.checked ? [...s.allowed_providers, p.key] : s.allowed_providers.filter((k) => k !== p.key) })} />On allowlist</label>
               {p.foreign && <span className={p.keyConfigured ? "text-ok" : "text-ink-faint"}>{p.keyConfigured ? "Key configured in deployment" : "No key in this deployment"}</span>}
@@ -109,13 +113,13 @@ export function AiGovernance() {
           <PanelHeader eyebrow="Cost and usage" title="Model calls across all agents" />
           <div className="grid gap-4 p-4">
             <dl className="grid grid-cols-2 gap-4 tabular sm:grid-cols-5">
-              {[["Model calls", totals.calls.toLocaleString("en-GB")], ["Served from cache", totals.cached.toLocaleString("en-GB")], ["Blocked by policy", totals.blocked.toLocaleString("en-GB")], ["Tokens", totals.tokens.toLocaleString("en-GB")], ["Spend", `USD ${totals.cost.toFixed(4)}`]].map(([k, v]) => <div key={k}><dt className="text-[12px] text-ink-faint">{k}</dt><dd className="text-[20px] font-semibold">{v}</dd></div>)}
+              {[["Model calls", totals.calls.toLocaleString("en-GB")], ["Served from cache", totals.cached.toLocaleString("en-GB")], ["Blocked by policy", totals.blocked.toLocaleString("en-GB")], ["Tokens", totals.tokens.toLocaleString("en-GB")], ["Spend", `USD ${num(totals.cost, 4)}`]].map(([k, v]) => <div key={k}><dt className="text-[12px] text-ink-faint">{k}</dt><dd className="text-[20px] font-semibold">{v}</dd></div>)}
             </dl>
-            <p className="text-[12px] text-ink-faint">Local model compute time: {(totals.ms / 1000).toFixed(0)} s on this host. Foreign spend uses the provider price table above.</p>
+            <p className="text-[12px] text-ink-faint">Local model compute time: {num((totals.ms / 1000), 0)} s on this host. Foreign spend uses the provider price table above.</p>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-[12.5px]">
                 <thead><tr className="border-b border-line text-ink-faint">{["Agent", "Calls", "Blocked", "Tokens", "Time", "Cost"].map((h) => <th key={h} className="px-3 py-1.5 text-start font-medium">{h}</th>)}</tr></thead>
-                <tbody>{usage.byAgent.map((a) => <tr key={a.agent_key} className="border-b border-line/50"><td className="px-3 py-1.5">{AGENT_LABEL[a.agent_key] ?? a.agent_key}</td><td className="px-3 py-1.5 tabular">{a.calls}</td><td className="px-3 py-1.5 tabular">{a.blocked}</td><td className="px-3 py-1.5 tabular">{(a.tokens ?? 0).toLocaleString("en-GB")}</td><td className="px-3 py-1.5 tabular">{((a.ms ?? 0) / 1000).toFixed(0)} s</td><td className="px-3 py-1.5 tabular">USD {(a.cost_usd ?? 0).toFixed(4)}</td></tr>)}</tbody>
+                <tbody>{usage.byAgent.map((a) => <tr key={a.agent_key} className="border-b border-line/50"><td className="px-3 py-1.5">{AGENT_LABEL[a.agent_key] ?? a.agent_key}</td><td className="px-3 py-1.5 tabular">{a.calls}</td><td className="px-3 py-1.5 tabular">{a.blocked}</td><td className="px-3 py-1.5 tabular">{(a.tokens ?? 0).toLocaleString("en-GB")}</td><td className="px-3 py-1.5 tabular">{num(((a.ms ?? 0) / 1000), 0)} s</td><td className="px-3 py-1.5 tabular">USD {num((a.cost_usd ?? 0), 4)}</td></tr>)}</tbody>
               </table>
             </div>
             {usage.recentBlocked.length > 0 && (
@@ -124,7 +128,7 @@ export function AiGovernance() {
               </div>
             )}
             <div><div className="mb-1 text-[12.5px] font-medium">Recent agent runs</div>
-              <ul className="grid gap-1 text-[12px]">{usage.runs.slice(0, 10).map((r) => <li key={r.id} className="flex flex-wrap gap-2"><Badge tone={r.status === "completed" ? "ok" : r.status === "failed" ? "crit" : "info"}>{r.status}</Badge><span>{r.kind.replace("_", " ")}{r.case_key ? ` · ${r.case_key}` : ""}</span>{r.question && <span className="max-w-[40ch] truncate text-ink-muted">“{r.question}”</span>}<span className="text-ink-faint">{r.model_calls} calls · USD {r.cost_usd.toFixed(4)} · {r.requested_by_label}</span><span className="ms-auto tabular text-ink-faint">{formatDate(r.started_at, true)}</span></li>)}</ul>
+              <ul className="grid gap-1 text-[12px]">{usage.runs.slice(0, 10).map((r) => <li key={r.id} className="flex flex-wrap gap-2"><Badge tone={r.status === "completed" ? "ok" : r.status === "failed" ? "crit" : "info"}>{r.status}</Badge><span>{r.kind.replace("_", " ")}{r.case_key ? ` · ${r.case_key}` : ""}</span>{r.question && <span className="max-w-[40ch] truncate text-ink-muted">“{r.question}”</span>}<span className="text-ink-faint">{r.model_calls} calls · USD {num(r.cost_usd, 4)} · {r.requested_by_label}</span><span className="ms-auto tabular text-ink-faint">{formatDate(r.started_at, true)}</span></li>)}</ul>
             </div>
           </div>
         </Panel>
@@ -137,7 +141,7 @@ export function AiGovernance() {
             <li key={a.key} className="rounded-md border border-line bg-surface-2 p-3 text-[12.5px]">
               <div className="font-semibold text-ink">{a.name}</div>
               <p className="mt-0.5 text-ink-muted">{a.purpose}</p>
-              <p className="mt-1 text-ink-faint">Tools: <span className="font-mono text-[11.5px]">{a.tools.join(", ")}</span></p>
+              <p className="mt-1 text-ink-faint">Tools: <span translate="no" className="font-mono text-[11.5px]">{a.tools.join(", ")}</span></p>
               <p className="mt-0.5"><span className="text-ok">May:</span> {a.may.join("; ")}. <span className="text-warn">May not:</span> {a.mayNot.join("; ")}.</p>
             </li>
           ))}

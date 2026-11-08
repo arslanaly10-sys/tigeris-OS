@@ -7,7 +7,7 @@ export async function api<T>(path: string, init?: RequestInit & { json?: unknown
     credentials: "same-origin",
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) return { ok: false, status: res.status, error: body.error ?? "error", message: body.message ?? "The request failed." };
+  if (!res.ok) return { ok: false, status: res.status, error: body.error ?? "error", message: body.message ?? "The request failed. Check the connection to the TIGERIS server and try again." };
   return { ok: true, data: body as T };
 }
 

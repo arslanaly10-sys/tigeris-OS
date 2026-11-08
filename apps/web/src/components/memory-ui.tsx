@@ -1,9 +1,11 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BookMarked, Search } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { requireText, clearInvalid } from "@/lib/forms";
+import { formatDate, num } from "@/lib/format";
 import { PageHeader } from "./page-header";
 import { Panel, PanelHeader } from "./ui/panel";
 import { Badge } from "./ui/badge";
@@ -24,7 +26,7 @@ export function PrecedentList({ hits, semantic, empty, onOpen }: { hits: Hit[]; 
           <div className="flex flex-wrap items-center gap-2">
             {onOpen ? <button type="button" onClick={() => onOpen(h.id)} className="text-start font-medium hover:underline">{h.title}</button> : <span className="font-medium">{h.title}</span>}
             <Badge tone={CLAIM_TONE[h.claim_class] ?? "neutral"} title={h.source_label}>{h.claim_class}</Badge>
-            <span className="ms-auto flex gap-1">{h.matchedBy.map((m) => <Badge key={m} tone={m === "meaning" ? "gold" : "neutral"} title={m === "meaning" ? `Similarity ${h.similarity}` : `Keyword rank ${h.keywordRank}`}>{m === "meaning" ? `meaning ${h.similarity?.toFixed(2)}` : "keyword"}</Badge>)}</span>
+            <span className="ms-auto flex gap-1">{h.matchedBy.map((m) => <Badge key={m} tone={m === "meaning" ? "gold" : "neutral"} title={m === "meaning" ? `Similarity ${h.similarity}` : `Keyword rank ${h.keywordRank}`}>{m === "meaning" ? `meaning ${num(h.similarity ?? 0, 2)}` : "keyword"}</Badge>)}</span>
           </div>
           <p className="text-[12px] text-ink-faint">{DOMAIN_LABEL[h.domain] ?? h.domain} · {h.region} · {h.period}</p>
           <p className="line-clamp-2 text-[12.5px] text-ink-muted">{h.summary}</p>
@@ -40,7 +42,9 @@ interface Proposed { id: string; title: string; summary: string; outcome: string
 
 export function MemoryModule() {
   const can = useCan();
-  const [q, setQ] = useState("");
+  const params = useSearchParams();
+  const router = useRouter();
+  const [q, setQ] = useState(params.get("q") ?? "");
   const [domain, setDomain] = useState("");
   const [res, setRes] = useState<{ hits: Hit[]; semantic: boolean } | null>(null);
   const [overview, setOverview] = useState<{ stats: Array<{ domain: string; claim_class: string; n: number }>; proposed: Proposed[]; recent: Array<{ id: string; title: string; case_key: string; approved_by_label: string; approved_at: string }>; embeddings: { model: string; embedded: number } } | null>(null);
@@ -49,12 +53,18 @@ export function MemoryModule() {
   const [msg, setMsg] = useState<string | null>(null);
   const load = useCallback(() => api<typeof overview>("/memory").then((r) => r.ok && setOverview(r.data)), []);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { const initial = params.get("q"); if (initial) search(initial); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   async function search(text: string) {
-    if (text.trim().length < 2) return;
+    if (text.trim().length < 2) { setMsg("Type at least 2 characters to search, for example “grain export ban”."); document.querySelector<HTMLInputElement>('input[aria-label="Search memory"]')?.focus(); return; }
+    setMsg(null);
+    router.replace(`/memory?q=${encodeURIComponent(text.trim())}`, { scroll: false });
     const r = await api<{ hits: Hit[]; semantic: boolean }>(`/memory/search?q=${encodeURIComponent(text)}${domain ? `&domain=${domain}` : ""}`);
     if (r.ok) setRes(r.data);
   }
   async function review(id: string, approve: boolean) {
+    const bad = requireText(reason, 3, `review-${id}`, "The reason");
+    if (bad) { setMsg(bad); return; }
+    clearInvalid(`review-${id}`);
     const r = await api<{ status: string }>(`/memory/${id}/review`, { json: { approve, reason } });
     setMsg(r.ok ? `Entry ${r.data.status}.` : r.message);
     if (r.ok) { setReason(""); load(); }
@@ -68,7 +78,7 @@ export function MemoryModule() {
         <div className="grid content-start gap-5">
           <Panel className="p-4">
             <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); search(q); }}>
-              <div className="relative min-w-[260px] flex-1"><Search className="absolute start-2.5 top-2.5 size-4 text-ink-faint" /><input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search memory" placeholder="e.g. what happened when tankers were attacked near the strait?" className="h-9 w-full rounded-md border border-line bg-surface-2 ps-8 pe-3 text-[13.5px]" /></div>
+              <div className="relative min-w-[260px] flex-1"><Search className="absolute start-2.5 top-2.5 size-4 text-ink-faint" /><input autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search memory" placeholder="e.g. What happened when tankers were attacked near the strait?…" className="h-9 w-full rounded-md border border-line bg-surface-2 ps-8 pe-3 text-[13.5px]" /></div>
               <select value={domain} onChange={(e) => setDomain(e.target.value)} aria-label="Domain" className="h-9 rounded-md border border-line bg-surface-2 px-2 text-[13px]"><option value="">All domains</option>{domains.map((d) => <option key={d} value={d}>{DOMAIN_LABEL[d] ?? d}</option>)}</select>
               <Button type="submit" variant="primary">Search</Button>
             </form>
@@ -93,7 +103,7 @@ export function MemoryModule() {
                   <div className="font-medium">{x.title}</div>
                   <div className="text-ink-faint">{x.case_key && <Link href={`/cases/${x.case_key}`} className="text-accent hover:underline">{x.case_key}</Link>} · proposed by {x.proposed_by_label} · {formatDate(x.created_at, true)}</div>
                   <p className="text-ink-muted">{x.summary}</p>
-                  {can("decision.approve") && <div className="mt-1 flex flex-wrap gap-2"><input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" aria-label="Reason" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2" /><Button size="sm" variant="primary" aria-label="Approve memory entry" disabled={reason.trim().length < 3} onClick={() => review(x.id, true)}>Approve</Button><Button size="sm" variant="ghost" disabled={reason.trim().length < 3} onClick={() => review(x.id, false)}>Reject</Button></div>}
+                  {can("decision.approve") && <div className="mt-1 flex flex-wrap gap-2"><input autoComplete="off" id={`review-${x.id}`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Accurate record of the case…" aria-label="Reason" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2" /><Button size="sm" variant="primary" aria-label="Approve memory entry" onClick={() => review(x.id, true)}>Approve</Button><Button size="sm" variant="ghost" onClick={() => review(x.id, false)}>Reject</Button></div>}
                 </div>
               ))}
               {msg && <p role="status" className="text-ink-muted">{msg}</p>}

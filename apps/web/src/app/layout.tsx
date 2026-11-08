@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import type { Metadata, Viewport } from "next";
+import { cookies, headers } from "next/headers";
 import "@fontsource/ibm-plex-sans/400.css";
 import "@fontsource/ibm-plex-sans/500.css";
 import "@fontsource/ibm-plex-sans/600.css";
@@ -17,10 +17,25 @@ export const metadata: Metadata = {
   description: "Demonstration build. Public snapshots and synthetic data only.",
 };
 
+/** Browser chrome matches the page background of the chosen theme. */
+export async function generateViewport(): Promise<Viewport> {
+  const jar = await cookies();
+  const light = jar.get(THEME_COOKIE)?.value === "light";
+  return { themeColor: light ? "#f6f5f0" : "#070d18", colorScheme: light ? "light" : "dark" };
+}
+
+/** Without a saved choice, the first language follows the browser (Accept-Language), never location. */
+async function initialLang(saved: string | undefined): Promise<Lang> {
+  if (saved === "ar" || saved === "en") return saved;
+  const accept = (await headers()).get("accept-language") ?? "";
+  const first = accept.split(",")[0]?.trim().toLowerCase() ?? "";
+  return first.startsWith("ar") ? "ar" : "en";
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const jar = await cookies();
   const theme: Theme = jar.get(THEME_COOKIE)?.value === "light" ? "light" : "dark";
-  const lang: Lang = jar.get(LANG_COOKIE)?.value === "ar" ? "ar" : "en";
+  const lang: Lang = await initialLang(jar.get(LANG_COOKIE)?.value);
   return (
     <html lang={lang} dir={lang === "ar" ? "rtl" : "ltr"} data-theme={theme}>
       <body>

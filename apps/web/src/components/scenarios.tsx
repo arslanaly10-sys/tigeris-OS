@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Play, Plus, RotateCcw, ShieldAlert, X } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, num } from "@/lib/format";
 import { Panel, PanelHeader } from "./ui/panel";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -123,7 +123,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                   <th key={i} className="px-3 py-2 text-start font-medium">
                     <div className="flex items-center gap-2">
                       <SeriesKey index={i} label="" />
-                      <input aria-label={`Name of scenario ${i + 1}`} value={v.name} onChange={(e) => setVariants((vs) => vs.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} className="h-7 w-36 rounded border border-line bg-surface-2 px-2 text-[12.5px] text-ink" />
+                      <input autoComplete="off" aria-label={`Name of scenario ${i + 1}`} value={v.name} onChange={(e) => setVariants((vs) => vs.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} className="h-7 w-36 rounded border border-line bg-surface-2 px-2 text-[12.5px] text-ink" />
                       {i > 0 && <button type="button" aria-label="Remove alternative" onClick={() => setVariants((vs) => vs.filter((_, j) => j !== i))}><X className="size-3.5 text-ink-faint" /></button>}
                     </div>
                   </th>
@@ -137,7 +137,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                   {variants.map((v, i) => (
                     <td key={i} className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <input type="range" aria-label={`${spec.label}, ${v.name}`} min={spec.min} max={spec.max} step={spec.max - spec.min > 50 ? 1 : 0.1} value={v.drivers[k] ?? spec.min} onChange={(e) => setVariants((vs) => vs.map((x, j) => (j === i ? { ...x, drivers: { ...x.drivers, [k]: Number(e.target.value) } } : x)))} className="w-28 accent-[var(--primary)]" />
+                        <input autoComplete="off" type="range" aria-label={`${spec.label}, ${v.name}`} min={spec.min} max={spec.max} step={spec.max - spec.min > 50 ? 1 : 0.1} value={v.drivers[k] ?? spec.min} onChange={(e) => setVariants((vs) => vs.map((x, j) => (j === i ? { ...x, drivers: { ...x.drivers, [k]: Number(e.target.value) } } : x)))} className="w-28 accent-[var(--primary)]" />
                         <span className="w-14 text-end tabular">{v.drivers[k] ?? "—"}</span>
                       </div>
                     </td>
@@ -157,7 +157,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
         <>
           <div className="flex flex-wrap items-center gap-3 text-[12.5px] text-ink-muted">
             <span>Run by {runs[0]!.created_by_label} · {formatDate(runs[0]!.created_at, true)} · {runs[0]!.monte_carlo_runs} Monte Carlo draws per scenario</span>
-            <span className="font-mono text-[11px] text-ink-faint">input {runs[0]!.input_hash.slice(0, 12)}</span>
+            <span translate="no" className="font-mono text-[11px] text-ink-faint">input {runs[0]!.input_hash.slice(0, 12)}</span>
             <Button size="sm" variant="ghost" onClick={doReplay}><RotateCcw />Replay and compare</Button>
             {replay && (replay.identical ? <Badge tone="ok"><CheckCircle2 />Identical: {replay.checked} numbers reproduced</Badge> : <Badge tone="crit"><ShieldAlert />{replay.differences.length} differences</Badge>)}
           </div>
@@ -221,14 +221,14 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                   {runs.map((r, i) => (
                     <div key={r.id} className="grid gap-0.5">
                       <SeriesKey index={i} label={r.name} className="text-[12px] text-ink-muted" />
-                      <span className="font-serif text-[32px] leading-none tabular">{r.resilience.score.toFixed(0)}<span className="text-[14px] text-ink-faint"> / 100</span></span>
+                      <span className="font-serif text-[32px] leading-none tabular">{num(r.resilience.score, 0)}<span className="text-[14px] text-ink-faint"> / 100</span></span>
                     </div>
                   ))}
                 </div>
                 <ul className="grid gap-2.5">
                   {runs[0]!.resilience.components.map((c) => (
                     <li key={c.key} className="grid gap-1 text-[12.5px]">
-                      <div className="flex justify-between"><span>{c.label}</span><span className="tabular text-ink-muted">{runs.map((r) => r.resilience.components.find((x) => x.key === c.key)!.score.toFixed(0)).join(" · ")}</span></div>
+                      <div className="flex justify-between"><span>{c.label}</span><span className="tabular text-ink-muted">{runs.map((r) => num(r.resilience.components.find((x) => x.key === c.key)!.score, 0)).join(" · ")}</span></div>
                       <div className="h-1.5 overflow-hidden rounded bg-surface-3"><div className="h-full rounded bg-[var(--series-1)]" style={{ width: `${c.score}%` }} /></div>
                       <span className="text-[11.5px] text-ink-faint">{c.basis}</span>
                     </li>
@@ -251,7 +251,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
               <ul className="divide-y divide-line">
                 {runs[0]!.top_exposures.map((e) => (
                   <li key={e.holding_key} className="flex items-center justify-between gap-3 px-4 py-2 text-[12.5px]">
-                    <span className="min-w-0"><span className="block truncate">{e.name}</span><span className="text-[11.5px] text-ink-faint">{e.sector} · path strength {e.path_strength.toFixed(2)}</span></span>
+                    <span className="min-w-0"><span className="block truncate">{e.name}</span><span className="text-[11.5px] text-ink-faint">{e.sector} · path strength {num(e.path_strength, 2)}</span></span>
                     <span className="tabular">{fmtUnit(e.value_usd, "USD")}</span>
                   </li>
                 ))}

@@ -61,7 +61,7 @@ export function SignalsModule() {
               <option value="">All</option><option value="new">New</option><option value="monitoring">Monitoring</option><option value="in_case">In a case</option><option value="dismissed">Dismissed</option>
             </select>} />
           {!signals && <div className="m-4 h-64 animate-pulse rounded bg-surface-2" />}
-          <ul className="divide-y divide-line">
+          <ul className="cv-auto divide-y divide-line">
             {signals?.map((s) => (
               <li key={s.id}>
                 <button type="button" onClick={() => setOpen(s.id)} className="grid w-full gap-1.5 px-4 py-3 text-start hover:bg-surface-2">
@@ -162,7 +162,7 @@ function SignalDrawer({ id, onClose }: { id: string | null; onClose: () => void 
           {can("evidence.dispose") && d.signal.status !== "in_case" && (
             <div className="grid gap-2 border-t border-line pt-4">
               <label htmlFor="sig-rationale" className="font-medium">Disposition</label>
-              <textarea id="sig-rationale" value={rationale} onChange={(e) => setRationale(e.target.value)} rows={2} placeholder="Rationale (required to monitor or dismiss)" className="rounded-md border border-line bg-surface-2 p-2" />
+              <textarea autoComplete="off" id="sig-rationale" value={rationale} onChange={(e) => setRationale(e.target.value)} rows={2} placeholder="e.g. Corroborated by the shipping advisory…" className="rounded-md border border-line bg-surface-2 p-2" />
               <div className="flex flex-wrap gap-2">
                 {can("case.create") && <Button variant="primary" size="sm" onClick={() => act("open_case")}>Open a case</Button>}
                 <Button size="sm" onClick={() => act("monitor")}>Monitor</Button>

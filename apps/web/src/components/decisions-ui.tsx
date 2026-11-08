@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Activity, AlertTriangle, BookMarked, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Gavel, History, ShieldAlert, ShieldCheck, XCircle } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { requireText, clearInvalid, useUnsavedWarning } from "@/lib/forms";
+import { formatDate, num } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { PageHeader } from "./page-header";
 import { Panel, PanelHeader } from "./ui/panel";
@@ -24,7 +25,7 @@ export function TraceList({ trace }: { trace: RuleTrace[] }) {
       {trace.map((t) => (
         <li key={t.rule} className="grid grid-cols-[18px_220px_1fr] items-start gap-2">
           {!t.applied ? <span className="text-ink-faint" aria-label="not applicable">–</span> : t.passed ? <CheckCircle2 className="size-3.5 text-ok" aria-label="passed" /> : <XCircle className="size-3.5 text-crit" aria-label="failed" />}
-          <span className={cn("font-mono", t.applied ? "text-ink" : "text-ink-faint")}>{t.rule}</span>
+          <span translate="no" className={cn("font-mono", t.applied ? "text-ink" : "text-ink-faint")}>{t.rule}</span>
           <span className={t.passed ? "text-ink-faint" : "text-warn"}>{t.message ?? (t.applied ? "passes" : "does not apply")}</span>
         </li>
       ))}
@@ -65,6 +66,7 @@ function RecordDecision({ caseKey, data, onDone }: { caseKey: string; data: Deci
   const [opt, setOpt] = useState(data.options[0]?.id ?? "");
   const [outcome, setOutcome] = useState<"approve" | "reject" | "defer">("approve");
   const [rationale, setRationale] = useState("");
+  useUnsavedWarning(rationale.trim().length > 0);
   const [res, setRes] = useState<{ ok: boolean; message: string; trace?: RuleTrace[] } | null>(null);
   if (!data.options.length) return <Panel className="p-5 text-ink-muted">No ranked options yet. Run the agent analysis first; a decision is always taken on one option.</Panel>;
   const o = data.options.find((x) => x.id === opt)!;
@@ -85,7 +87,7 @@ function RecordDecision({ caseKey, data, onDone }: { caseKey: string; data: Deci
           {data.options.map((x) => (
             <label key={x.id} className={cn("grid cursor-pointer grid-cols-[18px_1fr_auto] items-start gap-2 rounded-md border p-2.5 text-[13px]", opt === x.id ? "border-primary bg-primary-soft/40" : "border-line")}>
               <input type="radio" name="option" checked={opt === x.id} onChange={() => setOpt(x.id)} className="mt-1" />
-              <span><span className="font-medium">{x.title}</span><br /><span className="text-[12px] text-ink-muted">Score {x.base_score.toFixed(1)} · confidence {x.band} · option policy {x.governance} · {x.approval.required === 1 ? "one approval" : `${x.approval.required} approvals by different people`} ({x.authority})</span></span>
+              <span><span className="font-medium">{x.title}</span><br /><span className="text-[12px] text-ink-muted">Score {num(x.base_score, 1)} · confidence {x.band} · option policy {x.governance} · {x.approval.required === 1 ? "one approval" : `${x.approval.required} approvals by different people`} ({x.authority})</span></span>
               <PolicyResultBadge result={x.preview.result} />
             </label>
           ))}
@@ -95,7 +97,7 @@ function RecordDecision({ caseKey, data, onDone }: { caseKey: string; data: Deci
           {(["approve", "reject", "defer"] as const).map((x) => <label key={x} className="flex items-center gap-1.5"><input type="radio" name="outcome" checked={outcome === x} onChange={() => setOutcome(x)} />{x === "approve" ? "Approve" : x === "reject" ? "Reject" : "Defer"}</label>)}
         </div>
         <label className="grid gap-1 text-[12.5px] text-ink-muted">Rationale (kept with the decision and on the audit trail)
-          <textarea aria-label="Decision rationale" value={rationale} onChange={(e) => setRationale(e.target.value)} rows={3} className="rounded-md border border-line bg-surface-2 p-2 text-[13.5px] text-ink" />
+          <textarea autoComplete="off" aria-label="Decision rationale" value={rationale} onChange={(e) => setRationale(e.target.value)} rows={3} className="rounded-md border border-line bg-surface-2 p-2 text-[13.5px] text-ink" />
         </label>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="primary" onClick={submit} disabled={!can("decision.approve")}><Gavel />Record decision</Button>
@@ -117,6 +119,9 @@ function DecisionCard({ d, onDone }: { d: Decision; onDone: () => void }) {
   const [replay, setReplay] = useState<{ identical: boolean; checks: Array<{ check: string; ok: boolean; detail: string }> } | null>(null);
   const approvals = d.approvals.filter((a) => a.vote === "approve").length;
   async function cast(v: "approve" | "reject") {
+    const bad = requireText(vote, 3, `vote-${d.id}`, "Your reason");
+    if (bad) { setMsg(bad); return; }
+    clearInvalid(`vote-${d.id}`);
     const r = await api<{ decisionStatus: string; approvals: number; required: number }>(`/decisions/${d.id}/approvals`, { json: { vote: v, rationale: vote } });
     setMsg(r.ok ? `Recorded. ${r.data.approvals}/${r.data.required} approvals; decision ${r.data.decisionStatus}.` : r.message);
     if (r.ok) { setVote(""); onDone(); }
@@ -136,9 +141,9 @@ function DecisionCard({ d, onDone }: { d: Decision; onDone: () => void }) {
       {d.approvals.length > 0 && <ul className="grid gap-1 text-[12.5px]">{d.approvals.map((a, i) => <li key={i} className="flex flex-wrap gap-2"><Badge tone={a.vote === "approve" ? "ok" : "crit"}>{a.vote}</Badge><span>{a.approver_label} ({a.approver_role.replace("_", " ")})</span><span className="text-ink-muted">“{a.rationale}”</span><span className="ms-auto tabular text-ink-faint">{formatDate(a.created_at, true)}</span></li>)}</ul>}
       {d.status === "pending" && can("decision.approve") && !voted && (
         <div className="flex flex-wrap items-end gap-2 rounded-md border border-warn/40 bg-warn-soft/40 p-3">
-          <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Your reason<input value={vote} onChange={(e) => setVote(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label>
-          <Button size="sm" variant="primary" aria-label="Approve this decision" disabled={vote.trim().length < 3} onClick={() => cast("approve")}>Approve</Button>
-          <Button size="sm" variant="danger" aria-label="Reject this decision" disabled={vote.trim().length < 3} onClick={() => cast("reject")}>Reject</Button>
+          <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Your reason<input autoComplete="off" id={`vote-${d.id}`} value={vote} onChange={(e) => setVote(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label>
+          <Button size="sm" variant="primary" aria-label="Approve this decision" onClick={() => cast("approve")}>Approve</Button>
+          <Button size="sm" variant="danger" aria-label="Reject this decision" onClick={() => cast("reject")}>Reject</Button>
         </div>
       )}
       {msg && <p role="status" className="text-[12.5px] text-ink-muted">{msg}</p>}
@@ -191,11 +196,11 @@ function Handoffs({ items, onDone }: { items: Handoff[]; onDone: () => void }) {
             {h.updates.map((u, i) => <p key={i} className="text-[12px] text-ink-faint">{formatDate(u.created_at, true)} · {u.actor_label}: {u.status.replace("_", " ")} — {u.note}</p>)}
             {can("handoff.update") && h.status !== "done" && (edit === h.id ? (
               <div className="flex flex-wrap items-end gap-2">
-                <select value={status} onChange={(e) => setStatus(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-[12.5px]">{["in_progress", "done", "blocked"].map((x) => <option key={x} value={x}>{x.replace("_", " ")}</option>)}</select>
-                <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="What was done or what is blocking" aria-label="Note" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2 text-[12.5px]" />
-                <Button size="sm" variant="primary" onClick={() => save(h.id)}>Save</Button>
+                <select aria-label="New status" value={status} onChange={(e) => setStatus(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-[12.5px]">{["in_progress", "done", "blocked"].map((x) => <option key={x} value={x}>{x.replace("_", " ")}</option>)}</select>
+                <input autoComplete="off" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Terminal slots confirmed with the operator…" aria-label="Note" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2 text-[12.5px]" />
+                <Button size="sm" variant="primary" onClick={() => save(h.id)}>Save update</Button>
               </div>
-            ) : <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => setEdit(h.id)}>Update</Button>)}
+            ) : <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => setEdit(h.id)}>Update task</Button>)}
           </li>
         ))}
       </ul>
@@ -209,6 +214,7 @@ function CaseMemory({ caseKey }: { caseKey: string }) {
   const can = useCan();
   const [d, setD] = useState<{ hits: Hit[]; semantic: boolean; draft: Draft } | null>(null);
   const [form, setForm] = useState<Draft | null>(null);
+  useUnsavedWarning(form !== null);
   const [msg, setMsg] = useState<string | null>(null);
   useEffect(() => { api<{ hits: Hit[]; semantic: boolean; draft: Draft }>(`/cases/${caseKey}/precedents`).then((r) => r.ok && setD(r.data)); }, [caseKey]);
   async function propose() {
@@ -224,10 +230,10 @@ function CaseMemory({ caseKey }: { caseKey: string }) {
         {form && (
           <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-3 text-[12.5px]">
             <p className="text-ink-muted">Draft assembled from this case's decision, handoff and agent challenges. Edit before proposing; an approver must approve it.</p>
-            <label className="grid gap-1">Title<input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-8 rounded-md border border-line bg-surface px-2" /></label>
-            <label className="grid gap-1">Summary<textarea value={form.summary} rows={3} onChange={(e) => setForm({ ...form, summary: e.target.value })} className="rounded-md border border-line bg-surface p-2" /></label>
-            <label className="grid gap-1">Outcome<textarea value={form.outcome} rows={2} onChange={(e) => setForm({ ...form, outcome: e.target.value })} className="rounded-md border border-line bg-surface p-2" /></label>
-            {form.lessons.map((l, i) => <label key={i} className="grid gap-1">Lesson {i + 1}<input value={l} onChange={(e) => setForm({ ...form, lessons: form.lessons.map((x, j) => (j === i ? e.target.value : x)) })} className="h-8 rounded-md border border-line bg-surface px-2" /></label>)}
+            <label className="grid gap-1">Title<input autoComplete="off" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-8 rounded-md border border-line bg-surface px-2" /></label>
+            <label className="grid gap-1">Summary<textarea autoComplete="off" value={form.summary} rows={3} onChange={(e) => setForm({ ...form, summary: e.target.value })} className="rounded-md border border-line bg-surface p-2" /></label>
+            <label className="grid gap-1">Outcome<textarea autoComplete="off" value={form.outcome} rows={2} onChange={(e) => setForm({ ...form, outcome: e.target.value })} className="rounded-md border border-line bg-surface p-2" /></label>
+            {form.lessons.map((l, i) => <label key={i} className="grid gap-1">Lesson {i + 1}<input autoComplete="off" value={l} onChange={(e) => setForm({ ...form, lessons: form.lessons.map((x, j) => (j === i ? e.target.value : x)) })} className="h-8 rounded-md border border-line bg-surface px-2" /></label>)}
             <div className="flex gap-2"><Button size="sm" variant="ghost" onClick={() => setForm({ ...form, lessons: [...form.lessons, ""] })}>Add lesson</Button><Button size="sm" variant="primary" onClick={propose}>Propose</Button><Button size="sm" variant="ghost" onClick={() => setForm(null)}>Cancel</Button></div>
           </div>
         )}

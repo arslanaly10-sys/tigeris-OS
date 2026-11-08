@@ -207,7 +207,7 @@ export default function SignInPage() {
                 />
               </label>
               <div id="mfa-demo" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-line px-3 py-2 text-[13px] text-ink-muted">
-                <span>{t("signin.demoCode")} ({t("signin.simulated")}): <span className="font-mono text-ink tabular">{demoCode}</span></span>
+                <span>{t("signin.demoCode")} ({t("signin.simulated")}): <span translate="no" className="font-mono text-ink tabular">{demoCode}</span></span>
                 <button type="button" className="text-accent underline-offset-2 hover:underline" onClick={() => setCode(demoCode)}>{t("signin.useCode")}</button>
               </div>
               <Button type="submit" size="lg" variant="primary" disabled={busy || code.length !== 6}>{t("signin.verify")}</Button>

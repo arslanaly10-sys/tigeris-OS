@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { FlaskConical, Play } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { requireText, clearInvalid } from "@/lib/forms";
+import { formatDate, num } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { Panel, PanelHeader } from "./ui/panel";
 import { Badge } from "./ui/badge";
@@ -44,9 +45,9 @@ function DotPlot({ eps }: { eps: Ep[] }) {
             return (
               <g key={e.key}>
                 <text x={0} y={y - 6} dy="0.32em" fontSize="12" fill="var(--ink)">{e.name.length > 30 ? `${e.name.slice(0, 29)}…` : e.name}</text>
-                <text x={0} y={y + 14} fontSize="10.5" fill="var(--ink-faint)" className="tabular">{e.date.slice(0, 4)} · {e.share_pct.toFixed(1)}% of supply</text>
+                <text x={0} y={y + 14} fontSize="10.5" fill="var(--ink-faint)" className="tabular">{e.date.slice(0, 4)} · {num(e.share_pct, 1)}% of supply</text>
                 <line x1={sx(Math.min(...series.map((s) => e[s.key])))} x2={sx(Math.max(...series.map((s) => e[s.key])))} y1={y} y2={y} stroke="var(--line-strong)" />
-                {series.map((s, i) => <g key={s.key}><title>{`${s.label}: ${e[s.key] > 0 ? "+" : ""}${e[s.key].toFixed(1)}%`}</title>{mark(s.shape, sx(e[s.key]), y, SERIES_COLOR[i]!)}</g>)}
+                {series.map((s, i) => <g key={s.key}><title>{`${s.label}: ${e[s.key] > 0 ? "+" : ""}${num(e[s.key], 1)}%`}</title>{mark(s.shape, sx(e[s.key]), y, SERIES_COLOR[i]!)}</g>)}
               </g>
             );
           })}
@@ -54,7 +55,7 @@ function DotPlot({ eps }: { eps: Ep[] }) {
       ) : (
         <table className="w-full text-[12px]">
           <thead><tr className="border-b border-line text-ink-faint">{["Episode", "Share lost", "Before", "First 3 days", "Observed", "Assumption", "Fitted", "Fitted without it"].map((h) => <th key={h} className="px-2 py-1 text-end font-medium first:text-start">{h}</th>)}</tr></thead>
-          <tbody>{eps.map((e) => <tr key={e.key} className="border-b border-line/50 tabular"><td className="px-2 py-1">{e.name}</td><td className="px-2 py-1 text-end">{e.share_pct.toFixed(2)}%</td><td className="px-2 py-1 text-end">USD {e.pre_avg.toFixed(2)}</td><td className="px-2 py-1 text-end">USD {e.post_avg.toFixed(2)}</td><td className="px-2 py-1 text-end">{e.observed_pct.toFixed(1)}%</td><td className="px-2 py-1 text-end">{e.prior_pct.toFixed(1)}%</td><td className="px-2 py-1 text-end">{e.predicted_pct.toFixed(1)}%</td><td className="px-2 py-1 text-end">{e.loo_predicted_pct.toFixed(1)}%</td></tr>)}</tbody>
+          <tbody>{eps.map((e) => <tr key={e.key} className="border-b border-line/50 tabular"><td className="px-2 py-1">{e.name}</td><td className="px-2 py-1 text-end">{num(e.share_pct, 2)}%</td><td className="px-2 py-1 text-end">USD {num(e.pre_avg, 2)}</td><td className="px-2 py-1 text-end">USD {num(e.post_avg, 2)}</td><td className="px-2 py-1 text-end">{num(e.observed_pct, 1)}%</td><td className="px-2 py-1 text-end">{num(e.prior_pct, 1)}%</td><td className="px-2 py-1 text-end">{num(e.predicted_pct, 1)}%</td><td className="px-2 py-1 text-end">{num(e.loo_predicted_pct, 1)}%</td></tr>)}</tbody>
         </table>
       )}
     </div>
@@ -79,6 +80,9 @@ export function BacktestPanel() {
     load();
   }
   async function adopt(id: string) {
+    const bad = requireText(reason, 5, "adopt-reason", "The reason to adopt");
+    if (bad) { setMsg(bad); return; }
+    clearInvalid("adopt-reason");
     const r = await api(`/backtests/${id}/adopt`, { json: { reason } });
     setMsg(r.ok ? "Adopted. New scenario runs use the fitted price response." : r.message);
     if (r.ok) setReason("");
@@ -95,16 +99,16 @@ export function BacktestPanel() {
         {latest && (
           <>
             <dl className="grid grid-cols-2 gap-4 tabular sm:grid-cols-4">
-              <div><dt className="text-[12px] text-ink-faint">Fitted response</dt><dd className="text-[20px] font-semibold">{latest.fitted.response_pct_per_pct.toFixed(2)}%</dd><dd className="text-[11.5px] text-ink-faint">per 1% of world supply lost · USD {latest.fitted.premium_usd_per_pct_at_80.toFixed(2)} at USD 80</dd></div>
-              <div><dt className="text-[12px] text-ink-faint">Analyst assumption</dt><dd className="text-[20px] font-semibold">{latest.prior.response_pct_per_pct.toFixed(2)}%</dd><dd className="text-[11.5px] text-ink-faint">USD {latest.prior.premium_usd_per_pct_at_80} at USD 80</dd></div>
-              <div><dt className="text-[12px] text-ink-faint">Average error</dt><dd className="text-[20px] font-semibold">{latest.metrics.mae_pp.toFixed(1)} pp</dd><dd className="text-[11.5px] text-ink-faint">assumption {latest.metrics.prior_mae_pp.toFixed(1)} pp</dd></div>
-              <div><dt className="text-[12px] text-ink-faint">Leave-one-out error</dt><dd className="text-[20px] font-semibold">{latest.metrics.loo_mae_pp.toFixed(1)} pp</dd><dd className="text-[11.5px] text-ink-faint">fitted without the episode it predicts</dd></div>
+              <div><dt className="text-[12px] text-ink-faint">Fitted response</dt><dd className="text-[20px] font-semibold">{num(latest.fitted.response_pct_per_pct, 2)}%</dd><dd className="text-[11.5px] text-ink-faint">per 1% of world supply lost · USD {num(latest.fitted.premium_usd_per_pct_at_80, 2)} at USD 80</dd></div>
+              <div><dt className="text-[12px] text-ink-faint">Analyst assumption</dt><dd className="text-[20px] font-semibold">{num(latest.prior.response_pct_per_pct, 2)}%</dd><dd className="text-[11.5px] text-ink-faint">USD {latest.prior.premium_usd_per_pct_at_80} at USD 80</dd></div>
+              <div><dt className="text-[12px] text-ink-faint">Average error</dt><dd className="text-[20px] font-semibold">{num(latest.metrics.mae_pp, 1)} pp</dd><dd className="text-[11.5px] text-ink-faint">assumption {num(latest.metrics.prior_mae_pp, 1)} pp</dd></div>
+              <div><dt className="text-[12px] text-ink-faint">Leave-one-out error</dt><dd className="text-[20px] font-semibold">{num(latest.metrics.loo_mae_pp, 1)} pp</dd><dd className="text-[11.5px] text-ink-faint">fitted without the episode it predicts</dd></div>
             </dl>
             <DotPlot eps={latest.episodes} />
             <p className="text-[12px] text-ink-faint">{latest.method} {latest.metrics.episodes} episodes; few and varied, so calibration is rated medium, not high. Run by {latest.run_by_label} · {formatDate(latest.created_at, true)} · <span className={cn(latest.status === "adopted" ? "text-ok" : "text-warn")}>{latest.status}</span>.
               {" "}Lineage: <button type="button" className="text-accent hover:underline" onClick={() => show(latest.episodes[0]!.fact_ids[0]!)}>a Brent price fact</button> · <button type="button" className="text-accent hover:underline" onClick={() => show(latest.episodes[0]!.assumption_fact_ids[0]!)}>an episode assumption</button></p>
             {latest.status === "proposed" && s.principal.role === "domain_expert" && (
-              <div className="flex flex-wrap items-end gap-2"><label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Reason to adopt<input value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label><Button size="sm" variant="primary" disabled={reason.trim().length < 5} onClick={() => adopt(latest.id)}><FlaskConical />Adopt calibration</Button></div>
+              <div className="flex flex-wrap items-end gap-2"><label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Reason to adopt<input autoComplete="off" id="adopt-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label><Button size="sm" variant="primary" onClick={() => adopt(latest.id)}><FlaskConical />Adopt calibration</Button></div>
             )}
           </>
         )}

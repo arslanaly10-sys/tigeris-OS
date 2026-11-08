@@ -143,6 +143,26 @@ tinted at 12% with a 35% border; status badges always carry an icon. Tabs are te
 underline when active. Tables use a surface-2 header band, hairline row dividers and end-aligned
 tabular numbers. Inputs sit on surface-2 with a strong hairline and a gold focus ring.
 
+## Interface guidelines
+
+The UI is reviewed against the Vercel Web Interface Guidelines (`.agents/skills/web-design-guidelines`).
+Patterns adopted across the app:
+
+- Buttons stay enabled; a missing field is explained next to it and receives focus (`lib/forms.ts`).
+- Unsaved edits (policy editor, decision rationale, comments, memory drafts) warn before leaving.
+- Destructive actions confirm: reset demo and discard edits need a second press.
+- Case tabs and memory searches live in the URL, so they can be linked and restored.
+- Placeholders show an example and end with "…"; non-auth fields set `autocomplete="off"`.
+- Numbers go through `Intl.NumberFormat` (`num()`); units stay on the number's line (non-breaking space).
+- Identifiers, hashes and the wordmark carry `translate="no"`.
+- Clickable rows are keyboard-reachable; tables over 50 rows show 50 with "Show all"; long lists use
+  `content-visibility`.
+- A skip link leads to the main content; sticky bars never cover a focused field.
+
+Deliberate deviations: headings and buttons use **sentence case**, not Title Case (house style, and
+consistent with the Arabic screens). Fonts are bundled with the app and use `font-display: swap`;
+there is no CDN to preconnect to.
+
 ## Do
 
 - Let content lead: tables, maps, charts and checked text are the protagonists.

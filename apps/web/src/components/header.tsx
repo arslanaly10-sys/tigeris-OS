@@ -80,7 +80,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
         <Popover.Anchor asChild>
           <label className="relative flex h-9 min-w-0 max-w-[420px] flex-1 items-center">
             <Search className="pointer-events-none absolute start-3 size-4 text-ink-faint" />
-            <input
+            <input autoComplete="off"
               id="global-search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -137,7 +137,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
 
         <Dropdown.Root>
           <Dropdown.Trigger asChild>
-            <button type="button" className="flex items-center gap-2.5 rounded-md border border-line bg-surface-2 py-1 ps-1.5 pe-2.5 text-start hover:border-line-strong">
+            <button type="button" id="user-menu-trigger" className="flex items-center gap-2.5 rounded-md border border-line bg-surface-2 py-1 ps-1.5 pe-2.5 text-start hover:border-line-strong">
               <span className="grid size-7 place-items-center rounded bg-primary-soft text-accent"><UserRound className="size-4" /></span>
               <span className="hidden min-w-0 md:block">
                 <span className="block max-w-[180px] truncate text-[12.5px] font-medium leading-tight">{s.principal.name}</span>

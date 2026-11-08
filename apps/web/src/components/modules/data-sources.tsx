@@ -175,7 +175,7 @@ function RegistryView() {
       <Panel>
         <PanelHeader eyebrow="Air-gap transfer" title="Trusted package signers" />
         <ul className="grid gap-2 p-4 text-[13px]">
-          {data.signers.map((s) => <li key={s.fingerprint} className="flex flex-wrap items-center gap-2"><PackageCheck className="size-4 text-ok" />{s.name}<span className="font-mono text-[11.5px] text-ink-faint">{s.fingerprint}</span><Badge tone="ok">{s.status}</Badge></li>)}
+          {data.signers.map((s) => <li key={s.fingerprint} className="flex flex-wrap items-center gap-2"><PackageCheck className="size-4 text-ok" />{s.name}<span translate="no" className="font-mono text-[11.5px] text-ink-faint">{s.fingerprint}</span><Badge tone="ok">{s.status}</Badge></li>)}
         </ul>
         <p className="border-t border-line px-4 py-3 text-[12px] text-ink-muted">Packages signed by any other key are refused before any file is opened.</p>
       </Panel>
@@ -235,7 +235,7 @@ function ImportsView({ onChanged, onOpenEvidence }: { onChanged: () => void; onO
             <div className="flex flex-wrap gap-2">
               <Button variant="primary" size="sm" disabled={!can("source.manage") || busy !== null} onClick={() => run("Bundled snapshot", post("/sources/packages/bundled"))}><PackageOpen />Import bundled snapshot</Button>
               <Button size="sm" disabled={!can("source.manage") || busy !== null} onClick={() => pkgInput.current?.click()}><FileUp />Choose package file</Button>
-              <input ref={pkgInput} id="pkg-file" type="file" accept=".tigpkg" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) run(f.name, sendFile("/sources/packages", f)); e.target.value = ""; }} />
+              <input ref={pkgInput} id="pkg-file" aria-label="Transfer package file" type="file" accept=".tigpkg" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) run(f.name, sendFile("/sources/packages", f)); e.target.value = ""; }} />
             </div>
             {!can("source.manage") && <p className="text-[12px] text-ink-faint">Importing packages needs the Administrator role.</p>}
           </div>
@@ -246,7 +246,7 @@ function ImportsView({ onChanged, onOpenEvidence }: { onChanged: () => void; onO
             <p className="text-ink-muted">PDFs are screened for hidden text and instructions aimed at AI systems before any figure is extracted. Extracted figures wait for analyst review.</p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" disabled={!can("evidence.upload") || busy !== null} onClick={() => pdfInput.current?.click()}><FileUp />Choose PDF</Button>
-              <input ref={pdfInput} id="pdf-file" type="file" accept="application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) run(f.name, sendFile("/evidence/documents", f)); e.target.value = ""; }} />
+              <input ref={pdfInput} id="pdf-file" aria-label="PDF document" type="file" accept="application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) run(f.name, sendFile("/evidence/documents", f)); e.target.value = ""; }} />
               {docs.data?.documents.map((d) => (
                 <Button key={d} size="sm" variant={d.includes("poisoned") ? "danger" : "secondary"} disabled={!can("evidence.upload") || busy !== null} onClick={() => run(d, post(`/evidence/demo-documents/${d}`))}>
                   {d.includes("poisoned") ? <ShieldAlert /> : <FileUp />}{d.includes("poisoned") ? "Try the poisoned document" : "Try the sample advisory"}
@@ -387,7 +387,7 @@ function EvidenceDrawer({ id, onClose }: { id: string | null; onClose: () => voi
           <p className="break-all font-mono text-[11px] text-ink-faint">SHA-256 {d.evidence.sha256}</p>
           {d.validations.map((v, i) => (
             <div key={i}>
-              <div className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold">Checks <span className="font-mono text-[11px] font-normal text-ink-faint">{v.rule_set_version}</span></div>
+              <div className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold">Checks <span translate="no" className="font-mono text-[11px] font-normal text-ink-faint">{v.rule_set_version}</span></div>
               <ul className="grid gap-1.5">{v.checks.map((c, j) => <li key={j} className="flex gap-2 text-[12.5px]"><CheckIcon result={c.result} /><span><span className="text-ink">{c.label}.</span> <span className="text-ink-muted">{c.detail}</span></span></li>)}</ul>
             </div>
           ))}

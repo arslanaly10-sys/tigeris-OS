@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowRight, GitBranch, Search, Waypoints } from "lucide-react";
 import { api } from "@/lib/api";
+import { num } from "@/lib/format";
 import { PageHeader } from "../page-header";
 import { GraphAsk } from "../agents";
 import { Panel, PanelHeader } from "../ui/panel";
@@ -55,7 +56,7 @@ export function GraphModule() {
           <Badge tone="info" className="tabular">{stats.snapshot.entity_count.toLocaleString("en-GB")} entities</Badge>
           <Badge className="tabular">{stats.snapshot.relationship_count.toLocaleString("en-GB")} relationships</Badge>
           <span>{totals}</span>
-          <span className="font-mono text-[11px] text-ink-faint">snapshot {stats.snapshot.content_hash.slice(0, 12)}</span>
+          <span translate="no" className="font-mono text-[11px] text-ink-faint">snapshot {stats.snapshot.content_hash.slice(0, 12)}</span>
         </div>
       )}
       <div className="mb-5"><GraphAsk /></div>
@@ -64,10 +65,10 @@ export function GraphModule() {
           <div className="border-b border-line p-3">
             <label className="relative flex items-center">
               <Search className="pointer-events-none absolute start-2.5 size-4 text-ink-faint" />
-              <input id="graph-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find an entity" className="h-9 w-full rounded-md border border-line bg-surface-2 ps-8 pe-2 text-[13px]" />
+              <input autoComplete="off" id="graph-search" aria-label="Find an entity in the graph" value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. Jebel Ali, Strait of Hormuz…" className="h-9 w-full rounded-md border border-line bg-surface-2 ps-8 pe-2 text-[13px]" />
             </label>
           </div>
-          <ul className="flex-1 overflow-y-auto p-1.5">
+          <ul className="cv-auto flex-1 overflow-y-auto p-1.5">
             {list.map((e) => (
               <li key={e.key}>
                 <button type="button" onClick={() => select(e.key)} className={cn("flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-start text-[13px] hover:bg-surface-2", e.key === focus && "bg-primary-soft")}>
@@ -94,9 +95,9 @@ export function GraphModule() {
         </Panel>
 
         <Panel className="flex max-h-[680px] flex-col">
-          <div role="tablist" className="flex border-b border-line">
+          <div role="tablist" aria-label="Graph detail views" className="flex border-b border-line">
             {(["detail", "paths"] as const).map((v) => (
-              <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} className={cn("-mb-px flex-1 border-b-2 px-3 py-2.5 text-[13px]", view === v ? "border-primary font-medium" : "border-transparent text-ink-muted")}>
+              <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} className={cn("-mb-px flex-1 border-b-2 px-3 py-2.5 text-[13px]", view === v ? "border-primary font-medium" : "border-transparent text-ink-muted hover:text-ink")}>
                 {v === "detail" ? "Entity and links" : "Impact paths"}
               </button>
             ))}
@@ -169,7 +170,7 @@ export function PathList({ paths, onSelect }: { paths: Paths; onSelect?: (k: str
                   <span className="block truncate">{h.entity.name}</span>
                   <span className="text-[11px] text-ink-faint">{h.via.label} · {typeLabel(h.entity.type)}</span>
                 </button>
-                <span className="flex shrink-0 items-center gap-1.5"><ClaimBadge claim={h.via.class} /><span className="w-10 text-end text-[11px] tabular text-ink-muted">{h.cumulativeWeight.toFixed(2)}</span></span>
+                <span className="flex shrink-0 items-center gap-1.5"><ClaimBadge claim={h.via.class} /><span className="w-10 text-end text-[11px] tabular text-ink-muted">{num(h.cumulativeWeight, 2)}</span></span>
               </li>
             ))}
             {hops.length > 15 && <li className="px-1.5 text-[12px] text-ink-faint">and {hops.length - 15} more</li>}

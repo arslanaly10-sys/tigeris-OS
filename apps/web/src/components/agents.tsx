@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowRight, Bot, ChevronDown, ChevronRight, Cpu, Download, FileText, Gavel, Play, Scale, Send, ShieldCheck, Swords, ThumbsDown, ThumbsUp, Wrench } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { requireText, clearInvalid, useUnsavedWarning } from "@/lib/forms";
+import { formatDate, num } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { Panel, PanelHeader } from "./ui/panel";
 import { Badge } from "./ui/badge";
@@ -161,7 +162,7 @@ export function AgentAnalysis({ caseKey, onDone }: { caseKey: string; onDone?: (
             <span>Steps: <span className="tabular text-ink">{d!.steps.length}</span>/12</span>
             <span>Model calls: <span className="tabular text-ink">{d!.calls.filter((c) => c.outcome === "ok" || c.outcome === "cached").length}</span>{d!.calls.some((c) => c.outcome === "blocked") && <span className="text-warn"> · {d!.calls.filter((c) => c.outcome === "blocked").length} blocked</span>}</span>
             <span>Tokens: <span className="tabular text-ink">{d!.calls.reduce((s, c) => s + c.tokens_in + c.tokens_out, 0).toLocaleString("en-GB")}</span></span>
-            <span>Cost: <span className="tabular text-ink">USD {d!.calls.reduce((s, c) => s + c.cost_usd, 0).toFixed(4)}</span></span>
+            <span>Cost: <span className="tabular text-ink">USD {num(d!.calls.reduce((s, c) => s + c.cost_usd, 0), 4)}</span></span>
             <span>By {run.requested_by_label} · {formatDate(run.started_at, true)}</span>
             {run.error && <span className="text-crit">Error: {run.error}</span>}
           </div>
@@ -205,7 +206,7 @@ function Debate({ challenges }: { challenges: Challenge[] }) {
         {challenges.map((c) => (
           <li key={c.id} className="grid gap-1.5 rounded-md border border-line bg-surface-2 p-3 text-[13px]">
             <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
-              <span className="font-mono text-ink-faint">{c.id}</span>
+              <span translate="no" className="font-mono text-ink-faint">{c.id}</span>
               <span className="font-medium">{AGENT_LABEL[c.challenger] ?? c.challenger}</span><ArrowRight className="size-3.5 text-ink-faint rtl:rotate-180" aria-label="challenges" /><span className="font-medium">{AGENT_LABEL[c.target] ?? c.target}</span>
               <Badge tone={c.status === "accepted" ? "ok" : "info"} className="ms-auto">{c.status === "accepted" ? "Accepted" : "Rebutted"}</Badge>
             </div>
@@ -225,10 +226,10 @@ function StepCard({ s, calls }: { s: Step; calls: Call[] }) {
   return (
     <Panel className="grid gap-2 p-3.5">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-[11px] text-ink-faint">#{s.seq}</span>
+        <span translate="no" className="font-mono text-[11px] text-ink-faint">#{s.seq}</span>
         <span className="font-semibold">{s.agent_key === "sector" ? s.title.split(":")[0] : AGENT_LABEL[s.agent_key] ?? s.agent_key}</span>
         <WriterBadge writer={s.writer} />
-        <span className="ms-auto tabular text-[11.5px] text-ink-faint">{(s.ms / 1000).toFixed(1)} s</span>
+        <span className="ms-auto tabular text-[11.5px] text-ink-faint">{num((s.ms / 1000), 1)} s</span>
       </div>
       <p className="text-[12.5px] text-ink-muted">{s.agent_key === "sector" ? s.title.split(": ").slice(1).join(": ") : s.title}</p>
       <CheckedText text={s.text} sources={s.sources} className="text-[13.5px]" />
@@ -237,14 +238,14 @@ function StepCard({ s, calls }: { s: Step; calls: Call[] }) {
       {trace && (
         <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-2.5 text-[12px]">
           <div><div className="mb-1 font-medium">Tool calls</div>
-            <ul className="grid gap-1">{s.tool_calls.map((t, i) => <li key={i} className="grid grid-cols-[1fr_auto] gap-2"><span><span className="font-mono text-accent">{t.tool}</span> <span className="text-ink-faint">{JSON.stringify(t.input)}</span><br /><span className="text-ink-muted">→ {t.summary}</span></span><span className="tabular text-ink-faint">{t.ms} ms</span></li>)}</ul>
+            <ul className="grid gap-1">{s.tool_calls.map((t, i) => <li key={i} className="grid grid-cols-[1fr_auto] gap-2"><span><span translate="no" className="font-mono text-accent">{t.tool}</span> <span className="text-ink-faint">{JSON.stringify(t.input)}</span><br /><span className="text-ink-muted">→ {t.summary}</span></span><span className="tabular text-ink-faint">{t.ms} ms</span></li>)}</ul>
           </div>
           <div><div className="mb-1 font-medium">Sources given to the writer ({s.sources.length})</div>
-            <ul className="grid gap-0.5">{s.sources.map((x) => <li key={x.tag} className="text-ink-muted"><span className="font-mono text-ink-faint">{x.tag}</span> {x.label}: {x.text}</li>)}</ul>
+            <ul className="grid gap-0.5">{s.sources.map((x) => <li key={x.tag} className="text-ink-muted"><span translate="no" className="font-mono text-ink-faint">{x.tag}</span> {x.label}: {x.text}</li>)}</ul>
           </div>
           {!!s.output.excluded?.length && <div><div className="mb-1 font-medium text-warn">Excluded before the model</div><ul>{s.output.excluded.map((x, i) => <li key={i} className="text-ink-muted">{x.label}: {x.reason}</li>)}</ul></div>}
           {calls.length > 0 && <div><div className="mb-1 font-medium">Model gateway</div>
-            <ul className="grid gap-0.5">{calls.map((c, i) => <li key={i} className="text-ink-muted"><Badge tone={c.outcome === "ok" || c.outcome === "cached" ? "ok" : c.outcome === "blocked" ? "warn" : "crit"}>{c.outcome}</Badge> {c.provider} · {c.model}{c.outcome === "ok" && ` · ${c.tokens_in}+${c.tokens_out} tokens · ${(c.latency_ms / 1000).toFixed(1)} s · USD ${c.cost_usd.toFixed(4)}`}{c.reason && ` · ${c.reason}`}</li>)}</ul>
+            <ul className="grid gap-0.5">{calls.map((c, i) => <li key={i} className="text-ink-muted"><Badge tone={c.outcome === "ok" || c.outcome === "cached" ? "ok" : c.outcome === "blocked" ? "warn" : "crit"}>{c.outcome}</Badge> {c.provider} · {c.model}{c.outcome === "ok" && ` · ${c.tokens_in}+${c.tokens_out} tokens · ${num((c.latency_ms / 1000), 1)} s · USD ${num(c.cost_usd, 4)}`}{c.reason && ` · ${c.reason}`}</li>)}</ul>
           </div>}
           {s.output.modelText && <div><div className="mb-1 font-medium">Raw model text (before the citation check)</div><p className="whitespace-pre-wrap break-words text-ink-faint">{s.output.modelText}</p></div>}
         </div>
@@ -289,11 +290,17 @@ function OptionCard({ r, onChange }: { r: Rec; onChange: () => void }) {
   const [details, setDetails] = useState(false);
   const moved = r.rank !== r.baseRank;
   async function sendVote() {
+    const bad = requireText(reason, 5, `reason-${r.id}`, "The reason");
+    if (bad) { setMsg(bad); return; }
+    clearInvalid(`reason-${r.id}`);
     const res = await api<{ rankBefore: number; rankAfter: number }>(`/recommendations/${r.id}/feedback`, { json: { vote, reason } });
     setMsg(res.ok ? `Feedback recorded. Rank ${res.data.rankBefore} → ${res.data.rankAfter}.` : res.message);
     if (res.ok) { setVote(null); setReason(""); onChange(); }
   }
   async function sendAdjust() {
+    const bad = requireText(reason, 5, `reason-${r.id}`, "The reason");
+    if (bad) { setMsg(bad); return; }
+    clearInvalid(`reason-${r.id}`);
     const res = await api(`/confidence-adjustments`, { json: { targetType: "recommendation", targetId: r.id, toBand: band, reason } });
     setMsg(res.ok ? "Adjustment recorded." : res.message);
     if (res.ok) { setAdjust(false); setReason(""); onChange(); }
@@ -313,14 +320,14 @@ function OptionCard({ r, onChange }: { r: Rec; onChange: () => void }) {
             <p className="mt-0.5 text-[13px] text-ink-muted">{r.description}</p>
           </div>
           <div className="text-end">
-            <div className="tabular text-[20px] font-semibold">{r.score.toFixed(1)}</div>
-            <div className="text-[11px] text-ink-faint">score{r.learned.adjustment ? ` (${r.base_score.toFixed(1)} ${r.learned.adjustment > 0 ? "+" : "−"} ${Math.abs(r.learned.adjustment)} learned)` : ""}</div>
+            <div className="tabular text-[20px] font-semibold">{num(r.score, 1)}</div>
+            <div className="text-[11px] text-ink-faint">score{r.learned.adjustment ? ` (${num(r.base_score, 1)} ${r.learned.adjustment > 0 ? "+" : "−"} ${Math.abs(r.learned.adjustment)} learned)` : ""}</div>
           </div>
         </div>
         <dl className="grid gap-3 text-[12.5px] sm:grid-cols-3">
           <div><dt className="text-ink-faint">90-day value at risk</dt><dd className="tabular">{fmtUsd(r.effect.var_90d.base)} → <span className="font-medium text-ink">{fmtUsd(r.effect.var_90d.with)}</span></dd></div>
-          <div><dt className="text-ink-faint">Resilience score</dt><dd className="tabular">{r.effect.resilience.base.toFixed(0)} → <span className="font-medium text-ink">{r.effect.resilience.with.toFixed(0)}</span></dd></div>
-          <div><dt className="text-ink-faint">Net shortfall, first 72 h</dt><dd className="tabular">{r.effect.shortfall_72h.base.toFixed(1)} → <span className="font-medium text-ink">{r.effect.shortfall_72h.with.toFixed(1)}</span> mb/d</dd></div>
+          <div><dt className="text-ink-faint">Resilience score</dt><dd className="tabular">{num(r.effect.resilience.base, 0)} → <span className="font-medium text-ink">{num(r.effect.resilience.with, 0)}</span></dd></div>
+          <div><dt className="text-ink-faint">Net shortfall, first 72 h</dt><dd className="tabular">{num(r.effect.shortfall_72h.base, 1)} → <span className="font-medium text-ink">{num(r.effect.shortfall_72h.with, 1)}</span> mb/d</dd></div>
         </dl>
         <p className="text-[12px] text-ink-faint">Effect basis: {r.effect.basis}. Engine input {r.effect.input_hash.slice(0, 12)}.</p>
         <div className="grid gap-3 md:grid-cols-2">
@@ -357,8 +364,8 @@ function OptionCard({ r, onChange }: { r: Rec; onChange: () => void }) {
         {(vote !== null || adjust) && (
           <div className="flex flex-wrap items-end gap-2">
             {adjust && <label className="grid gap-1 text-[12px] text-ink-muted">New band<select value={band} onChange={(e) => setBand(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink">{["low", "medium", "high"].filter((b) => b !== r.effectiveBand).map((b) => <option key={b}>{b}</option>)}</select></label>}
-            <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Reason (recorded and audited)<input value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" placeholder={adjust ? "Why the confidence should change" : "Why this option is or is not useful"} /></label>
-            <Button size="sm" variant="primary" disabled={reason.trim().length < 5} onClick={adjust ? sendAdjust : sendVote}>Record</Button>
+            <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Reason (recorded and audited)<input autoComplete="off" id={`reason-${r.id}`} value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" placeholder={adjust ? "e.g. Operator confirmed capacity in writing…" : "e.g. Feasible within the decision window…"} /></label>
+            <Button size="sm" variant="primary" onClick={adjust ? sendAdjust : sendVote}>{adjust ? "Record adjustment" : "Record feedback"}</Button>
           </div>
         )}
       </Panel>
@@ -427,10 +434,10 @@ export function AskPanel({ caseKey }: { caseKey: string }) {
       <Panel className="p-4">
         <h3 className="text-[17px] font-semibold">Ask TIGERIS</h3>
         <p className="mt-1 text-[13px] text-ink-muted">Answers come only from this case's records: its signals, evidence, scenario results, options and agent challenges. Every sentence carries its source or is marked unverified. A question the records cannot answer gets that answer.</p>
-        <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); if (q.trim().length > 2) ask(q.trim()); }}>
-          <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Question about this case" placeholder="Ask about this case…" className="h-9 min-w-[260px] flex-1 rounded-md border border-line bg-surface-2 px-3 text-[13.5px]" />
+        <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); const bad = requireText(q, 3, "ask-case", "The question"); if (bad) { setErr(bad); return; } clearInvalid("ask-case"); ask(q.trim()); }}>
+          <input autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} id="ask-case" aria-label="Question about this case" placeholder="e.g. What is the 90-day value at risk?…" className="h-9 min-w-[260px] flex-1 rounded-md border border-line bg-surface-2 px-3 text-[13.5px]" />
           <ProviderPicker value={provider ?? defaultProvider} onChange={setProvider} providers={providers} />
-          <Button variant="primary" type="submit" disabled={busy || q.trim().length < 3}><Send />{busy ? "Answering…" : "Ask"}</Button>
+          <Button variant="primary" type="submit" disabled={busy}><Send />{busy ? "Answering…" : "Ask"}</Button>
         </form>
         <div className="mt-2 flex flex-wrap gap-1.5">{examples.map((x) => <button key={x} type="button" disabled={busy} onClick={() => { setQ(x); ask(x); }} className="rounded-full border border-line px-2.5 py-1 text-[12px] text-ink-muted hover:border-line-strong hover:text-ink">{x}</button>)}</div>
         {err && <p role="alert" className="mt-2 text-[12.5px] text-crit">{err}</p>}
@@ -466,10 +473,10 @@ export function GraphAsk() {
   return (
     <Panel className="p-4">
       <div className="eyebrow text-ink-faint">Ask the graph</div>
-      <form className="mt-2 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); if (q.trim().length > 2) ask(q.trim()); }}>
-        <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Question about the graph" placeholder="e.g. Which holdings are exposed to Strait of Hormuz?" className="h-9 min-w-[260px] flex-1 rounded-md border border-line bg-surface-2 px-3 text-[13.5px]" />
+      <form className="mt-2 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); const bad = requireText(q, 3, "ask-graph", "The question"); if (bad) { setErr(bad); return; } clearInvalid("ask-graph"); ask(q.trim()); }}>
+        <input autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} id="ask-graph" aria-label="Question about the graph" placeholder="e.g. Which holdings are exposed to Strait of Hormuz?…" className="h-9 min-w-[260px] flex-1 rounded-md border border-line bg-surface-2 px-3 text-[13.5px]" />
         <ProviderPicker value={provider ?? defaultProvider} onChange={setProvider} providers={providers} />
-        <Button variant="primary" type="submit" disabled={busy || q.trim().length < 3}><Send />{busy ? "Working…" : "Ask"}</Button>
+        <Button variant="primary" type="submit" disabled={busy}><Send />{busy ? "Working…" : "Ask"}</Button>
       </form>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {["What is the path between Strait of Hormuz and Jebel Ali?", "Which holdings are exposed to Bab el-Mandeb?", "What is connected to Ras Tanura?"].map((x) => <button key={x} type="button" disabled={busy} onClick={() => { setQ(x); ask(x); }} className="rounded-full border border-line px-2.5 py-1 text-[12px] text-ink-muted hover:border-line-strong hover:text-ink">{x}</button>)}
@@ -498,7 +505,7 @@ function ExportMenu({ caseKey }: { caseKey: string }) {
   async function download() {
     setErr(null);
     const res = await fetch(`/api/cases/${caseKey}/brief.pdf?audience=${audience}`, { credentials: "same-origin" });
-    if (!res.ok) { const b = await res.json().catch(() => ({})); setErr(b.message ?? "Export refused."); return; }
+    if (!res.ok) { const b = await res.json().catch(() => ({})); setErr(b.message ?? "Export refused. Choose a version your role may release, or ask an executive."); return; }
     const url = URL.createObjectURL(await res.blob());
     const a = document.createElement("a");
     a.href = url; a.download = `${caseKey}-brief-${audience}.pdf`; a.click();

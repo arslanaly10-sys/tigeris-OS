@@ -9,6 +9,7 @@ import {
   type MovingPoint, type Scenario,
 } from "@tigeris/shared";
 import { api } from "@/lib/api";
+import { num } from "@/lib/format";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Drawer, Field } from "./drawer";
@@ -270,7 +271,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         <div ref={box} className="h-full w-full" role="region" aria-label="Movement map of the GCC. A table view with the same data is available." />
         {!compact && (
           <div className="absolute start-3 top-3 z-10 w-[220px] rounded-md border border-line bg-surface/95 text-[12.5px] shadow-lg backdrop-blur">
-            <button type="button" className="flex w-full items-center gap-2 px-3 py-2 font-medium" onClick={() => setLayersOpen((v) => !v)} aria-expanded={layersOpen}><Layers className="size-4 text-accent" />Layers</button>
+            <button type="button" className="flex w-full items-center gap-2 px-3 py-2 font-medium hover:bg-surface-2" onClick={() => setLayersOpen((v) => !v)} aria-expanded={layersOpen}><Layers className="size-4 text-accent" />Layers</button>
             {layersOpen && (
               <div className="grid max-h-[420px] gap-2 overflow-y-auto border-t border-line px-3 py-2">
                 {["Movement", "Infrastructure", "Context"].map((g) => (
@@ -304,7 +305,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
               <>
                 <Button size="icon" variant="ghost" onClick={() => setMinutes(0)} aria-label="Back to start"><SkipBack /></Button>
                 <Button size="icon" variant="secondary" onClick={() => setPlaying((p) => !p)} aria-label={playing ? "Pause" : "Play"}>{playing ? <Pause /> : <Play />}</Button>
-                <input type="range" id="replay-time" aria-label="Replay time" min={0} max={1439} value={Math.floor(minutes)} onChange={(e) => { setMinutes(Number(e.target.value)); setPlaying(false); }} className="min-w-[200px] flex-1 accent-[var(--primary)]" />
+                <input autoComplete="off" type="range" id="replay-time" aria-label="Replay time" min={0} max={1439} value={Math.floor(minutes)} onChange={(e) => { setMinutes(Number(e.target.value)); setPlaying(false); }} className="min-w-[200px] flex-1 accent-[var(--primary)]" />
                 <div className="flex gap-1" role="group" aria-label="Playback speed">
                   {SPEEDS.map((s, i) => <Button key={s.label} size="sm" variant={speed === i ? "primary" : "ghost"} onClick={() => setSpeed(i)} aria-pressed={speed === i}>{s.label}</Button>)}
                 </div>
@@ -324,30 +325,36 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
 }
 
 function MoversTable({ movers, entities, onSelect }: { movers: MovingPoint[]; entities: MapEntity[]; onSelect: (s: { kind: "entity"; key: string } | { kind: "mover"; id: string }) => void }) {
+  const [showAll, setShowAll] = useState(false);
   const [tab, setTab] = useState<"movers" | "assets">("movers");
   return (
     <div className="rounded-lg border border-line bg-surface">
-      <div role="tablist" className="flex border-b border-line">
-        {(["movers", "assets"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-4 py-2 text-[13px]", tab === t ? "border-primary font-medium" : "border-transparent text-ink-muted")}>{t === "movers" ? `Ships and trucks (${movers.length})` : `Infrastructure (${entities.filter((e) => ENTITY_LAYER[e.type]).length})`}</button>)}
+      <div role="tablist" aria-label="Table view" className="flex border-b border-line">
+        {(["movers", "assets"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn("-mb-px border-b-2 px-4 py-2 text-[13px]", tab === t ? "border-primary font-medium" : "border-transparent text-ink-muted hover:text-ink")}>{t === "movers" ? `Ships and trucks (${movers.length})` : `Infrastructure (${entities.filter((e) => ENTITY_LAYER[e.type]).length})`}</button>)}
       </div>
       <div className="max-h-[560px] overflow-auto">
         <table className="w-full min-w-[720px] text-[12.5px]">
           <thead className="sticky top-0 bg-surface"><tr className="border-b border-line text-ink-faint">{(tab === "movers" ? ["Name", "Type", "Status", "Route", "Speed", "Position"] : ["Name", "Type", "Country", "Position", "Class"]).map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr></thead>
           <tbody>
-            {tab === "movers" ? movers.map((p) => (
-              <tr key={p.id} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "mover", id: p.id })}>
-                <td className="px-3 py-1.5">{p.name} <span className="font-mono text-[10.5px] text-ink-faint">{p.id}</span></td><td className="px-3 py-1.5">{p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"}</td>
+            {tab === "movers" ? movers.slice(0, showAll ? undefined : 50).map((p) => (
+              <tr key={p.id} role="button" tabIndex={0} aria-label={`Show ${p.name} on the map`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "mover", id: p.id })} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.currentTarget.click(); } }}>
+                <td className="px-3 py-1.5">{p.name} <span translate="no" className="font-mono text-[10.5px] text-ink-faint">{p.id}</span></td><td className="px-3 py-1.5">{p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"}</td>
                 <td className="px-3 py-1.5"><Badge tone={p.status === "holding" ? "warn" : p.status === "rerouted" ? "gold" : "neutral"}>{p.status}</Badge></td><td className="px-3 py-1.5 text-ink-muted">{p.laneName}</td>
-                <td className="px-3 py-1.5 tabular">{p.speedLabel}</td><td className="px-3 py-1.5 font-mono text-[11px] tabular text-ink-faint">{p.lngLat[1].toFixed(2)}, {p.lngLat[0].toFixed(2)}</td>
+                <td className="px-3 py-1.5 tabular">{p.speedLabel}</td><td className="px-3 py-1.5 font-mono text-[11px] tabular text-ink-faint">{num(p.lngLat[1], 2)}, {num(p.lngLat[0], 2)}</td>
               </tr>
-            )) : entities.filter((e) => ENTITY_LAYER[e.type]).map((e) => (
-              <tr key={e.key} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "entity", key: e.key })}>
+            )) : entities.filter((e) => ENTITY_LAYER[e.type]).slice(0, showAll ? undefined : 50).map((e) => (
+              <tr key={e.key} role="button" tabIndex={0} aria-label={`Show ${e.name} on the map`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "entity", key: e.key })} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.currentTarget.click(); } }}>
                 <td className="px-3 py-1.5">{e.name}</td><td className="px-3 py-1.5">{e.type.replace("_", " ")}</td><td className="px-3 py-1.5">{e.country ?? "—"}</td>
-                <td className="px-3 py-1.5 font-mono text-[11px] tabular text-ink-faint">{e.lat.toFixed(2)}, {e.lon.toFixed(2)}</td><td className="px-3 py-1.5"><ClaimBadge claim={e.claim_class} /></td>
+                <td className="px-3 py-1.5 font-mono text-[11px] tabular text-ink-faint">{num(e.lat, 2)}, {num(e.lon, 2)}</td><td className="px-3 py-1.5"><ClaimBadge claim={e.claim_class} /></td>
               </tr>
             ))}
           </tbody>
         </table>
+        {!showAll && (tab === "movers" ? movers.length : entities.filter((e) => ENTITY_LAYER[e.type]).length) > 50 && (
+          <button type="button" onClick={() => setShowAll(true)} className="w-full border-t border-line px-3 py-2 text-[12.5px] text-accent hover:bg-surface-2">
+            Show all {tab === "movers" ? movers.length : entities.filter((e) => ENTITY_LAYER[e.type]).length} rows
+          </button>
+        )}
       </div>
     </div>
   );
@@ -369,7 +376,7 @@ function SelectionDrawer({ selected, movers, onClose }: { selected: { kind: "ent
           <dl className="grid grid-cols-2 gap-3">
             <Field label="Simulation id">{mover.id}</Field><Field label="Type">{mover.kind === "vessel" ? VESSEL_LABEL[mover.type as keyof typeof VESSEL_LABEL] : "Truck"}</Field>
             <Field label="Route">{mover.laneName}</Field><Field label="Speed">{mover.speedLabel}</Field>
-            <Field label="Position (approximate)">{mover.lngLat[1].toFixed(3)}, {mover.lngLat[0].toFixed(3)}</Field><Field label="Details">{mover.detail}</Field>
+            <Field label="Position (approximate)">{num(mover.lngLat[1], 3)}, {num(mover.lngLat[0], 3)}</Field><Field label="Details">{mover.detail}</Field>
           </dl>
           <p className="rounded-md border border-warn/40 bg-warn-soft p-3 text-warn">Fictional vessel from the movement simulation. It does not represent any real ship, cargo, destination or intent.</p>
         </div>

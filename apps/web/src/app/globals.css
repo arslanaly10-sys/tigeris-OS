@@ -297,3 +297,41 @@ main :is(input, select, textarea):focus-visible {
 ::selection {
   background: color-mix(in oklab, var(--primary) 35%, transparent);
 }
+
+/* Web Interface Guidelines: touch, overscroll, anchors, native controls. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+@media (pointer: fine) {
+  html {
+    overscroll-behavior: none;
+  }
+}
+:is(a, button, [role="button"], [role="tab"], input, select, textarea, label, summary) {
+  touch-action: manipulation;
+}
+:is(h1, h2, h3, h4, [id]) {
+  scroll-margin-top: 112px;
+}
+h3,
+h4 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+select,
+option {
+  background-color: var(--surface-2);
+  color: var(--ink);
+}
+/* Rows that open a detail view are keyboard-reachable; show their focus. */
+tr[role="button"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+/* Long lists render lazily off-screen. */
+.cv-auto > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 56px;
+}
