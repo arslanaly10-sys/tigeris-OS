@@ -22,7 +22,7 @@ interface Run {
   cascade: { day: number; availability_pct: number; net_shortfall_mbd: number; oil_price_usd: number; cumulative_lost_mb: number; reserve_cover_days: number; gross_loss_mbd: number; bypass_mbd: number }[];
   resilience: { score: number; components: { key: string; label: string; score: number; weight: number; basis: string }[] };
   sensitivity: { driver: string; label: string; low: number; high: number }[];
-  top_exposures: { name: string; sector: string; value_usd: number; path_strength: number }[];
+  top_exposures: { holding_key: string; name: string; sector: string; value_usd: number; path_strength: number }[];
   results: Result[]; assumptions: { key: string; label: string; value_num: number; unit: string }[];
 }
 
@@ -250,7 +250,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
               <PanelHeader eyebrow="Synthetic institution context" title="Most exposed holdings" actions={<ClaimBadge claim="synthetic" />} />
               <ul className="divide-y divide-line">
                 {runs[0]!.top_exposures.map((e) => (
-                  <li key={e.name} className="flex items-center justify-between gap-3 px-4 py-2 text-[12.5px]">
+                  <li key={e.holding_key} className="flex items-center justify-between gap-3 px-4 py-2 text-[12.5px]">
                     <span className="min-w-0"><span className="block truncate">{e.name}</span><span className="text-[11.5px] text-ink-faint">{e.sector} · path strength {e.path_strength.toFixed(2)}</span></span>
                     <span className="tabular">{fmtUnit(e.value_usd, "USD")}</span>
                   </li>
@@ -284,7 +284,7 @@ function ResultLineage({ id, onClose }: { id: string | null; onClose: () => void
             <div className="mt-2 font-serif text-[28px] tabular">{fmtUnit(d.result.value, d.result.unit)}</div>
             {d.result.p10 !== null && <div className="text-ink-muted tabular">P10 {fmtUnit(d.result.p10, d.result.unit)} · P50 {fmtUnit(d.result.p50, d.result.unit)} · P90 {fmtUnit(d.result.p90, d.result.unit)}</div>}
           </div>
-          <div><div className="mb-1 font-semibold">Formula</div><p className="rounded-md border border-line p-2.5 font-mono text-[12px]">{d.result.formula}</p></div>
+          <div><div className="mb-1 font-semibold">Formula</div><p className="whitespace-pre-wrap break-words rounded-md border border-line p-2.5 font-mono text-[12px]">{d.result.formula}</p></div>
           <div>
             <div className="mb-1.5 font-semibold">Facts used ({d.facts.length})</div>
             {d.facts.length === 0 && <p className="text-ink-muted">This measure uses assumptions only.</p>}

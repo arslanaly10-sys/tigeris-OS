@@ -20,7 +20,7 @@ pnpm install
 pnpm db:migrate && pnpm db:seed
 pnpm dev
 ```
-Reasoning service:
+Reasoning service (needed for scenarios and for the API tests):
 ```bash
 cd services/reasoning && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/uvicorn app.main:app --port 8000
