@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowRight, GitBranch, Search, Waypoints } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageHeader } from "../page-header";
+import { GraphAsk } from "../agents";
 import { Panel, PanelHeader } from "../ui/panel";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -57,6 +58,7 @@ export function GraphModule() {
           <span className="font-mono text-[11px] text-ink-faint">snapshot {stats.snapshot.content_hash.slice(0, 12)}</span>
         </div>
       )}
+      <div className="mb-5"><GraphAsk /></div>
       <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)_380px]">
         <Panel className="flex max-h-[680px] flex-col">
           <div className="border-b border-line p-3">

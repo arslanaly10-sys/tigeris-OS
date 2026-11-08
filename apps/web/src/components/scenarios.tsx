@@ -272,7 +272,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
   );
 }
 
-function ResultLineage({ id, onClose }: { id: string | null; onClose: () => void }) {
+export function ResultLineage({ id, onClose }: { id: string | null; onClose: () => void }) {
   const [d, setD] = useState<{ result: Result & { formula: string; run_name: string; model_version: string; input_hash: string; monte_carlo_runs: number; run_at: string; created_by_label: string }; facts: { id: string; subject_label: string; predicate_label: string; value_num: number; unit: string; period: string | null; claim_class: string; source_name: string }[]; assumptions: { key: string; label: string; kind: string; value_num: number | null; unit: string; basis: string }[] } | null>(null);
   useEffect(() => { if (id) { setD(null); api<NonNullable<typeof d>>(`/scenario-results/${id}/lineage`).then((r) => r.ok && setD(r.data)); } }, [id]);
   return (

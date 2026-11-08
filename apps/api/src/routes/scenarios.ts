@@ -12,7 +12,7 @@ const DRIVER_KEYS = ["duration_days", "oil_price_usd", "route_availability_pct",
 const driversSchema = z.object(Object.fromEntries(DRIVER_KEYS.map((k) => [k, z.number().optional()]))).strict();
 const variantSchema = z.object({ name: z.string().min(1).max(80), drivers: driversSchema });
 
-async function engine<T>(path: string, body?: unknown): Promise<T> {
+export async function engine<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${config.reasoningUrl}${path}`, {
     method: body ? "POST" : "GET", headers: body ? { "content-type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined,
     signal: AbortSignal.timeout(60_000),
@@ -22,7 +22,7 @@ async function engine<T>(path: string, body?: unknown): Promise<T> {
 }
 
 /** Assembles the engine input from this institution's own facts and graph (TR-035). */
-async function buildPayload(tx: Tx, caseRow: { id: string; scenario_template: string }) {
+export async function buildPayload(tx: Tx, caseRow: { id: string; scenario_template: string }) {
   const fact = async (predicate: string) => (await tx.query(
     `SELECT f.id, f.value_num FROM evidence_facts f JOIN evidence_objects e ON e.id = f.evidence_id JOIN sources s ON s.id = e.source_id
       WHERE s.key = 'eia.chokepoints' AND f.predicate = $1 AND e.duplicate_of IS NULL ORDER BY f.created_at DESC LIMIT 1`, [predicate])).rows[0];
@@ -52,13 +52,13 @@ async function buildPayload(tx: Tx, caseRow: { id: string; scenario_template: st
   return { payload: { template: caseRow.scenario_template, facts, exposures, portfolio_value_usd: portfolio, origin, monte_carlo_runs: 200, seed: 7 }, snapshot };
 }
 
-interface EngineResult {
+export interface EngineResult {
   model_version: string; input_hash: string; drivers: Record<string, number>; derived: unknown; cascade: unknown; resilience: unknown; sensitivity: unknown; top_exposures: unknown; monte_carlo_runs: number;
   results: Array<{ key: string; label: string; unit: string; horizon: string; value: number; p10: number | null; p50: number | null; p90: number | null; method: string; formula: string; inputs: Array<{ kind: "fact" | "assumption"; ref?: string | null; key: string }> }>;
   assumptions: Array<{ key: string; label: string; kind: "driver" | "parameter"; value: number | null; unit: string; basis: string }>;
 }
 
-async function persistRun(tx: Tx, inst: string, caseId: string, groupId: string, variant: string, name: string, payload: unknown, snapshot: string | null, r: EngineResult, ms: number, actor: { id: string; label: string }) {
+export async function persistRun(tx: Tx, inst: string, caseId: string, groupId: string, variant: string, name: string, payload: unknown, snapshot: string | null, r: EngineResult, ms: number, actor: { id: string; label: string }) {
   const run = await tx.query<{ id: string }>(
     `INSERT INTO scenario_runs (institution_id, case_id, group_id, variant, name, template, model_version, input_hash, payload, graph_snapshot_id, derived, cascade, resilience, sensitivity, top_exposures, monte_carlo_runs, duration_ms, created_by, created_by_label)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING id`,
@@ -84,7 +84,7 @@ async function persistRun(tx: Tx, inst: string, caseId: string, groupId: string,
   return runId;
 }
 
-async function loadGroup(tx: Tx, groupId: string) {
+export async function loadGroup(tx: Tx, groupId: string) {
   const runs = (await tx.query("SELECT id, group_id, variant, name, template, model_version, input_hash, derived, cascade, resilience, sensitivity, top_exposures, monte_carlo_runs, duration_ms, created_by_label, created_at, payload->'drivers' AS drivers_in FROM scenario_runs WHERE group_id = $1 ORDER BY variant", [groupId])).rows;
   for (const r of runs) {
     r.results = (await tx.query("SELECT id, key, label, horizon, unit, value, p10, p50, p90, method FROM scenario_results WHERE run_id = $1", [r.id])).rows;

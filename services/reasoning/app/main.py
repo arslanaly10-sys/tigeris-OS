@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import Body
 
+from . import llm
 from .engine import DRIVERS, MODEL_VERSION, PARAMETERS, TEMPLATES, run_scenario
 from .horizons import HORIZONS, horizon_windows
 
@@ -45,3 +46,15 @@ def templates() -> dict:
 def run(payload: dict[str, Any] = Body(...)) -> dict:
     """Runs one scenario deterministically. The caller persists the result with its lineage."""
     return run_scenario(payload)
+
+
+@app.get("/llm/status")
+def llm_status() -> dict:
+    """Local model presence, hash and load state. Weights stay on this host."""
+    return llm.status()
+
+
+@app.post("/llm/chat")
+def llm_chat(payload: dict[str, Any] = Body(...)) -> dict:
+    """Bounded local completion for the API gateway. The gateway enforces policy before calling."""
+    return llm.chat(payload.get("messages", []), int(payload.get("max_tokens", 256)), payload.get("json_schema"))

@@ -82,7 +82,7 @@ export async function resetDemo() {
   const c = await pool.connect();
   try {
     await c.query("BEGIN");
-    await c.query("TRUNCATE scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
+    await c.query("TRUNCATE case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
     for (const r of ROLES) await c.query("INSERT INTO roles (key, label) VALUES ($1,$2)", [r, ROLE_LABELS[r]]);
     for (const inst of DEMO_INSTITUTIONS) {
       await c.query(
@@ -122,6 +122,8 @@ export async function resetDemo() {
         await c.query("INSERT INTO trusted_signers (institution_id, name, public_key_pem, fingerprint) VALUES ($1,$2,$3,$4)", [inst.id, "TIGERIS public-data collector (demonstration)", pub, fp]);
       }
       const admin = peopleByRole.get("administrator")!;
+      // Sovereignty defaults: foreign models cut, outbound off, local model and deterministic writer only (Q063).
+      await c.query("INSERT INTO sovereignty_settings (institution_id) VALUES ($1)", [inst.id]);
       for (const pkg of await allBundledPackages()) {
         const bytes = await readFile(path.join(PACKAGES, pkg));
         await enqueue(c, { institutionId: inst.id, kind: "package_import", label: pkg, bytes, actorId: admin.id, actorLabel: admin.name, actorRole: "administrator" });

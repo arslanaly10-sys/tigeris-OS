@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
-import { Bell, Check, ChevronDown, Database, Landmark, LogOut, Menu, RotateCcw, Search, Server, UserRound, Users } from "lucide-react";
+import { Bell, Check, Globe2, Lock, ChevronDown, Database, Landmark, LogOut, Menu, RotateCcw, Search, Server, UserRound, Users } from "lucide-react";
 import { ROLE_LABELS } from "@tigeris/shared";
 import { MODULES } from "@/lib/modules";
 import { api } from "@/lib/api";
@@ -108,6 +108,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
           <Badge tone="info" title="Deployment profile"><Server />{t("header.environment")}</Badge>
           <Badge tone="neutral" title="Data mode"><Database />{t("header.dataMode")}</Badge>
         </div>
+        <ModelBadge />
         <Badge tone="gold" className="hidden sm:inline-flex">{t("header.demo")}</Badge>
         {lang === "ar" && <Badge tone="info" className="hidden md:inline-flex">{t("arabicDraft")}</Badge>}
 
@@ -176,5 +177,23 @@ export function Header({ onMenu }: { onMenu: () => void }) {
         </Dropdown.Root>
       </div>
     </header>
+  );
+}
+
+/** Always-visible state of the foreign-model switch (Q063). Links to the controls. */
+function ModelBadge() {
+  const [s, setS] = useState<{ foreign_models_enabled: boolean; default_provider: string } | null>(null);
+  useEffect(() => {
+    const load = () => api<{ settings: { foreign_models_enabled: boolean; default_provider: string } }>("/ai/status").then((r) => r.ok && setS(r.data.settings));
+    load();
+    const t = setInterval(load, 60_000);
+    return () => clearInterval(t);
+  }, []);
+  if (!s) return null;
+  const local = s.default_provider === "local" ? "local model" : s.default_provider === "deterministic" ? "no model" : s.default_provider;
+  return (
+    <Link href="/governance#ai" className="hidden md:inline-flex" title="Model sovereignty controls">
+      <Badge tone={s.foreign_models_enabled ? "warn" : "ok"}>{s.foreign_models_enabled ? <Globe2 /> : <Lock />}{s.foreign_models_enabled ? "Foreign models on" : "Foreign models off"} · {local}</Badge>
+    </Link>
   );
 }

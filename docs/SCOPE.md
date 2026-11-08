@@ -114,6 +114,6 @@ Plus: Reports module · global search (signals, entities, cases, memory) · noti
 |---|---|---|
 | B1 | GitHub access invalid in this session: reconnect at claude.ai/connect-github and create an empty private repo | ASAP (code lives only in this session until then) |
 | B2 | Network access to public data hosts — **done 6 Nov** (21 hosts allowed). Still unreachable from here: GCC-Stat (rate limited), UN list, SAMA, CBUAE | Week 2 |
-| B3 | Anthropic and OpenAI API keys | Week 6 |
-| B4 | Download of the local open-weight model and offline map tiles (Hugging Face / Ollama registry / tile source) | Weeks 4 and 6 |
+| B3 | Anthropic and OpenAI API keys. The gateway reads `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` from the deployment environment; none is set in this build session (OpenAI key declined on 8 Nov; an Anthropic key cannot be stored in this session's environment). Live foreign calls are therefore unverified; all controls around them are tested | Before the hosted demo (week 8) |
+| B4 | Local open-weight model — **done 8 Nov** (Qwen2.5 1.5B Instruct Q4_K_M, Apache-2.0, from Hugging Face). Offline map tiles still use bundled Natural Earth vectors | Weeks 4 and 6 |
 | B5 | Cloud VM for the hosted link (provider and account) | Week 8 |

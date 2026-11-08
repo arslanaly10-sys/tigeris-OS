@@ -35,6 +35,10 @@ services:
       API_PORT: "4000"
       REASONING_URL: http://reasoning:8000
       VAULT_DIR: /vault
+      # Foreign model keys come only from the deployment environment; leave unset to stay local-only.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
     volumes:
       - vault-data:/vault
     depends_on:
@@ -42,6 +46,10 @@ services:
 
   reasoning:
     build: { context: ., dockerfile: services/reasoning/Dockerfile }
+    environment:
+      LOCAL_MODEL_PATH: /models/qwen2.5-1.5b-instruct-q4_k_m.gguf
+    volumes:
+      - ./data/models:/models:ro   # open-weight model file, imported once (air-gap friendly)
 
   web:
     build:

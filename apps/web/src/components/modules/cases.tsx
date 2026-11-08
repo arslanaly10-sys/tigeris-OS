@@ -16,6 +16,7 @@ import { useSession } from "../session-context";
 import { ConfidenceBand, ModeBadge, URGENCY_TONE, type Confidence } from "./signals";
 import { PathList, typeLabel, type Paths } from "./graph";
 import { ScenarioWorkspace } from "../scenarios";
+import { AgentAnalysis, AskPanel, OptionsPanel } from "../agents";
 import { cn } from "@/lib/cn";
 
 const STATE_LABEL: Record<CaseState, string> = { detected: "Detected", triaged: "Triaged", analysis: "Analysis", scenario: "Scenario", review: "Review", decision: "Decision", handoff: "Handoff", closed: "Closed" };
@@ -82,7 +83,7 @@ interface CaseDetail {
   impact: Paths | null;
 }
 
-const TABS = ["Situation", "Evidence", "Impact graph", "Scenarios", "Options", "Decision and memory", "Discussion", "History"] as const;
+const TABS = ["Situation", "Evidence", "Impact graph", "Scenarios", "Agents", "Options", "Ask TIGERIS", "Decision and memory", "Discussion", "History"] as const;
 type Tab = (typeof TABS)[number];
 
 export function CaseWorkspace({ caseKey }: { caseKey: string }) {
@@ -172,13 +173,15 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
       )}
 
       {tab === "Scenarios" && <ScenarioWorkspace caseKey={c.case_key} />}
+      {tab === "Agents" && <AgentAnalysis caseKey={c.case_key} onDone={load} />}
+      {tab === "Options" && <OptionsPanel caseKey={c.case_key} />}
+      {tab === "Ask TIGERIS" && <AskPanel caseKey={c.case_key} />}
 
-      {(tab === "Options" || tab === "Decision and memory") && (
+      {tab === "Decision and memory" && (
         <Panel className="geo-pattern grid gap-3 p-6 text-[14px]">
-          <div className="flex items-center gap-2 font-semibold"><CalendarClock className="size-5 text-accent" />{tab === "Options" ? "Week 6" : "Week 7"}</div>
+          <div className="flex items-center gap-2 font-semibold"><CalendarClock className="size-5 text-accent" />Week 7</div>
           <p className="max-w-[60ch] text-ink-muted">
-            {tab === "Options" && "Ranked next actions drafted by bounded agents, each with evidence, assumptions, confidence components, constraints, owner and the authority required."}
-            {tab === "Decision and memory" && "Policy PASS/HOLD/BLOCK, the named decision with rationale, the operations handoff and an approved memory entry linked to this case."}
+            {"Policy PASS/HOLD/BLOCK, the named decision with rationale, the operations handoff and an approved memory entry linked to this case."}
           </p>
         </Panel>
       )}

@@ -7,13 +7,14 @@ import { Panel, PanelHeader } from "../ui/panel";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { useCan } from "../session-context";
+import { AiGovernance } from "../ai-governance";
 
 interface AuditEvent { seq: number; occurred_at: string; actor_type: string; actor_label: string; actor_role: string | null; action: string; resource_type: string; resource_id: string | null; details: Record<string, unknown>; hash: string; prev_hash: string }
 interface Verify { ok: boolean; checked: number; headHash: string; firstBrokenSeq: number | null; reason: string | null }
 interface Isolation { ok: boolean; ownPeopleVisible: number; foreignPeopleVisible: number; foreignAuditEventsVisible: number; enforcedBy: string; checkedAt: string }
 
 const ACTION_TONE: Record<string, "ok" | "warn" | "crit" | "info" | "neutral"> = {
-  "access.denied": "crit", "session.signed_in": "ok", "audit.chain_verified": "info", "sovereignty.isolation_checked": "info", "demo.reset": "warn",
+  "access.denied": "crit", "egress.blocked": "crit", "model.call_blocked": "warn", "sovereignty.settings_changed": "warn", "ask.refused_instruction": "crit", "agent_run.completed": "info", "export.created": "info", "confidence.adjusted": "info", "recommendation.feedback": "info", "session.signed_in": "ok", "audit.chain_verified": "info", "sovereignty.isolation_checked": "info", "demo.reset": "warn",
 };
 
 const fmt = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Riyadh" });
@@ -88,6 +89,8 @@ export function GovernanceAudit() {
           </div>
         </Panel>
       </div>
+
+      <AiGovernance />
 
       <Panel className="mt-5">
         <PanelHeader eyebrow="Append-only" title="Audit trail" actions={events && <Badge className="tabular">{events.length} most recent</Badge>} />

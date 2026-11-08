@@ -10,6 +10,7 @@ import { evidenceRoutes } from "./routes/evidence";
 import { graphRoutes, mapRoutes } from "./routes/graph";
 import { workflowRoutes } from "./routes/workflow";
 import { scenarioRoutes } from "./routes/scenarios";
+import { aiRoutes } from "./routes/ai";
 
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info", redact: ["req.headers.cookie"] } });
@@ -32,5 +33,6 @@ export async function buildApp() {
   await app.register(mapRoutes);
   await app.register(workflowRoutes);
   await app.register(scenarioRoutes);
+  await app.register(aiRoutes);
   return app;
 }

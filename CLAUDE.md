@@ -21,7 +21,8 @@ Requirement IDs (FR-xx, TR-xxx, AC-xx, Qxxx) come from the requirements register
 7. Every displayed number links to its lineage, or is suppressed / marked UNVERIFIED. Synthetic data is always labelled.
 8. Never show target institutions (PIF, Mubadala, ADIA, Aramco) by name; use buyer categories. Institutions and people are fictional.
 9. Copy follows the Foundation voice: no "predicts", "fully autonomous", "real-time intelligence", "guaranteed".
-10. Status is never colour alone. Respect reduced motion. Keep nav and key screens Arabic-ready (RTL, logical CSS properties: `ms-`, `me-`, `start-`, `end-`).
+10. Every model call goes through `apps/api/src/ai/gateway.ts` (allowlist, foreign switch, classification ceiling, egress, key). Agents get numbers from tools only; their text passes `verifyText()` or is shown UNVERIFIED.
+11. Status is never colour alone. Respect reduced motion. Keep nav and key screens Arabic-ready (RTL, logical CSS properties: `ms-`, `me-`, `start-`, `end-`).
 
 ## Commands
 ```
