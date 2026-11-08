@@ -24,6 +24,13 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - name: Create roles and database
         run: PGPASSWORD=postgres psql -h localhost -U postgres -f db/init/00-roles.sql
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - name: Start reasoning service
+        run: |
+          pip install -r services/reasoning/requirements.txt
+          (cd services/reasoning && nohup uvicorn app.main:app --port 8000 &)
+          until curl -s localhost:8000/health; do sleep 1; done
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test

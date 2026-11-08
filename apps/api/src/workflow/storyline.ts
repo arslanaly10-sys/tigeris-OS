@@ -32,40 +32,40 @@ export async function seedStoryline(tx: Tx, institutionId: string, shortName: st
   const eia = (await tx.query("SELECT e.id AS evidence_id, f.id AS fact_id FROM evidence_facts f JOIN evidence_objects e ON e.id = f.evidence_id JOIN sources s ON s.id = e.source_id WHERE s.key = 'eia.chokepoints' AND f.predicate IN ('oil_transit_flow','bypass_capacity_available') ORDER BY f.predicate DESC")).rows;
   const jodi = (await tx.query("SELECT e.id AS evidence_id FROM evidence_objects e JOIN sources s ON s.id = e.source_id WHERE s.key = 'jodi.oil' ORDER BY e.title DESC LIMIT 1")).rows[0];
 
-  const cases: Array<{ title: string; objective: string; domain: string; depth: "full" | "medium" | "short"; path: string[]; owner: Person; creator: Person; signals: string[]; entities: Array<[string, string]>; situation: string; why: string; questions: string[]; evidence?: Array<{ evidence_id: string; fact_id?: string; note: string }>; link?: number; closure?: string }> = [
-    { title: "Strait of Hormuz transit disruption", objective: "Establish what a sustained fall in Hormuz transits means for this institution's mandates, holdings and national dependencies, and which options are available.", domain: "energy", depth: "full", path: ["triaged", "analysis"], owner: analyst, creator: analyst, signals: [hormuz],
+  const cases: Array<{ template?: string; title: string; objective: string; domain: string; depth: "full" | "medium" | "short"; path: string[]; owner: Person; creator: Person; signals: string[]; entities: Array<[string, string]>; situation: string; why: string; questions: string[]; evidence?: Array<{ evidence_id: string; fact_id?: string; note: string }>; link?: number; closure?: string }> = [
+    { template: "hormuz", title: "Strait of Hormuz transit disruption", objective: "Establish what a sustained fall in Hormuz transits means for this institution's mandates, holdings and national dependencies, and which options are available.", domain: "energy", depth: "full", path: ["triaged", "analysis"], owner: analyst, creator: analyst, signals: [hormuz],
       entities: [["chokepoint:hormuz", "origin"], ["pipeline:east-west", "alternative"], ["pipeline:adcop", "alternative"], ["port:ras-tanura", "affected"], ["port:jebel-ali", "affected"], ["port:ras-laffan", "affected"]],
       situation: "Simulated transit counts through the Strait of Hormuz are 23% below their 7-day average, alongside reports of GPS interference near the traffic separation scheme.",
       why: "About 20 million b/d of oil moved through the strait in 2024 (EIA). Gulf export terminals, LNG from Ras Laffan and food imports to inner-Gulf ports all depend on it; only about 2.6 million b/d of pipeline capacity can bypass it.",
       questions: ["How long could a disruption last, and at what intensity?", "Which holdings depend on exports through the strait?", "How much of the bypass capacity is actually available?"],
       evidence: eia.map((e) => ({ evidence_id: e.evidence_id, fact_id: e.fact_id, note: "EIA baseline for flows and bypass capacity" })) },
-    { title: "Institutional resilience to a Hormuz disruption", objective: "Measure how exposed the institution's portfolio and national services are to the same Hormuz event, and how fast they could recover.", domain: "infrastructure", depth: "full", path: ["triaged"], owner: analyst, creator: analyst, signals: [], link: 0,
+    { template: "resilience", title: "Institutional resilience to a Hormuz disruption", objective: "Measure how exposed the institution's portfolio and national services are to the same Hormuz event, and how fast they could recover.", domain: "infrastructure", depth: "full", path: ["triaged"], owner: analyst, creator: analyst, signals: [], link: 0,
       entities: [["chokepoint:hormuz", "origin"], ["desal:taweelah", "affected"], ["city:doha", "affected"], ["port:hamad", "affected"]],
       situation: "Linked to the Hormuz case. Inner-Gulf ports carry most food and goods imports; power and water plants depend on gas supply that also moves by sea.",
       why: "Resilience depends on alternative routes, reserve cover and how long dependent services can run on buffers.",
       questions: ["Which dependencies have no tested alternative?", "How many days of reserve cover exist for staples?"] },
-    { title: "Oil falls to USD 45: capital allocation stress test", objective: "Compare hold, defer, hedge and reallocate options for the portfolio under a sustained oil price of USD 45 per barrel.", domain: "sovereign_capital", depth: "full", path: [], owner: analyst, creator: exec, signals: [],
+    { template: "oil45", title: "Oil falls to USD 45: capital allocation stress test", objective: "Compare hold, defer, hedge and reallocate options for the portfolio under a sustained oil price of USD 45 per barrel.", domain: "sovereign_capital", depth: "full", path: [], owner: analyst, creator: exec, signals: [],
       entities: [["commodity:crude", "origin"], ["country:SAU", "affected"]],
       situation: "Requested by the Strategy Office. The oil price is a scenario assumption, not a market observation.",
       why: "Energy-linked holdings and fiscal-dependent sectors are concentrated in the portfolio; mandates set drawdown and liquidity limits.",
       questions: ["Which mandates would be breached first?", "How much liquidity is needed to avoid forced sales?"],
       evidence: jodi ? [{ evidence_id: jodi.evidence_id, note: "JODI production and export baseline" }] : [] },
-    { title: "Red Sea shipping rerouting", objective: "Assess cost and timing effects of Asia–Europe services avoiding the Red Sea on Red Sea ports and dependent holdings.", domain: "supply_chain", depth: "medium", path: ["triaged", "analysis", "scenario"], owner: analyst, creator: analyst, signals: [redSea],
+    { template: "red_sea", title: "Red Sea shipping rerouting", objective: "Assess cost and timing effects of Asia–Europe services avoiding the Red Sea on Red Sea ports and dependent holdings.", domain: "supply_chain", depth: "medium", path: ["triaged", "analysis", "scenario"], owner: analyst, creator: analyst, signals: [redSea],
       entities: [["route:red-sea", "origin"], ["route:cape", "alternative"], ["port:jeddah", "affected"], ["port:king-abdullah", "affected"]],
       situation: "Simulated schedules show three services moving to the Cape route.", why: "Longer routes raise freight and insurance costs and reduce Red Sea port volumes.", questions: ["How long have past diversions lasted?"] },
-    { title: "Pandemic-type supply shock through Asian hubs", objective: "Trace how congestion at Asian transhipment hubs reaches GCC import availability and prices.", domain: "supply_chain", depth: "medium", path: ["triaged"], owner: analyst, creator: analyst, signals: [pandemic],
+    { template: "pandemic", title: "Pandemic-type supply shock through Asian hubs", objective: "Trace how congestion at Asian transhipment hubs reaches GCC import availability and prices.", domain: "supply_chain", depth: "medium", path: ["triaged"], owner: analyst, creator: analyst, signals: [pandemic],
       entities: [["chokepoint:malacca", "origin"], ["commodity:containers", "affected"], ["port:jebel-ali", "affected"]],
       situation: "Synthetic port-health feed shows dwell times rising.", why: "Upstream congestion reaches GCC shelves within weeks.", questions: ["Which goods have the shortest buffers?"] },
-    { title: "Banking liquidity stress", objective: "Assess exposure of banking holdings to tightening interbank liquidity.", domain: "banking", depth: "medium", path: ["triaged", "analysis", "scenario", "review"], owner: analyst, creator: analyst, signals: [banking],
+    { template: "banking", title: "Banking liquidity stress", objective: "Assess exposure of banking holdings to tightening interbank liquidity.", domain: "banking", depth: "medium", path: ["triaged", "analysis", "scenario", "review"], owner: analyst, creator: analyst, signals: [banking],
       entities: [["country:SAU", "affected"], ["country:ARE", "affected"]],
       situation: "Synthetic market feed: overnight rate up 85 basis points in two sessions.", why: "Bank holdings are sensitive to funding costs; liquidity mandate sets a 10% buffer.", questions: ["Is the rise driven by local or global factors?"] },
-    { title: "Food security: delayed grain imports", objective: "Check reserve cover against delayed wheat cargoes and identify alternative supply.", domain: "supply_chain", depth: "medium", path: ["triaged", "analysis"], owner: analyst, creator: analyst, signals: [food],
+    { template: "food", title: "Food security: delayed grain imports", objective: "Check reserve cover against delayed wheat cargoes and identify alternative supply.", domain: "supply_chain", depth: "medium", path: ["triaged", "analysis"], owner: analyst, creator: analyst, signals: [food],
       entities: [["commodity:grain", "origin"], ["port:jebel-ali", "affected"], ["port:dammam", "affected"]],
       situation: "Simulated schedules show four bulk carriers delayed 6–9 days.", why: "Staple imports cover most demand; the food mandate requires 90 days of cover.", questions: ["What is current reserve cover by country?"] },
-    { title: "Fujairah desalination output reduced", objective: "Confirm duration and downstream water supply effects.", domain: "infrastructure", depth: "short", path: [], owner: expert, creator: analyst, signals: [desal],
+    { template: "resilience", title: "Fujairah desalination output reduced", objective: "Confirm duration and downstream water supply effects.", domain: "infrastructure", depth: "short", path: [], owner: expert, creator: analyst, signals: [desal],
       entities: [["desal:fujairah", "origin"], ["city:fujairah", "affected"], ["city:sharjah", "affected"]],
       situation: "Simulated operator report: output at about 60% for 36 hours.", why: "Two cities draw on this plant.", questions: [] },
-    { title: "Sanctions change affecting a chartered vessel", objective: "Screen chartered vessels against the latest lists.", domain: "insurance", depth: "short", path: ["triaged"], owner: analyst, creator: analyst, signals: [], closure: "non_actionable",
+    { template: "hormuz", title: "Sanctions change affecting a chartered vessel", objective: "Screen chartered vessels against the latest lists.", domain: "insurance", depth: "short", path: ["triaged"], owner: analyst, creator: analyst, signals: [], closure: "non_actionable",
       entities: [], situation: "Latest OFAC and UK vessel lists imported.", why: "Chartering a designated vessel creates legal and insurance exposure.", questions: [] },
   ];
 
@@ -74,10 +74,10 @@ export async function seedStoryline(tx: Tx, institutionId: string, shortName: st
     const key = await nextCaseKey(tx, shortName);
     const finalState = c.closure ? "closed" : c.path.at(-1) ?? "detected";
     const r = await tx.query<{ id: string }>(
-      `INSERT INTO cases (institution_id, case_key, title, objective, domain, depth, state, closure, owner_id, owner_label, created_by, created_by_label, source_signal_id, linked_case_id, situation, why_it_matters, open_questions, created_at, last_activity_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING id`,
+      `INSERT INTO cases (institution_id, case_key, title, objective, domain, depth, state, closure, owner_id, owner_label, created_by, created_by_label, source_signal_id, linked_case_id, situation, why_it_matters, open_questions, created_at, last_activity_at, scenario_template)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING id`,
       [institutionId, key, c.title, c.objective, c.domain, c.depth, finalState, c.closure ?? null, c.owner.id, c.owner.name, c.creator.id, c.creator.name, c.signals[0] ?? null,
-        c.link !== undefined ? ids[c.link] : null, c.situation, c.why, c.questions, hoursAgo(48 - i * 3), hoursAgo(Math.max(1, 20 - i * 2))],
+        c.link !== undefined ? ids[c.link] : null, c.situation, c.why, c.questions, hoursAgo(48 - i * 3), hoursAgo(Math.max(1, 20 - i * 2)), c.template ?? "hormuz"],
     );
     const id = r.rows[0]!.id;
     ids.push(id);

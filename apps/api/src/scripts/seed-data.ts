@@ -82,7 +82,7 @@ export async function resetDemo() {
   const c = await pool.connect();
   try {
     await c.query("BEGIN");
-    await c.query("TRUNCATE notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
+    await c.query("TRUNCATE scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
     for (const r of ROLES) await c.query("INSERT INTO roles (key, label) VALUES ($1,$2)", [r, ROLE_LABELS[r]]);
     for (const inst of DEMO_INSTITUTIONS) {
       await c.query(

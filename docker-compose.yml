@@ -33,6 +33,7 @@ services:
     environment:
       <<: *api-env
       API_PORT: "4000"
+      REASONING_URL: http://reasoning:8000
       VAULT_DIR: /vault
     volumes:
       - vault-data:/vault
