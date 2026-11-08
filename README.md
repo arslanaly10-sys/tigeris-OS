@@ -1,86 +1,169 @@
+<div align="center">
+
 # TIGERIS · Sovereign Intelligence OS
 
-Demonstration build of an AI-native sovereign intelligence operating system: validated evidence, a shared intelligence graph, governed multi-horizon reasoning and named human decisions, inside each institution's own boundary.
+**An institution-owned intelligence and decision layer for sovereign institutions.**
+Validated evidence, a shared intelligence graph, governed reasoning and named human decisions, all inside the institution's own boundary.
 
-Confidential · Client IP. All institutions and people in this build are fictional; data is public snapshots plus clearly labelled synthetic data.
+`Demonstration build` · `Fictional institutions and people` · `Public + synthetic data` · `Outbound access off by default`
 
-## Design
-The visual system is specified in [`DESIGN.md`](DESIGN.md) (the DESIGN.md format), adapted from the Linear and IBM analyses in
-[VoltAgent/awesome-design-md](https://github.com/voltagent/awesome-design-md) (MIT) and applied to TIGERIS's own brand.
-The previous look is tagged `pre-redesign`.
+</div>
 
-## Run it
+![Command Centre (dark theme)](docs/screenshots/command-centre.png)
 
-### Docker (laptop or cloud VM)
+## What it does
+
+TIGERIS follows a question from the first signal to a recorded decision:
+
+1. **Signals and early warning.** Public sources and simulated feeds raise signals. Each one says why it was surfaced and how confident it is.
+2. **Intelligence cases.** A signal becomes a case with an owner, a state machine (detected → triaged → analysis → scenario → review → decision → handoff → closed) and a policy-checked next step.
+3. **Intelligence graph and movement map.** Entities, dependencies and exposures form one graph. Shipping, trucking, pipelines and lanes are drawn on an offline basemap of the Gulf.
+4. **Scenarios and foresight.** A deterministic Python engine runs multi-horizon scenarios. Every number traces back to a fact or a labelled assumption, and the price response is calibrated by a back-test on real EIA Brent history.
+5. **Bounded agents.** Ten agents analyse a case on a local open-weight model. They get numbers only from tools; their text is checked against the evidence or marked UNVERIFIED.
+6. **Options and decisions.** Recommendations are scored and policy-checked, but nothing executes. A named human decides, a second person approves where policy requires it, and the decision can be replayed and checked for drift.
+7. **Institutional memory.** Fifty precedents plus the institution's own approved case records, searchable by keyword and by meaning.
+8. **Governance and audit.** Policy as code, a hash-chained append-only audit trail, a live security posture, redacted exports and a sovereignty switch for foreign models.
+
+![Case options with confidence breakdown (light theme)](docs/screenshots/case-options.png)
+
+## Principles built into the code
+
+| Principle | How it is enforced |
+|---|---|
+| Each institution's data stays its own | PostgreSQL row-level security (forced) on every institutional table; the app connects without bypass rights; a live check proves the other institution is invisible. |
+| Every change is accountable | Every protected mutation writes an audit event in the same transaction. Events are hash-chained and the table is append-only. |
+| No model is the source of truth | Arithmetic, policy and authority live in deterministic TypeScript and Python. Model text must cite evidence or is shown UNVERIFIED. |
+| Sovereign by default | Outbound access is off. All model calls pass one gateway: allowlist, foreign-model switch, classification ceiling, egress rule, key. |
+| Every number has lineage | Displayed numbers link to their sources and assumptions; synthetic data is always labelled. |
+| Humans decide | Recommendations only. Separation of duties is enforced, and decisions name the person who made them. |
+| Accessible and Arabic-ready | Status is never colour alone, reduced motion is respected, and key screens run in Arabic (RTL). |
+
+![Governance & Audit with live security posture](docs/screenshots/governance.png)
+
+## Architecture
+
+```
+            outside the boundary          │                inside the institution's boundary
+                                          │
+  public sources ──► tools/collector ──► signed snapshot ──► apps/api (Fastify, TypeScript)  ◄──► apps/web (Next.js)
+                     (fetch + sign)       package          │  identity · cases · policy · audit
+                                          │                │  model gateway · agents · memory
+                                          │                ├──► PostgreSQL 16 + pgvector (row-level security)
+                                          │                └──► services/reasoning (FastAPI, Python)
+                                          │                      scenario engine · back-test · local models
+```
+
+| Path | Purpose |
+|---|---|
+| `apps/web` | Next.js 15, React 19, Tailwind 4: sign-in, OS shell and every module |
+| `apps/api` | Fastify API: identity, sessions, cases, policy, decisions, memory, model gateway, agents, audit |
+| `packages/shared` | Roles, permission matrix and shared labels |
+| `services/reasoning` | Python: scenario engine, back-test, local language and embedding models |
+| `tools/collector` | Runs outside the boundary: fetches public sources and signs a transfer package |
+| `db/migrations` | Plain SQL migrations with row-level security |
+| `deploy`, `scripts` | Offline package, install script, VM overlay with automatic TLS |
+| `docs` | Scope, architecture decisions (`docs/adr`), weekly progress notes, demo script |
+
+The design system is specified in [`DESIGN.md`](DESIGN.md). Its structure is adapted from the Linear and IBM analyses in [VoltAgent/awesome-design-md](https://github.com/voltagent/awesome-design-md) (MIT); the brand is TIGERIS's own.
+
+## Quick start
+
+### Docker
+
 ```bash
 docker compose up --build
 ```
-Open http://localhost:3000, choose an institution, then either the simulated SSO or the demo entry. The MFA step shows a demo code.
+
+Open http://localhost:3000, choose an institution, then **Demo entry** and a role. The MFA step shows its demo code on screen.
 
 ### Local development
-Requirements: Node 22, pnpm 10, Python 3.13, PostgreSQL 16 with pgvector.
+
+Requirements: Node 22, pnpm 10, Python 3.13 and PostgreSQL 16 with pgvector.
+
 ```bash
 psql -U postgres -f db/init/00-roles.sql
+```
+```bash
 pnpm install
+```
+```bash
 pnpm db:migrate && pnpm db:seed
+```
+```bash
 pnpm dev
 ```
-Reasoning service (needed for scenarios and for the API tests):
+
+The web app runs on port 3000 and the API on 4000. Scenarios and the API tests also need the reasoning service:
+
 ```bash
 cd services/reasoning && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-.venv/bin/uvicorn app.main:app --port 8000
+```
+```bash
+cd services/reasoning && .venv/bin/uvicorn app.main:app --port 8000
 ```
 
-## Models (week 6)
-The agents run on a local open-weight model by default; nothing leaves the host.
-```
+### Local models
+
+Model weights are not in the repository. Without them the agents fall back to a deterministic writer and memory search uses keywords only.
+
+```bash
 mkdir -p data/models
-curl -L -o data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
-  https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf
+```
+```bash
+curl -L -o data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf
+```
+```bash
+curl -L -o data/models/bge-small-en-v1.5-q8_0.gguf https://huggingface.co/CompendiumLabs/bge-small-en-v1.5-gguf/resolve/main/bge-small-en-v1.5-q8_0.gguf
+```
+```bash
 services/reasoning/.venv/bin/pip install -r services/reasoning/requirements-llm.txt
 ```
-Memory search also uses a small local embedding model:
-```
-curl -L -o data/models/bge-small-en-v1.5-q8_0.gguf \
-  https://huggingface.co/CompendiumLabs/bge-small-en-v1.5-gguf/resolve/main/bge-small-en-v1.5-q8_0.gguf
-```
-On an air-gapped machine, copy the same files into `data/models/` (sha256 `6a1a2eb6…407e`). Without it the agents
-use the deterministic writer. Foreign models are optional and off by default: set `ANTHROPIC_API_KEY` and/or
-`OPENAI_API_KEY` (plus `OPENAI_MODEL`) in the deployment environment, then an administrator must put the provider on
-the allowlist, switch foreign models on, allow outbound access and set the classification ceiling in Governance & Audit.
 
-## Offline package (laptop or VM)
-```
+Foreign models are optional and off by default. To use one, set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (plus `OPENAI_MODEL`) in the deployment environment. An administrator then has to allowlist the provider, switch foreign models on, allow outbound access and set the classification ceiling in Governance & Audit.
+
+### Offline package (laptop or VM)
+
+```bash
 TIGERIS_VERSION=demo docker compose build
-scripts/package.sh demo          # → dist/tigeris-demo/ (images, models, data, install.sh)
 ```
-Copy the folder to the target machine and run `./install.sh` (laptop) or `TIGERIS_DOMAIN=… ./install.sh vm`.
-See `deploy/README-package.md` and the demo talk track in `docs/demo-script.md`.
+```bash
+scripts/package.sh demo
+```
 
-## Refresh the public data snapshot
-The collector runs outside the sovereign boundary and writes a signed package to `data/packages/`. Import it from Data & Sources, or run `pnpm db:seed` to reset and import.
+This writes `dist/tigeris-demo/` with the images, models, signed data, `install.sh` and checksums. Copy it to the target machine and run `./install.sh`, or `TIGERIS_DOMAIN=… ./install.sh vm` for a VM with automatic TLS. See [`deploy/README-package.md`](deploy/README-package.md).
+
+### Refresh the public data snapshot
+
 ```bash
 pnpm --filter @tigeris/collector collect
-pnpm --filter @tigeris/collector demo-docs   # regenerates the two synthetic demo PDFs
-pnpm --filter @tigeris/collector reference   # re-signs the reference geography and synthetic institution packages
 ```
 
+Then import the new package from **Data & Sources**, or run `pnpm db:seed` to reset and import.
+
 ## Tests
+
 ```bash
 pnpm typecheck
+```
+```bash
 pnpm test
+```
+```bash
 cd services/reasoning && .venv/bin/pytest -q
 ```
 
-## Repository
-| Path | Purpose |
-|---|---|
-| `apps/web` | Next.js web app: sign-in, OS shell, modules |
-| `apps/api` | TypeScript API: identity, sessions, audit, governance |
-| `packages/shared` | Roles, permission matrix, shared labels |
-| `tools/collector` | External collector: fetches public sources and signs a transfer package |
-| `services/reasoning` | Python deterministic reasoning: horizons, propagation, scenarios |
-| `db/migrations` | SQL migrations with row-level security |
-| `docs/SCOPE.md` | Locked demo scope and the 8-week plan |
-| `docs/adr` | Architecture decision records |
-| `docs/progress` | Weekly progress notes |
+The API tests need the database and the reasoning service running.
+
+## Running the demo
+
+[`docs/demo-script.md`](docs/demo-script.md) is a 25-minute talk track. The **Guide** button on every screen walks the same story: command centre → signal → case → scenarios → back-test → agents → options → decision → governance → memory → architecture. **Reset demo** in the user menu (top right) restores the starting state.
+
+## Status
+
+All eight weekly slices of the demonstration build are complete. See [`docs/SCOPE.md`](docs/SCOPE.md) for the scope and [`docs/progress`](docs/progress) for what each week delivered and verified.
+
+Not yet done: a hosted VM, live foreign models, and client review of the Arabic terminology (currently a labelled draft).
+
+## Notice
+
+Confidential · Client IP. No licence is granted to use, copy or distribute this code. All institutions and people in this build are fictional; data is public snapshots plus clearly labelled synthetic data.
