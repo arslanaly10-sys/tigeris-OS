@@ -112,7 +112,7 @@ export async function briefPdf(b: BriefContent, meta: { caseKey: string; version
   pages.forEach((p, i) => {
     p.drawText(label, { x: W / 2 - sansBold.widthOfTextAtSize(label, 9) / 2, y: H - 30, size: 9, font: sansBold, color: warn });
     p.drawText(label, { x: W / 2 - sansBold.widthOfTextAtSize(label, 9) / 2, y: 22, size: 9, font: sansBold, color: warn });
-    p.drawText("Confidential · Client IP", { x: M, y: 22, size: 8, font: sans, color: muted });
+    p.drawText("TIGERIS demonstration build · Fictional institutions and people", { x: M, y: 22, size: 8, font: sans, color: muted });
     const pn = `Page ${i + 1} of ${pages.length}`;
     p.drawText(pn, { x: W - M - sans.widthOfTextAtSize(pn, 8), y: 22, size: 8, font: sans, color: muted });
   });

@@ -26,7 +26,7 @@ Progress: a working slice every week.
 - Dark and light themes with a switch; **dark is default**. Serif headings + sans body.
 - Subtle regional geometric pattern on sign-in and empty states only.
 - Information density adapts to role (executive spacious, analyst dense).
-- Footer: "Confidential · Client IP". Strict Foundation voice rules for all copy.
+- Footer: "Source available on GitHub" (changed 8 Nov 2026 when the repository was made public; originally "Confidential · Client IP"). Strict Foundation voice rules for all copy.
 - Target institutions shown as **buyer categories only**.
 
 ## 4. Language

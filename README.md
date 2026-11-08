@@ -166,4 +166,6 @@ Not yet done: a hosted VM, live foreign models, and client review of the Arabic 
 
 ## Notice
 
-Confidential · Client IP. No licence is granted to use, copy or distribute this code. All institutions and people in this build are fictional; data is public snapshots plus clearly labelled synthetic data.
+This is a public demonstration build. The source is published so it can be read and evaluated. No open-source licence has been chosen yet, so copyright law's default applies: you may view and fork it on GitHub, but not reuse or redistribute it without permission.
+
+All institutions and people in this build are fictional. Data is public snapshots plus clearly labelled synthetic data. Third-party data keeps its own terms; see each source in Data & Sources.

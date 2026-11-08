@@ -223,7 +223,7 @@ export default function SignInPage() {
           )}
         </div>
 
-        <footer className="text-center text-[12px] text-ink-faint">{t("footer.confidential")} · Demonstration build · Fictional institutions and people</footer>
+        <footer className="text-center text-[12px] text-ink-faint">{t("footer.notice")} · Demonstration build · Fictional institutions and people</footer>
       </main>
     </div>
   );
