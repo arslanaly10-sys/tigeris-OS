@@ -178,6 +178,8 @@ cd services/reasoning && .venv/bin/pytest -q
 
 The API tests need the database and the reasoning service running.
 
+For browser checks by a coding agent, the repository includes [Playwright CLI](https://github.com/microsoft/playwright-cli) (`@playwright/cli`, Apache-2.0) and its skill in `.claude/skills/playwright-cli`. With the app running: `npx playwright-cli open http://localhost:3000/sign-in`, then `npx playwright-cli screenshot`. Its output goes to `.playwright-cli/`, which is not committed.
+
 ## Running the demo
 
 [`docs/demo-script.md`](docs/demo-script.md) is a 25-minute talk track. The **Guide** button on every screen walks the same story: command centre → signal → case → scenarios → back-test → agents → options → decision → governance → memory → architecture. **Reset demo** in the user menu (top right) restores the starting state.

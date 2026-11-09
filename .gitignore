@@ -20,3 +20,5 @@ data/packages/ais-hormuz-*.tigpkg
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

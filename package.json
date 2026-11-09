@@ -10,5 +10,8 @@
     "db:migrate": "pnpm --filter @tigeris/api migrate",
     "db:seed": "pnpm --filter @tigeris/api seed",
     "db:reset": "pnpm --filter @tigeris/api reset"
+  },
+  "devDependencies": {
+    "@playwright/cli": "^0.1.23"
   }
 }
