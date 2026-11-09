@@ -9,7 +9,9 @@ Validated evidence, a shared intelligence graph, governed reasoning and named hu
 
 </div>
 
-![Command Centre (dark theme)](docs/screenshots/command-centre.png)
+![Sign-in: the Gulf at night with simulated ships moving through the Strait of Hormuz](docs/screenshots/v2/1-sign-in.png)
+
+![Command Centre (dark theme): attention queue and the live Gulf map](docs/screenshots/v2/2-command-centre.png)
 
 ## What it does
 
@@ -24,7 +26,14 @@ TIGERIS follows a question from the first signal to a recorded decision:
 7. **Institutional memory.** Fifty precedents plus the institution's own approved case records, searchable by keyword and by meaning.
 8. **Governance and audit.** Policy as code, a hash-chained append-only audit trail, a live security posture, redacted exports and a sovereignty switch for foreign models.
 
-![Case options with confidence breakdown (light theme)](docs/screenshots/case-options.png)
+![Movement Map zoomed to the Strait of Hormuz with its traffic, corridor and infrastructure layers](docs/screenshots/v2/3-movement-map.png)
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/v2/4-case.png" alt="A case in the dark theme: stage path, next step and the Situation tab" /></td>
+    <td><img src="docs/screenshots/v2/6-case-light.png" alt="The same case in the light theme on the Scenarios tab" /></td>
+  </tr>
+</table>
 
 ## Principles built into the code
 
@@ -38,7 +47,7 @@ TIGERIS follows a question from the first signal to a recorded decision:
 | Humans decide | Recommendations only. Separation of duties is enforced, and decisions name the person who made them. |
 | Accessible and Arabic-ready | Status is never colour alone, reduced motion is respected, and key screens run in Arabic (RTL). |
 
-![Governance & Audit with live security posture](docs/screenshots/governance.png)
+![Governance & Audit with the live security posture](docs/screenshots/v2/5-governance.png)
 
 ## Architecture
 
@@ -64,7 +73,7 @@ TIGERIS follows a question from the first signal to a recorded decision:
 | `deploy`, `scripts` | Offline package, install script, VM overlay with automatic TLS |
 | `docs` | Scope, architecture decisions (`docs/adr`), weekly progress notes, demo script |
 
-The design system is specified in [`DESIGN.md`](DESIGN.md). Its structure is adapted from the Linear and IBM analyses in [VoltAgent/awesome-design-md](https://github.com/voltagent/awesome-design-md) (MIT); the brand is TIGERIS's own.
+The design system is specified in [`DESIGN.md`](DESIGN.md) (version 2.0). It follows the [taste skill](https://github.com/Leonxlnx/taste-skill) (MIT, installed in `.agents/skills`) for type, motion and copy, with motion built on [Motion](https://motion.dev); earlier structure came from the Linear and IBM analyses in [VoltAgent/awesome-design-md](https://github.com/voltagent/awesome-design-md) (MIT). The brand, navy and gold, is TIGERIS's own.
 
 ## Quick start
 
