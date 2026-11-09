@@ -97,6 +97,17 @@ describe("air-gap package verification (TR-017, Q092)", () => {
     expect(job.error).toMatch(/does not trust/);
   });
 
+  it("rejects a small package that would expand past the size limit, without taking the API down", async () => {
+    const cookie = await signIn(GSF.id, "administrator");
+    // Fourteen gzip members of 16 MB of zeros: about 0.2 MB on the wire, 224 MB once decompressed.
+    const member = gzipSync(Buffer.alloc(16 * 1024 * 1024));
+    const { job } = await upload(cookie, "/sources/packages", Buffer.concat(Array(14).fill(member)), "zip-bomb.tigpkg");
+    expect(job.status).toBe("failed");
+    expect(job.error).toMatch(/expands to more than 200 MB/);
+    const health = await app.inject({ method: "GET", url: "/health" });
+    expect(health.statusCode).toBe(200);
+  });
+
   it("rejects a file whose content no longer matches its signed hash", async () => {
     const cookie = await signIn(ANIA.id, "administrator");
     const { job } = await upload(cookie, "/sources/packages", repack((p) => {

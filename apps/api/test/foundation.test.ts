@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { buildApp } from "../src/server";
 import { resetDemo, DEMO_INSTITUTIONS } from "../src/scripts/seed-data";
 import { closePools, ownerPool } from "../src/db";
+import { config } from "../src/config";
 
 let app: FastifyInstance;
 const [GSF, ANIA] = DEMO_INSTITUTIONS;
@@ -153,5 +154,29 @@ describe("role switching", () => {
     expect(after.principal.role).toBe("approver");
     const old = await app.inject({ method: "GET", url: "/auth/context", headers: { cookie } });
     expect(old.statusCode).toBe(401);
+  });
+});
+
+describe("demo-only shortcuts", () => {
+  it("lets only an administrator reset the demo", async () => {
+    const cookie = await signIn(GSF.id, "analyst");
+    const res = await app.inject({ method: "POST", url: "/demo/reset", headers: { cookie }, payload: {} });
+    expect(res.statusCode).toBe(403);
+    expect((await app.inject({ method: "GET", url: "/auth/context", headers: { cookie } })).json().canReset).toBe(false);
+  });
+
+  it("turns off reset and role switching outside demo mode", async () => {
+    const admin = await signIn(GSF.id, "administrator");
+    const analyst = await signIn(GSF.id, "analyst");
+    const approverId = (await app.inject({ method: "GET", url: "/auth/context", headers: { cookie: analyst } })).json().roleSwitch.find((p: { role: string }) => p.role === "approver").id;
+    config.demoMode = false;
+    try {
+      expect((await app.inject({ method: "POST", url: "/demo/reset", headers: { cookie: admin }, payload: {} })).statusCode).toBe(403);
+      expect((await app.inject({ method: "POST", url: "/auth/switch-role", headers: { cookie: analyst }, payload: { principalId: approverId } })).statusCode).toBe(403);
+      const ctx = (await app.inject({ method: "GET", url: "/auth/context", headers: { cookie: admin } })).json();
+      expect([ctx.roleSwitch.length, ctx.canReset]).toEqual([0, false]);
+    } finally {
+      config.demoMode = true;
+    }
   });
 });

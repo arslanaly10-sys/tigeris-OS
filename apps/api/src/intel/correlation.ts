@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { ANOMALY_LABEL, SCRIPTED_SHIPS, THRESHOLDS, detectDark, detectLoiter, detectScripted, detectShipToShip, detectSpoofing, km, type Anomaly, type AnomalyKind, type AisTrackPoint, type LngLat, type TrackReport } from "@tigeris/shared";
+import { ANOMALY_LABEL, HORMUZ_BBOX, SCRIPTED_SHIPS, THRESHOLDS, detectDark, detectLoiter, detectScripted, detectShipToShip, detectSpoofing, km, type Anomaly, type AnomalyKind, type AisTrackPoint, type LngLat, type TrackReport } from "@tigeris/shared";
 import type { Tx } from "../db";
 
 /**
@@ -54,7 +54,12 @@ export async function realAnomalies(tx: Tx): Promise<{ assessed: number; vessels
   }
   const found: Anomaly[] = [];
   for (const [id, tr] of Object.entries(tracks)) {
-    found.push(...detectDark(id, tr), ...detectSpoofing(id, tr));
+    // A gap that starts or ends near the edge of the capture box is a ship leaving and re-entering it, not a gap.
+    const at = (t: number) => tr.find((p) => p.t === t)!;
+    const gaps = detectDark(id, tr).filter((a) => !nearBoxEdge(at(a.startMin)) && !nearBoxEdge(at(a.endMin)))
+      // Receivers near Hormuz are sparse: a real gap is as likely lost coverage as a switched-off transponder.
+      .map((a) => ({ ...a, confidence: "low" as const, summary: `${a.summary} Receiver coverage here is thin, so this may be a coverage gap rather than a switched-off transponder.` }));
+    found.push(...gaps, ...detectSpoofing(id, tr));
     if (!/^(At anchor|Moored)$/.test(nav.get(id) ?? "")) found.push(...detectLoiter(id, tr));
   }
   found.push(...detectShipToShip(tracks));
@@ -67,14 +72,23 @@ export async function realAnomalies(tx: Tx): Promise<{ assessed: number; vessels
   };
 }
 
+/** Within this many nautical miles of the capture box edge, a missing report means the ship was outside the box. */
+const EDGE_NM = 5;
+function nearBoxEdge(p: { lat: number; lon: number }) {
+  const [[latMin, lonMin], [latMax, lonMax]] = HORMUZ_BBOX;
+  const latNm = Math.min(p.lat - latMin, latMax - p.lat) * 60;
+  const lonNm = Math.min(p.lon - lonMin, lonMax - p.lon) * 60 * Math.cos((p.lat * Math.PI) / 180);
+  return Math.min(latNm, lonNm) < EDGE_NM;
+}
+
 /** Observed signals for real anomalies, linked to the AIS evidence they come from. */
 export async function realAnomalySignals(tx: Tx) {
   const r = await realAnomalies(tx);
   return r.anomalies.map((a) => {
     const m = ANOMALY_SIGNAL[a.kind];
     return {
-      key: `anomaly:${a.id}`, title: `${ANOMALY_LABEL[a.kind]}: ${a.names.join(" and ")}`, summary: `Real AIS (aisstream.io): ${a.summary}`, domain: m.domain, eventType: m.eventType,
-      urgency: a.confidence === "high" ? m.urgency : ("medium" as const), impact: "medium" as const, dataMode: "observed" as const, eventTime: new Date(a.at),
+      key: `anomaly:${a.id}`, title: `${a.kind === "going_dark" ? "AIS gap" : ANOMALY_LABEL[a.kind]}: ${a.names.join(" and ")}`, summary: `Real AIS (aisstream.io): ${a.summary}`, domain: m.domain, eventType: m.eventType,
+      urgency: a.confidence === "high" ? m.urgency : a.confidence === "low" ? ("low" as const) : ("medium" as const), impact: "medium" as const, dataMode: "observed" as const, eventTime: new Date(a.at),
       whySurfaced: m.why, detectedBy: "rule.voyage_anomaly", entityKeys: m.entities, evidence: [{ evidenceId: a.evidenceId, role: "origin" as const, note: "AIS snapshot the track comes from" }],
     };
   });
@@ -87,7 +101,7 @@ export function anomalySignals(now = Date.now()) {
     const names = a.vesselIds.map(shipName).join(" and ");
     return {
       key: `anomaly:${a.id}`, title: `${ANOMALY_LABEL[a.kind]}: ${names}`, summary: `Simulated movement stream: ${a.summary}`, domain: m.domain, eventType: m.eventType,
-      urgency: a.confidence === "high" ? m.urgency : ("medium" as const), impact: "medium" as const, dataMode: "simulated" as const, eventTime: anomalyTime(a.startMin, now),
+      urgency: a.confidence === "high" ? m.urgency : a.confidence === "low" ? ("low" as const) : ("medium" as const), impact: "medium" as const, dataMode: "simulated" as const, eventTime: anomalyTime(a.startMin, now),
       whySurfaced: m.why, detectedBy: "rule.voyage_anomaly", entityKeys: m.entities, anomaly: a,
     };
   });
@@ -143,7 +157,7 @@ export async function correlate(tx: Tx, now = Date.now()): Promise<Finding[]> {
   }
   // Real anomalies with no signal yet still count, as observed detector output.
   for (const a of (await realAnomalies(tx)).anomalies) if (!anomalyKeys.has(a.id)) {
-    members.push({ ref: `anomaly:${a.id}`, kind: "anomaly", eventType: ANOMALY_SIGNAL[a.kind].eventType, title: `${ANOMALY_LABEL[a.kind]}: ${a.names.join(" and ")}`, dataMode: "observed", at: a.at, lngLat: a.lngLat, detail: a.summary, anomaly: a });
+    members.push({ ref: `anomaly:${a.id}`, kind: "anomaly", eventType: ANOMALY_SIGNAL[a.kind].eventType, title: `${a.kind === "going_dark" ? "AIS gap" : ANOMALY_LABEL[a.kind]}: ${a.names.join(" and ")}`, dataMode: "observed", at: a.at, lngLat: a.lngLat, detail: a.summary, anomaly: a });
   }
   // Anomalies the detectors found that have no signal yet still count, marked as detector output.
   for (const a of detectScripted()) if (!anomalyKeys.has(a.id)) {
@@ -163,7 +177,8 @@ export async function correlate(tx: Tx, now = Date.now()): Promise<Finding[]> {
     scores.forEach((s) => (s.tiedWithLeader = s.rank === 1));
     const leaders = scores.filter((s) => s.rank === 1);
     const modes = [...new Set(inArea.map((m) => m.dataMode))].sort();
-    const observed = inArea.some((m) => m.dataMode === "observed");
+    // A low-confidence observation (an AIS gap that may be lost coverage) does not lift the finding.
+    const observed = inArea.some((m) => m.dataMode === "observed" && m.anomaly?.confidence !== "low");
     const independent = kinds.size;
     const confidence: Finding["confidence"] = observed && independent >= 4 ? "high" : independent >= 4 || observed ? "medium" : "low";
     const lead = scores[0]!;

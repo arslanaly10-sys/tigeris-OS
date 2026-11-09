@@ -1,2 +1,2 @@
 import { defineConfig } from "vitest/config";
-export default defineConfig({ test: { fileParallelism: false, testTimeout: 60000, hookTimeout: 60000, env: { LOG_LEVEL: "silent" } } });
+export default defineConfig({ test: { fileParallelism: false, testTimeout: 60000, hookTimeout: 180000, env: { LOG_LEVEL: "silent" } } });

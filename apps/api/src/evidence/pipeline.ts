@@ -157,8 +157,10 @@ async function runPackage(tx: Tx, job: Job): Promise<JobResult> {
   const raw = await getObject(job.institution_id, job.payload_ref);
   let pkg: TransferPackage;
   try {
-    pkg = JSON.parse(gunzipSync(raw).toString("utf8"));
-  } catch {
+    // Capped: a small crafted file must not expand to gigabytes and take the API down ("zip bomb").
+    pkg = JSON.parse(gunzipSync(raw, { maxOutputLength: MAX_PACKAGE_BYTES }).toString("utf8"));
+  } catch (e) {
+    if ((e as { code?: string }).code === "ERR_BUFFER_TOO_LARGE") throw new PackageRejected(`The package expands to more than ${MAX_PACKAGE_BYTES / 1024 / 1024} MB, the limit for one import.`);
     throw new PackageRejected("The file is not a TIGERIS transfer package (could not decompress and read it).");
   }
   if (pkg.format !== PACKAGE_FORMAT) throw new PackageRejected(`Unsupported package format "${String(pkg.format)}".`);
@@ -217,6 +219,9 @@ async function runDocument(tx: Tx, job: Job): Promise<JobResult> {
 }
 
 export class PackageRejected extends Error {}
+
+/** Largest a package may be once decompressed. */
+export const MAX_PACKAGE_BYTES = 200 * 1024 * 1024;
 
 export async function runJob(tx: Tx, job: Job): Promise<JobResult> {
   return job.kind === "package_import" ? runPackage(tx, job) : runDocument(tx, job);

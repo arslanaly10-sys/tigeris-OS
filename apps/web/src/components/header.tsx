@@ -155,6 +155,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
                 <div className="text-[13px] text-ink-faint">{s.institution.residency}</div>
               </div>
               <Dropdown.Separator className="my-1 h-px bg-line" />
+              {s.roleSwitch.length > 0 && <>
               <Dropdown.Label className="eyebrow px-2.5 py-1 text-ink-faint">{t("header.switchRole")}</Dropdown.Label>
               {s.roleSwitch.map((p) => (
                 <Dropdown.Item key={p.id} className={menuItem} onSelect={() => p.id !== s.principal.id && switchTo(p.id)}>
@@ -165,12 +166,15 @@ export function Header({ onMenu }: { onMenu: () => void }) {
                   </span>
                 </Dropdown.Item>
               ))}
+              </>}
               <Dropdown.Separator className="my-1 h-px bg-line" />
               <Dropdown.Item className={menuItem} onSelect={signOut}><Users className="size-4 text-ink-faint" />{t("header.switchInstitution")}</Dropdown.Item>
-              <Dropdown.Item className={menuItem} onSelect={reset}>
-                <RotateCcw className="size-4 text-warn" />
-                <span className={armed ? "text-warn" : undefined}>{armed ? t("header.resetConfirm") : t("header.resetDemo")}</span>
-              </Dropdown.Item>
+              {s.canReset && (
+                <Dropdown.Item className={menuItem} onSelect={reset}>
+                  <RotateCcw className="size-4 text-warn" />
+                  <span className={armed ? "text-warn" : undefined}>{armed ? t("header.resetConfirm") : t("header.resetDemo")}</span>
+                </Dropdown.Item>
+              )}
               <Dropdown.Item className={menuItem} onSelect={signOut}><LogOut className="size-4 text-ink-faint" />{t("header.signOut")}</Dropdown.Item>
             </Dropdown.Content>
           </Dropdown.Portal>

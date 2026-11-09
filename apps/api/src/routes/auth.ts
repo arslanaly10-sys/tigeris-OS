@@ -104,13 +104,16 @@ export async function authRoutes(app: FastifyInstance) {
         country: inst.country, residency: inst.residency, environment: inst.environment,
       },
       dataMode: "public_synthetic",
-      roleSwitch: colleagues.rows,
+      roleSwitch: config.demoMode ? colleagues.rows : [],
+      canReset: config.demoMode && ROLE_PERMISSIONS[p.role].includes("admin.manage"),
     };
   });
 
   /** Header role switcher: move to a colleague with another role in the same institution. */
   app.post("/auth/switch-role", { preHandler: requirePermission() }, async (req, reply) => {
     const p = req.principal!;
+    // Switching people with verification carried over would defeat two-person approval outside a demo.
+    if (!config.demoMode) return reply.code(403).send({ error: "demo_mode_off", message: "Switching roles is only available in a demonstration deployment." });
     const { principalId } = switchBody.parse(req.body);
     const target = await withTenant(p.institutionId, async (tx) => {
       const r = await tx.query(

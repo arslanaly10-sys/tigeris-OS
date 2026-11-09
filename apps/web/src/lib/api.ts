@@ -18,4 +18,6 @@ export interface AuthContext {
   institution: { id: string; name: string; shortName: string; buyerCategory: string; country: string; residency: string; environment: string };
   dataMode: string;
   roleSwitch: { id: string; name: string; title: string; role: import("@tigeris/shared").Role }[];
+  /** Demo reset is offered to administrators, and only in demo mode. */
+  canReset: boolean;
 }

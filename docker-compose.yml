@@ -25,6 +25,8 @@ services:
       DATABASE_OWNER_URL: postgres://tigeris_owner:tigeris_owner@db:5432/tigeris
       DATABASE_APP_URL: postgres://tigeris_app:tigeris_app@db:5432/tigeris
       SESSION_SECRET: ${SESSION_SECRET:-change-me-demo-only}
+      # Demo shortcuts (reset, role switcher). A pilot deployment sets DEMO_MODE=off.
+      DEMO_MODE: ${DEMO_MODE:-on}
       VAULT_DIR: /vault
       REASONING_URL: http://reasoning:8000
     depends_on:

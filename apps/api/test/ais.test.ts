@@ -131,8 +131,13 @@ describe("observed AIS vessels (FR-30, Q086)", () => {
       track.push({ MessageType: "PositionReport", MetaData: { MMSI: 999000077, time_utc: at(m) }, Message: { PositionReport: { Latitude: lat, Longitude: lon, Sog: 11, Cog: 90, TrueHeading: 90, NavigationalStatus: 0 } } });
     }
     track.push({ MessageType: "ShipStaticData", MetaData: { MMSI: 999000077 }, Message: { ShipStaticData: { Name: "TEST TRACKER", Type: 80 } } });
+    // A second made-up MMSI with the same gap, but sailing along the southern edge of the box: it was outside, not dark.
+    for (let m = 0; m <= 300; m += 6) {
+      if (m > 60 && m < 186) continue;
+      track.push({ MessageType: "PositionReport", MetaData: { MMSI: 999000078, time_utc: at(m) }, Message: { PositionReport: { Latitude: 24.63, Longitude: 55.2 + m * 0.002, Sog: 11, Cog: 90, TrueHeading: 90, NavigationalStatus: 0 } } });
+    }
     const snap2 = summariseAis(track, { from: new Date(base).toISOString(), to: new Date(base + 300 * 60_000).toISOString() });
-    expect(snap2.vessels[0]!.track!.length).toBeGreaterThan(20);
+    expect(snap2.vessels.find((v) => v.mmsi === "999000077")!.track!.length).toBeGreaterThan(20);
     const admin = await signIn(GSF.id, "administrator");
     const up = await app.inject({ method: "POST", url: "/sources/packages", headers: { cookie: admin, "content-type": "application/octet-stream", "x-file-name": "ais-hormuz-track-test.tigpkg" }, payload: signedPackage("aisstream.hormuz", "ais-hormuz-snapshot.json", { ...snap2, capturedTo: new Date().toISOString() }) });
     expect(up.statusCode).toBeLessThan(300);
@@ -143,9 +148,15 @@ describe("observed AIS vessels (FR-30, Q086)", () => {
     expect(kinds).toEqual(["ais_spoofing", "going_dark"]);
     expect(d.real.assessed).toBeGreaterThanOrEqual(1);
     expect(d.real.anomalies.every((a: { dataMode: string; names: string[] }) => a.dataMode === "observed" && a.names[0] === "TEST TRACKER")).toBe(true);
+    // Near Hormuz a real gap may be lost receiver coverage: it is low confidence and says so.
+    const gap = d.real.anomalies.find((a: { kind: string }) => a.kind === "going_dark");
+    expect(gap.confidence).toBe("low");
+    expect(gap.summary).toMatch(/coverage gap/);
     const ves = (await app.inject({ method: "GET", url: "/map/observed-vessels", headers: { cookie: analyst } })).json();
     expect(ves.vessels.find((v: { mmsi: string }) => v.mmsi === "999000077").track.length).toBeGreaterThan(20);
     const f = (await app.inject({ method: "GET", url: "/correlation", headers: { cookie: analyst } })).json().findings.find((x: { area: string }) => x.area === "hormuz");
     expect(f.dataModes).toContain("observed");
+    const sig = (await app.inject({ method: "GET", url: "/signals", headers: { cookie: analyst } })).json();
+    expect(JSON.stringify(sig)).not.toMatch(/Going dark: TEST TRACKER/);
   });
 });

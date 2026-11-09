@@ -197,7 +197,7 @@ For browser checks by a coding agent, the repository includes [Playwright CLI](h
 
 ## Running the demo
 
-[`docs/demo-script.md`](docs/demo-script.md) is a 25-minute talk track. The **Guide** button on every screen walks the same story: command centre → signal → case → scenarios → back-test → agents → options → decision → governance → memory → architecture. **Reset demo** in the user menu (top right) restores the starting state.
+[`docs/demo-script.md`](docs/demo-script.md) is a 25-minute talk track. The **Guide** button on every screen walks the same story: command centre → signal → case → scenarios → back-test → agents → options → decision → governance → memory → architecture. **Reset demo** in the user menu (top right) restores the starting state; it is offered to the administrator only (switch to them with the role switcher). Reset and the role switcher are demo shortcuts: they work only while `DEMO_MODE=on` (the default in development and in the demo package). A pilot sets `DEMO_MODE=off`, which removes both.
 
 ## Status
 

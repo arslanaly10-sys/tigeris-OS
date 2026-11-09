@@ -34,5 +34,6 @@ OPENAI_MODEL=...
 
 ## Stop, reset, remove
 - Stop: `docker compose down`
-- Reset the demo: header menu → Reset demo, or `docker compose run --rm seed`
+- Reset the demo: sign in as (or switch to) the administrator, then header menu → Reset demo; or `docker compose run --rm seed`
+- Demo shortcuts (reset, role switcher) need `DEMO_MODE=on`, the default here. Set `DEMO_MODE=off` for anything beyond a demonstration.
 - Remove everything, including data: `docker compose down -v`
