@@ -191,6 +191,8 @@ cd services/reasoning && .venv/bin/pytest -q
 
 The API tests need the database and the reasoning service running.
 
+For coding agents working on this repository, [Ponytail](https://github.com/dietrichgebert/ponytail) (MIT) is in `.claude/skills`: `/ponytail` for the smallest complete change, `/ponytail-review` for a change, `/ponytail-audit` for the whole repo, `/ponytail-debt` to list `shortcut:` comments. Its auto-start hooks are not installed, so it runs only when called.
+
 For browser checks by a coding agent, the repository includes [Playwright CLI](https://github.com/microsoft/playwright-cli) (`@playwright/cli`, Apache-2.0) and its skill in `.claude/skills/playwright-cli`. With the app running: `npx playwright-cli open http://localhost:3000/sign-in`, then `npx playwright-cli screenshot`. Its output goes to `.playwright-cli/`, which is not committed.
 
 ## Running the demo
