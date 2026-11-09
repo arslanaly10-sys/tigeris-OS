@@ -76,7 +76,7 @@ What a buyer will still poke at:
 2. **Agent taxonomy does not match Tiger's.** The prototype has ten bounded agents named by function; the sites use six
    specialists. → Section 6.
 3. **Horizons do not match.** The scenario engine's horizons differ from Tiger's four. → Section 6.
-4. **"Execution envelope" is on Tiger's site but not in the product.** → Section 5, built as a real feature.
+4. **"Execution envelope" is on Tiger's site but not in the product.** → Section 6, built as a real feature.
 5. **Sign-in is simulated SSO.** Fine for a demo; production needs the institution's identity provider (SAML/OIDC) and
    hardware-key MFA.
 6. **No certification yet.** The architecture is built for it (RLS, append-only audit, egress off, keys in the
