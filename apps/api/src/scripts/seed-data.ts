@@ -65,7 +65,7 @@ export const DEMO_INSTITUTIONS = [
   },
 ] as const satisfies ReadonlyArray<{ people: ReadonlyArray<readonly [Role, string, string, string]> } & Record<string, unknown>>;
 
-/** The eight domain packs (FD §4), in priority order. They extend one shared graph; none is a separate product. */
+/** The domain packs (FD §4; eight, plus four added 9 Nov 2026), in priority order. They extend one shared graph; none is a separate product. */
 const DOMAIN_PACKS = [
   { key: "sovereign_capital", name: "Sovereign capital, treasury and investment", status: "active", entityTypes: ["institution", "mandate", "holding"], description: "Mandates, holdings and exposures. The central decision context; portfolio data here is synthetic." },
   { key: "energy", name: "Energy, oil and gas", status: "active", entityTypes: ["field", "facility", "pipeline", "refinery", "terminal", "chokepoint"], description: "First full pack: fields, processing, pipelines, terminals and the Hormuz anchor case." },
@@ -73,8 +73,12 @@ const DOMAIN_PACKS = [
   { key: "supply_chain", name: "Supply chain and logistics", status: "active", entityTypes: ["port", "route", "airport", "commodity", "vessel"], description: "Ports, corridors, routes and alternatives through which disruption propagates." },
   { key: "infrastructure", name: "Infrastructure and utilities", status: "active", entityTypes: ["desalination", "power_plant", "city"], description: "Water and power dependencies for service continuity and resilience." },
   { key: "manufacturing", name: "Manufacturing and industrials", status: "configured", entityTypes: ["refinery", "holding"], description: "Production and supplier relationships, reusing the energy and logistics graph." },
-  { key: "construction_real_estate", name: "Construction and real estate", status: "planned", entityTypes: ["city", "holding"], description: "Later pack for project, asset and counterparty dependencies." },
+  { key: "construction_real_estate", name: "Construction and real estate", status: "configured", entityTypes: ["city", "holding"], description: "Later pack for project, asset and counterparty dependencies." },
   { key: "insurance", name: "Insurance", status: "configured", entityTypes: ["vessel", "sanctions_regime", "holding"], description: "Marine and war-risk exposure; scenario analysis only until actuarial controls exist." },
+  { key: "defence_security", name: "Defence and security", status: "configured", entityTypes: ["chokepoint", "port", "airport", "facility"], description: "Maritime security, navigation safety and critical sites. Added 9 Nov 2026; vessels and infrastructure only, no tracking of people." },
+  { key: "healthcare", name: "Healthcare", status: "configured", entityTypes: ["city", "airport", "port", "commodity"], description: "Medicine supply, cold chain and hospital capacity. Added 9 Nov 2026." },
+  { key: "telecoms", name: "Telecoms and digital", status: "configured", entityTypes: ["city", "facility", "chokepoint"], description: "Subsea cables, data centres and network resilience. Added 9 Nov 2026." },
+  { key: "transport_aviation", name: "Transport and aviation", status: "configured", entityTypes: ["airport", "port", "route", "city"], description: "Airports, air corridors, ports and road freight. Added 9 Nov 2026." },
 ] as const;
 
 const slugName = (n: string) => n.toLowerCase().replace(/^dr\.\s*/, "").replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "");

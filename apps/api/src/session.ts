@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { ROLES, type Permission, type Role, can } from "@tigeris/shared";
+import { DEFAULT_INDUSTRY, ROLES, isIndustry, type IndustryKey, type Permission, type Role, can } from "@tigeris/shared";
 import { appPool, withTenant } from "./db";
 import { appendAudit } from "./audit";
 import { config } from "./config";
@@ -10,6 +10,8 @@ export interface Principal {
   principalId: string;
   institutionId: string;
   role: Role;
+  /** Industry lens chosen at sign-in; sets what the OS shows first, never what is permitted. */
+  industry: IndustryKey;
   displayName: string;
   title: string;
   mfaVerified: boolean;
@@ -23,14 +25,14 @@ declare module "fastify" {
 
 export const hashToken = (t: string) => createHash("sha256").update(config.sessionSecret).update(t).digest("hex");
 
-export async function createSession(institutionId: string, principalId: string, role: Role) {
+export async function createSession(institutionId: string, principalId: string, role: Role, industry: IndustryKey = DEFAULT_INDUSTRY) {
   const token = randomBytes(32).toString("base64url");
   const mfaCode = String(randomInt(100000, 1000000));
   const expires = new Date(Date.now() + config.sessionHours * 3600_000);
   const res = await appPool.query<{ id: string }>(
-    `INSERT INTO sessions (token_hash, principal_id, institution_id, role_key, mfa_code_hash, expires_at)
-     VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-    [hashToken(token), principalId, institutionId, role, hashToken(mfaCode), expires],
+    `INSERT INTO sessions (token_hash, principal_id, institution_id, role_key, mfa_code_hash, expires_at, industry_key)
+     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+    [hashToken(token), principalId, institutionId, role, hashToken(mfaCode), expires, industry],
   );
   return { token, sessionId: res.rows[0]!.id, mfaCode, expires };
 }
@@ -40,7 +42,7 @@ export async function loadPrincipal(req: FastifyRequest): Promise<Principal | un
   const token = req.cookies[config.cookieName];
   if (!token) return undefined;
   const s = await appPool.query(
-    `SELECT id, principal_id, institution_id, role_key, mfa_verified_at FROM sessions
+    `SELECT id, principal_id, institution_id, role_key, mfa_verified_at, industry_key FROM sessions
       WHERE token_hash = $1 AND revoked_at IS NULL AND expires_at > now()`,
     [hashToken(token)],
   );
@@ -56,6 +58,7 @@ export async function loadPrincipal(req: FastifyRequest): Promise<Principal | un
     principalId: row.principal_id,
     institutionId: row.institution_id,
     role: row.role_key as Role,
+    industry: isIndustry(row.industry_key) ? row.industry_key : DEFAULT_INDUSTRY,
     displayName: person.display_name,
     title: person.title,
     mfaVerified: row.mfa_verified_at !== null,

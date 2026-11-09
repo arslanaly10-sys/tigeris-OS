@@ -5,6 +5,7 @@ import * as Icons from "lucide-react";
 import { MODULES } from "@/lib/modules";
 import { usePrefs } from "./prefs";
 import { Wordmark } from "./wordmark";
+import { IndustrySwitcher } from "./industry-switcher";
 import { cn } from "@/lib/cn";
 
 const GROUPS = [
@@ -38,6 +39,7 @@ export function Sidebar() {
   return (
     <nav aria-label="Main" className="flex h-full w-[244px] shrink-0 flex-col border-e border-line bg-bg">
       <div className="flex h-[52px] items-center border-b border-line px-5"><Wordmark /></div>
+      <IndustrySwitcher />
       <div className="flex-1 overflow-y-auto px-3 pb-4">
         {GROUPS.map((g) => (
           <div key={g.key} className="mt-4">

@@ -18,11 +18,12 @@ export async function workflowRoutes(app: FastifyInstance) {
     const p = req.principal!;
     return withTenant(p.institutionId, async (tx) => ({
       signals: (await tx.query(
-        `SELECT s.*, (SELECT count(*)::int FROM signal_evidence se WHERE se.signal_id = s.id AND se.role = 'corroborating') AS corroborations,
+        `SELECT s.*, (s.domain = $2) AS in_industry, (SELECT count(*)::int FROM signal_evidence se WHERE se.signal_id = s.id AND se.role = 'corroborating') AS corroborations,
                 (SELECT json_agg(json_build_object('key', e.key, 'name', e.name, 'type', e.type)) FROM signal_entities x JOIN entities e ON e.id = x.entity_id WHERE x.signal_id = s.id) AS entities,
                 (SELECT json_agg(json_build_object('caseKey', c.case_key, 'title', c.title)) FROM case_signals cs JOIN cases c ON c.id = cs.case_id WHERE cs.signal_id = s.id) AS cases
            FROM signals s WHERE ($1::text IS NULL OR s.status = $1)
-          ORDER BY CASE s.urgency WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, s.detected_at DESC LIMIT 100`, [q.status ?? null])).rows,
+          ORDER BY (s.domain = $2) DESC, CASE s.urgency WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, s.detected_at DESC LIMIT 100`, [q.status ?? null, p.industry])).rows,
+      industry: p.industry,
     }));
   });
 
@@ -119,11 +120,12 @@ export async function workflowRoutes(app: FastifyInstance) {
     const p = req.principal!;
     return withTenant(p.institutionId, async (tx) => ({
       cases: (await tx.query(
-        `SELECT c.id, c.case_key, c.title, c.domain, c.depth, c.state, c.closure, c.sensitivity, c.owner_label, c.last_activity_at, c.created_at,
+        `SELECT c.id, c.case_key, c.title, c.domain, (c.domain = $1) AS in_industry, c.depth, c.state, c.closure, c.sensitivity, c.owner_label, c.last_activity_at, c.created_at,
                 (SELECT count(*)::int FROM case_signals x WHERE x.case_id = c.id) AS signals,
                 (SELECT count(*)::int FROM case_comments x WHERE x.case_id = c.id) AS comments
-           FROM cases c ORDER BY (c.state = 'closed'), c.last_activity_at DESC`)).rows,
+           FROM cases c ORDER BY (c.domain = $1) DESC, (c.state = 'closed'), c.last_activity_at DESC`, [p.industry])).rows,
       nextActor: NEXT_ACTOR,
+      industry: p.industry,
     }));
   });
 
@@ -240,14 +242,15 @@ export async function workflowRoutes(app: FastifyInstance) {
   app.get("/attention", { preHandler: requirePermission() }, async (req) => {
     const p = req.principal!;
     return withTenant(p.institutionId, async (tx) => {
-      const items: Array<{ kind: string; title: string; reason: string; urgency: string; link: string; at: string; dataMode?: string }> = [];
-      const signals = (await tx.query("SELECT id, title, why_surfaced, urgency, data_mode, detected_at FROM signals WHERE status = 'new' ORDER BY CASE urgency WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, detected_at DESC LIMIT 8")).rows;
-      if (can(p.role, "evidence.dispose") || p.role === "executive") for (const s of signals) items.push({ kind: "signal", title: s.title, reason: s.why_surfaced, urgency: s.urgency, link: `/signals?focus=${s.id}`, at: s.detected_at, dataMode: s.data_mode });
+      // Industry lens: items in the person's industry come first and are marked; the rest stay below.
+      const items: Array<{ kind: string; title: string; reason: string; urgency: string; link: string; at: string; dataMode?: string; domain?: string; inIndustry?: boolean }> = [];
+      const signals = (await tx.query("SELECT id, title, why_surfaced, urgency, data_mode, detected_at, domain FROM signals WHERE status = 'new' ORDER BY (domain = $1) DESC, CASE urgency WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, detected_at DESC LIMIT 10", [p.industry])).rows;
+      if (can(p.role, "evidence.dispose") || p.role === "executive") for (const s of signals) items.push({ kind: "signal", title: s.title, reason: s.why_surfaced, urgency: s.urgency, link: `/signals?focus=${s.id}`, at: s.detected_at, dataMode: s.data_mode, domain: s.domain, inIndustry: s.domain === p.industry });
       const states = Object.entries(NEXT_ACTOR).filter(([, roles]) => roles.includes(p.role)).map(([s]) => s);
-      const cases = (await tx.query("SELECT case_key, title, state, last_activity_at, owner_id FROM cases WHERE state = ANY($1) ORDER BY last_activity_at DESC LIMIT 10", [states])).rows;
+      const cases = (await tx.query("SELECT case_key, title, state, last_activity_at, owner_id, domain FROM cases WHERE state = ANY($1) ORDER BY (domain = $2) DESC, last_activity_at DESC LIMIT 12", [states, p.industry])).rows;
       for (const c of cases) {
         const reason = c.state === "review" ? "Waiting for expert review" : c.state === "decision" ? "Waiting for a named decision" : c.state === "handoff" ? "Approved; follow-through and outcome needed" : c.owner_id === p.principalId ? `You own this case; it is in ${c.state}` : `Case in ${c.state}`;
-        items.push({ kind: "case", title: `${c.case_key} · ${c.title}`, reason, urgency: c.state === "decision" ? "high" : "medium", link: `/cases/${c.case_key}`, at: c.last_activity_at });
+        items.push({ kind: "case", title: `${c.case_key} · ${c.title}`, reason, urgency: c.state === "decision" ? "high" : "medium", link: `/cases/${c.case_key}`, at: c.last_activity_at, domain: c.domain, inIndustry: c.domain === p.industry });
       }
       if (can(p.role, "evidence.dispose")) {
         const n = (await tx.query("SELECT count(*)::int AS n FROM evidence_facts WHERE review_state = 'needs_review'")).rows[0].n;
@@ -260,7 +263,7 @@ export async function workflowRoutes(app: FastifyInstance) {
         if (u) items.push({ kind: "source", title: `${u} sources unreachable at last collection`, reason: "Not used until reachable and approved", urgency: "low", link: "/sources", at: new Date().toISOString() });
       }
       const pending = (await tx.query("SELECT count(*)::int AS n FROM cases WHERE state = 'decision'")).rows[0].n;
-      return { items, counts: { newSignals: signals.length, decisionsPending: pending, openCases: (await tx.query("SELECT count(*)::int AS n FROM cases WHERE state <> 'closed'")).rows[0].n } };
+      return { industry: p.industry, items, counts: { newSignals: signals.length, decisionsPending: pending, openCases: (await tx.query("SELECT count(*)::int AS n FROM cases WHERE state <> 'closed'")).rows[0].n } };
     });
   });
 }

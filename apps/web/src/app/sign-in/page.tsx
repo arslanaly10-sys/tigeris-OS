@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Building2, KeyRound, Landmark, Lock, ScrollText, Server, ShieldCheck, UserRound } from "lucide-react";
-import { ROLE_LABELS, type Role } from "@tigeris/shared";
+import { INDUSTRIES, ROLE_LABELS, jobTitle, type IndustryKey, type Role } from "@tigeris/shared";
+import { IndustryIcon, industryName } from "@/components/industry";
 import { api } from "@/lib/api";
 import { usePrefs } from "@/components/prefs";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { cn } from "@/lib/cn";
 
 interface Person { id: string; name: string; title: string; role: Role; division: string }
 interface Institution { id: string; name: string; shortName: string; buyerCategory: string; country: string; people: Person[] }
-type Step = "institution" | "method" | "idp" | "roles" | "mfa";
+type Step = "institution" | "industry" | "method" | "idp" | "roles" | "mfa";
 
 export default function SignInPage() {
   const { t, lang } = usePrefs();
@@ -25,6 +26,8 @@ export default function SignInPage() {
   const [inst, setInst] = useState<Institution | null>(null);
   const [method, setMethod] = useState<"sso_simulated" | "demo_entry">("sso_simulated");
   const [person, setPerson] = useState<Person | null>(null);
+  const [industry, setIndustry] = useState<IndustryKey | null>(null);
+  const title = (r: Role) => jobTitle(industry, r, lang === "ar" ? "ar" : "en");
   const [demoCode, setDemoCode] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -41,7 +44,7 @@ export default function SignInPage() {
     if (!inst) return;
     setBusy(true);
     setError(null);
-    const r = await api<{ demoMfaCode: string }>("/auth/sign-in", { json: { institutionId: inst.id, principalId: p.id, method } });
+    const r = await api<{ demoMfaCode: string }>("/auth/sign-in", { json: { institutionId: inst.id, principalId: p.id, method, industry } });
     setBusy(false);
     if (!r.ok) return setError(r.message);
     setPerson(p);
@@ -65,7 +68,7 @@ export default function SignInPage() {
 
   const back = () => {
     setError(null);
-    setStep(step === "mfa" ? (method === "demo_entry" ? "roles" : "idp") : step === "idp" || step === "roles" ? "method" : "institution");
+    setStep(step === "mfa" ? (method === "demo_entry" ? "roles" : "idp") : step === "idp" || step === "roles" ? "method" : step === "method" ? "industry" : "institution");
   };
 
   return (
@@ -74,7 +77,7 @@ export default function SignInPage() {
       <aside className="relative hidden flex-col justify-between overflow-hidden border-e border-line bg-surface px-12 py-10 lg:flex">
         <ShipBackdrop />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--surface)_92%,transparent)_0%,color-mix(in_oklab,var(--surface)_55%,transparent)_42%,transparent_70%)]" />
-        <span className="absolute end-12 top-12 z-[1] rounded border border-line-strong bg-surface/80 px-2 py-1 text-[13px] text-ink-muted">Simulated ships, Riyadh time</span>
+        <span className="absolute bottom-[84px] end-12 z-[1] rounded border border-line-strong bg-surface/80 px-2 py-1 text-[13px] text-ink-muted">Simulated ships, Riyadh time</span>
         <div className="relative"><Wordmark size="lg" /></div>
         <div className="relative max-w-lg space-y-5">
           <p className="eyebrow text-accent">{t("product.descriptor")}</p>
@@ -100,13 +103,14 @@ export default function SignInPage() {
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-center gap-6 py-10">
+        <div className={cn("mx-auto flex w-full flex-1 flex-col justify-center gap-6 py-10", step === "industry" ? "max-w-[620px]" : "max-w-[440px]")}>
           <div className="space-y-1">
             {lang === "ar" && <Badge tone="info">{t("arabicDraft")}</Badge>}
             <h1 className="text-[28px] font-medium">{t("signin.title")}</h1>
             <p className="text-ink-muted">
               {step === "institution" && t("signin.chooseInstitution")}
-              {step === "method" && inst?.name}
+              {step === "industry" && t("signin.chooseIndustry")}
+              {step === "method" && <>{inst?.name} · {industryName(industry, lang === "ar" ? "ar" : "en")}</>}
               {step === "idp" && `${t("signin.idpTitle")} · ${t("signin.simulated")}`}
               {step === "roles" && t("signin.demoEntry")}
               {step === "mfa" && t("signin.mfaBody")}
@@ -122,7 +126,7 @@ export default function SignInPage() {
                 <li key={i.id}>
                   <button
                     type="button"
-                    onClick={() => { setInst(i); setStep("method"); }}
+                    onClick={() => { setInst(i); setStep("industry"); }}
                     className="flex w-full items-center gap-4 rounded-lg border border-line bg-surface p-4 text-start transition-colors hover:border-primary"
                   >
                     <span className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-2 text-accent"><Landmark className="size-5" /></span>
@@ -131,6 +135,26 @@ export default function SignInPage() {
                       <span className="block text-[13px] text-ink-muted">{i.buyerCategory} · {i.country} · fictional</span>
                     </span>
                     <ArrowRight className="size-4 text-ink-faint rtl:rotate-180" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {step === "industry" && inst && (
+            <ul className="grid gap-2 sm:grid-cols-2" aria-label={t("signin.industry")}>
+              {INDUSTRIES.map((i) => (
+                <li key={i.key}>
+                  <button
+                    type="button"
+                    onClick={() => { setIndustry(i.key); setStep("method"); }}
+                    className="flex h-full w-full items-start gap-3 rounded-lg border border-line bg-surface p-3 text-start transition-colors hover:border-primary"
+                  >
+                    <span className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-2 text-accent"><IndustryIcon industry={i} className="size-[18px]" /></span>
+                    <span className="min-w-0">
+                      <span className="block font-medium leading-snug">{lang === "ar" ? i.nameAr : i.name}</span>
+                      <span className="block text-[13px] leading-snug text-ink-muted">{lang === "ar" ? i.focusAr : i.focus}</span>
+                    </span>
                   </button>
                 </li>
               ))}
@@ -172,12 +196,13 @@ export default function SignInPage() {
                         {step === "roles" ? (
                           <>
                             <span className="block font-medium">{ROLE_LABELS[p.role]}</span>
+                            {title(p.role) && <span className="block text-[13px] text-accent">{title(p.role)}</span>}
                             <span className="block text-[13px] text-ink-muted">{p.name}</span>
                           </>
                         ) : (
                           <>
                             <span className="block font-medium">{p.name}</span>
-                            <span className="block text-[13px] text-ink-muted">{p.title} · {p.division}</span>
+                            <span className="block text-[13px] text-ink-muted">{title(p.role) ?? p.title} · {ROLE_LABELS[p.role]}</span>
                           </>
                         )}
                       </span>
@@ -194,7 +219,8 @@ export default function SignInPage() {
                 <ShieldCheck className="size-5 text-ok" />
                 <div className="min-w-0 text-[13px]">
                   <div className="font-medium text-ink">{person.name}</div>
-                  <div className="text-ink-muted">{ROLE_LABELS[person.role]} · {inst?.name}</div>
+                  <div className="text-ink-muted">{title(person.role) ?? ROLE_LABELS[person.role]} · {ROLE_LABELS[person.role]} · {inst?.name}</div>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-ink-faint"><IndustryIcon industry={industry} className="size-3.5" />{industryName(industry, lang === "ar" ? "ar" : "en")}</div>
                 </div>
               </div>
               <label htmlFor="mfa-code" className="grid gap-1.5">

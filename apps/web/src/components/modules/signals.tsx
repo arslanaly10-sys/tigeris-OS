@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Activity, Radio, Zap } from "lucide-react";
 import { api } from "@/lib/api";
+import { LensHeading, OthersToggle, industryName, splitByIndustry } from "../industry";
+import { usePrefs } from "../prefs";
 import { formatDate, formatValue } from "@/lib/format";
 import { PageHeader } from "../page-header";
 import { Panel, PanelHeader } from "../ui/panel";
@@ -15,7 +17,7 @@ import { useCan } from "../session-context";
 import { cn } from "@/lib/cn";
 
 export interface Confidence { band: "low" | "medium" | "high"; components: { factor: string; level: "low" | "medium" | "high"; basis: string }[] }
-interface Signal { id: string; title: string; summary: string; domain: string; urgency: string; impact: string; data_mode: string; event_time: string; detected_at: string; status: string; why_surfaced: string; confidence: Confidence; corroborations: number; entities: { key: string; name: string }[] | null; cases: { caseKey: string; title: string }[] | null; disposition_note: string | null; disposition_by: string | null }
+interface Signal { id: string; title: string; summary: string; in_industry?: boolean; domain: string; urgency: string; impact: string; data_mode: string; event_time: string; detected_at: string; status: string; why_surfaced: string; confidence: Confidence; corroborations: number; entities: { key: string; name: string }[] | null; cases: { caseKey: string; title: string }[] | null; disposition_note: string | null; disposition_by: string | null }
 
 export const URGENCY_TONE: Record<string, "crit" | "warn" | "info" | "neutral"> = { critical: "crit", high: "warn", medium: "info", low: "neutral" };
 export const ModeBadge = ({ mode }: { mode: string }) => <Badge tone={mode === "observed" ? "ok" : "gold"} className="text-[13px] font-medium">{mode === "observed" ? "Observed" : mode === "simulated" ? "Simulated" : "Synthetic"}</Badge>;
@@ -48,7 +50,14 @@ export function SignalsModule() {
   const [filter, setFilter] = useState<string>("");
   const [signals, setSignals] = useState<Signal[] | null>(null);
   const [open, setOpen] = useState<string | null>(params.get("focus"));
-  const load = useCallback(() => api<{ signals: Signal[] }>(`/signals${filter ? `?status=${filter}` : ""}`).then((r) => r.ok && setSignals(r.data.signals)), [filter]);
+  const [industry, setIndustry] = useState("");
+  const [showOthers, setShowOthers] = useState(false);
+  const { lang } = usePrefs();
+  const load = useCallback(() => api<{ signals: Signal[]; industry: string }>(`/signals${filter ? `?status=${filter}` : ""}`).then((r) => { if (r.ok) { setSignals(r.data.signals); setIndustry(r.data.industry); } }), [filter]);
+  const split = splitByIndustry(signals ?? [], (s) => s.in_industry);
+  // A signal opened by link (?focus=) stays visible even when it is outside the lens.
+  const focusOutside = !!open && split.others.some((s) => s.id === open);
+  const shown = showOthers || focusOutside ? [...split.mine, ...split.others] : split.mine;
   useEffect(() => { load(); }, [load]);
 
   return (
@@ -61,8 +70,10 @@ export function SignalsModule() {
               <option value="">All</option><option value="new">New</option><option value="monitoring">Monitoring</option><option value="in_case">In a case</option><option value="dismissed">Dismissed</option>
             </select>} />
           {!signals && <div className="m-4 h-64 animate-pulse rounded bg-surface-2" />}
+          {signals && <LensHeading industry={industry} count={split.mine.length} lang={lang === "ar" ? "ar" : "en"} />}
+          {signals && !split.mine.length && <p className="px-4 py-4 text-[13px] text-ink-muted">No signals in this industry for this filter.</p>}
           <ul className="cv-auto divide-y divide-line">
-            {signals?.map((s) => (
+            {shown.map((s) => (
               <li key={s.id}>
                 <button type="button" onClick={() => setOpen(s.id)} className="grid w-full gap-1.5 px-4 py-3 text-start hover:bg-surface-2">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -78,6 +89,7 @@ export function SignalsModule() {
               </li>
             ))}
           </ul>
+          <OthersToggle count={split.others.length} open={showOthers || focusOutside} onToggle={() => setShowOthers((v) => !v)} />
         </Panel>
         <LivePanel onInjected={load} />
       </div>
@@ -146,7 +158,7 @@ function SignalDrawer({ id, onClose }: { id: string | null; onClose: () => void 
     <Drawer open={!!id} onClose={onClose} eyebrow="Signal" title={d?.signal.title ?? "Loading"}>
       {!d ? <div className="h-64 animate-pulse rounded bg-surface-2" /> : (
         <div className="grid gap-5 text-[13px]">
-          <div className="flex flex-wrap gap-1.5"><Badge tone={URGENCY_TONE[d.signal.urgency]}>{d.signal.urgency}</Badge><ModeBadge mode={d.signal.data_mode} /><Badge>{d.signal.domain.replace("_", " ")}</Badge><Badge>{d.signal.status.replace("_", " ")}</Badge></div>
+          <div className="flex flex-wrap gap-1.5"><Badge tone={URGENCY_TONE[d.signal.urgency]}>{d.signal.urgency}</Badge><ModeBadge mode={d.signal.data_mode} /><Badge>{industryName(d.signal.domain)}</Badge><Badge>{d.signal.status.replace("_", " ")}</Badge></div>
           <p>{d.signal.summary}</p>
           <div className="rounded-md border border-line bg-surface-2 p-3"><div className="mb-1 font-medium">Why this was surfaced</div><p className="text-ink-muted">{d.signal.why_surfaced}</p></div>
           <dl className="grid grid-cols-2 gap-3"><Field label="Event time">{formatDate(d.signal.event_time, true)}</Field><Field label="Detected">{formatDate(d.signal.detected_at, true)}</Field></dl>

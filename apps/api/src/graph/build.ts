@@ -13,6 +13,13 @@ import { getObject } from "../evidence/vault";
  * Upserts by stable key, so rebuilding is idempotent.
  */
 
+/** Entity types the four added industries, and construction and real estate, look at (packages/shared/src/industries.ts). */
+const DERIVED_DOMAINS: Record<string, string[]> = {
+  chokepoint: ["defence_security", "telecoms"], port: ["defence_security", "transport_aviation", "construction_real_estate"], terminal: ["defence_security"],
+  airport: ["defence_security", "transport_aviation", "healthcare"], facility: ["defence_security", "telecoms"], route: ["transport_aviation"],
+  city: ["healthcare", "telecoms", "transport_aviation", "construction_real_estate"], power_plant: ["telecoms"], commodity: ["healthcare"],
+};
+
 interface EntityRow { key: string; type: string; name: string; country: string | null; lat: number | null; lon: number | null; quality: string | null; domains: string[]; attributes: Record<string, unknown>; claim: string; evidenceId: string | null }
 interface RelRow { from: string; predicate: string; label: string; to: string; cls: string; weight: number | null; evidenceId: string; factId: string | null; note: string | null }
 
@@ -77,7 +84,12 @@ export async function buildGraph(tx: Tx, institutionId: string, actorLabel = "Gr
   const entities: EntityRow[] = [];
   const rels: RelRow[] = [];
   const known = new Set<string>();
-  const pushEntity = (e: EntityRow) => { if (!known.has(e.key)) { known.add(e.key); entities.push(e); } };
+  // Industries added on 9 Nov 2026 are derived from the entity type, so the signed reference package stays unchanged.
+  const pushEntity = (e: EntityRow) => {
+    if (known.has(e.key)) return;
+    known.add(e.key);
+    entities.push({ ...e, domains: [...new Set([...e.domains, ...(DERIVED_DOMAINS[e.type] ?? [])])] });
+  };
 
   // 1. Curated reference geography
   for (const ev of (await latestEvidence(tx, "tigeris.reference")).slice(0, 1)) {

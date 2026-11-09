@@ -6,10 +6,11 @@ import maplibregl, { type GeoJSONSource, type Map as MLMap } from "maplibre-gl";
 import Link from "next/link";
 import { Crosshair, Globe2, Layers, Map as MapIcon, Pause, Play, Radio, Rows3, SkipBack } from "lucide-react";
 import {
-  AIS_CATEGORY_LABEL, ESTIMATE_LIMIT_MIN, estimatePosition, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
+  AIS_CATEGORY_LABEL, ESTIMATE_LIMIT_MIN, estimatePosition, industryOf, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
   type AisCategory, type MovingPoint, type Scenario,
 } from "@tigeris/shared";
 import { api } from "@/lib/api";
+import { useSession } from "./session-context";
 import { formatDate, num } from "@/lib/format";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -116,7 +117,12 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const lastFrame = useRef(0);
   const [speed, setSpeed] = useState(1);
   const [scenario, setScenario] = useState<Scenario>("baseline");
-  const [on, setOn] = useState<Set<LayerKey>>(new Set(LAYERS.map((l) => l.key)));
+  // Industry lens: the industry's own layers start switched on, plus the context layers; the rest are one click away.
+  const session = useSession();
+  const [on, setOn] = useState<Set<LayerKey>>(() => {
+    const lens = industryOf(session.principal.industry)?.mapLayers ?? LAYERS.map((l) => l.key);
+    return new Set(LAYERS.map((l) => l.key).filter((k) => lens.includes(k) || ["borders", "labels", "signals", "chokepoints"].includes(k)));
+  });
   const [globe, setGlobe] = useState(false);
   const [view, setView] = useState<"map" | "table">("map");
   const [layersOpen, setLayersOpen] = useState(!compact);

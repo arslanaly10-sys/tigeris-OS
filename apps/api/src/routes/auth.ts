@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { ROLES, ROLE_DENSITY, ROLE_PERMISSIONS, type Role } from "@tigeris/shared";
+import { DEFAULT_INDUSTRY, INDUSTRY_KEYS, ROLES, ROLE_DENSITY, ROLE_PERMISSIONS, isIndustry, jobTitle, type IndustryKey, type Role } from "@tigeris/shared";
 import { appPool, withTenant } from "../db";
 import { appendAudit } from "../audit";
 import { config } from "../config";
@@ -10,7 +10,9 @@ const signInBody = z.object({
   institutionId: z.string().uuid(),
   principalId: z.string().uuid(),
   method: z.enum(["sso_simulated", "demo_entry"]),
+  industry: z.string().refine(isIndustry, "Unknown industry").optional(),
 });
+const industryBody = z.object({ industry: z.string().refine(isIndustry, "Unknown industry") });
 const mfaBody = z.object({ code: z.string().regex(/^\d{6}$/) });
 const switchBody = z.object({ principalId: z.string().uuid() });
 
@@ -46,12 +48,13 @@ export async function authRoutes(app: FastifyInstance) {
     });
     if (!person) return reply.code(404).send({ error: "unknown_person", message: "That person is not in this institution." });
     const role = person.role_key as Role;
-    const s = await createSession(body.institutionId, person.id, role);
+    const industry = (body.industry ?? DEFAULT_INDUSTRY) as IndustryKey;
+    const s = await createSession(body.institutionId, person.id, role, industry);
     await withTenant(body.institutionId, (tx) =>
       appendAudit(tx, body.institutionId, {
         actorType: "human", actorId: person.id, actorLabel: person.display_name, actorRole: role,
         action: "session.sign_in_started", resourceType: "session", resourceId: s.sessionId,
-        details: { method: body.method, mfa: "pending" },
+        details: { method: body.method, mfa: "pending", industry },
       }),
     );
     reply.setCookie(config.cookieName, s.token, { path: "/", httpOnly: true, sameSite: "lax", expires: s.expires });
@@ -93,7 +96,7 @@ export async function authRoutes(app: FastifyInstance) {
       ),
     );
     return {
-      principal: { id: p.principalId, name: p.displayName, title: p.title, role: p.role },
+      principal: { id: p.principalId, name: p.displayName, title: p.title, role: p.role, industry: p.industry, industryTitle: jobTitle(p.industry, p.role) ?? null, industryTitleAr: jobTitle(p.industry, p.role, "ar") ?? null },
       permissions: ROLE_PERMISSIONS[p.role],
       density: ROLE_DENSITY[p.role],
       institution: {
@@ -121,7 +124,7 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: "unknown_person", message: "That person is not in your institution." });
     }
     await appPool.query("UPDATE sessions SET revoked_at = now() WHERE id = $1", [p.sessionId]);
-    const s = await createSession(p.institutionId, target.id, target.role_key);
+    const s = await createSession(p.institutionId, target.id, target.role_key, p.industry);
     await appPool.query("UPDATE sessions SET mfa_verified_at = now() WHERE id = $1", [s.sessionId]);
     await withTenant(p.institutionId, (tx) =>
       appendAudit(tx, p.institutionId, {
@@ -132,6 +135,24 @@ export async function authRoutes(app: FastifyInstance) {
     );
     reply.setCookie(config.cookieName, s.token, { path: "/", httpOnly: true, sameSite: "lax", expires: s.expires });
     return { status: "switched", role: target.role_key };
+  });
+
+  /** Industry lens switcher: changes what the OS shows first for this session. Audited; permissions unchanged. */
+  app.post("/auth/industry", { preHandler: requirePermission() }, async (req, reply) => {
+    const p = req.principal!;
+    const parsed = industryBody.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: "unknown_industry", message: `Choose one of: ${INDUSTRY_KEYS.join(", ")}.` });
+    const industry = parsed.data.industry as IndustryKey;
+    if (industry === p.industry) return { status: "unchanged", industry };
+    await withTenant(p.institutionId, async (tx) => {
+      await tx.query("UPDATE sessions SET industry_key = $2 WHERE id = $1", [p.sessionId, industry]);
+      await appendAudit(tx, p.institutionId, {
+        actorType: "human", actorId: p.principalId, actorLabel: p.displayName, actorRole: p.role,
+        action: "session.industry_changed", resourceType: "session", resourceId: p.sessionId,
+        details: { from: p.industry, to: industry },
+      });
+    });
+    return { status: "changed", industry };
   });
 
   app.post("/auth/sign-out", async (req, reply) => {

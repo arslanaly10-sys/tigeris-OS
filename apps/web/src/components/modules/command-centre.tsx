@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, FolderKanban, Inbox, Map as MapIcon, MinusCircle, RadioTower, ShieldAlert, FileSearch } from "lucide-react";
 import { api } from "@/lib/api";
+import { LensHeading, OthersToggle, splitByIndustry } from "../industry";
 import { formatDate } from "@/lib/format";
 import { ModeBadge, URGENCY_TONE } from "./signals";
 import { MovementMapLazy } from "../movement-map-lazy";
@@ -35,11 +36,13 @@ const PERMISSION_TEXT: Record<Permission, string> = {
   "sovereignty.control": "Control offline mode and model allowlist",
 };
 
-interface Attention { items: { kind: string; title: string; reason: string; urgency: string; link: string; at: string; dataMode?: string }[]; counts: { newSignals: number; decisionsPending: number; openCases: number } }
+interface Attention { industry: string; items: { kind: string; title: string; reason: string; urgency: string; link: string; at: string; dataMode?: string; domain?: string; inIndustry?: boolean }[]; counts: { newSignals: number; decisionsPending: number; openCases: number } }
 const KIND_ICON: Record<string, React.ReactNode> = { signal: <RadioTower className="size-4 text-accent" />, case: <FolderKanban className="size-4 text-info" />, review: <FileSearch className="size-4 text-warn" />, source: <ShieldAlert className="size-4 text-crit" /> };
 
 function AttentionQueue() {
   const [a, setA] = useState<Attention | null>(null);
+  const [showOthers, setShowOthers] = useState(false);
+  const { lang } = usePrefs();
   useEffect(() => { api<Attention>("/attention").then((r) => r.ok && setA(r.data)); }, []);
   if (!a) return <div className="m-4 h-48 animate-pulse rounded bg-surface-2" />;
   if (!a.items.length) return (
@@ -48,9 +51,9 @@ function AttentionQueue() {
       <p className="max-w-[48ch] text-[13px] text-ink-muted">Signals, cases waiting for your role and source exceptions appear here with the reason each one is surfaced.</p>
     </div>
   );
-  return (
-    <ul className="divide-y divide-line">
-      {a.items.map((i, n) => (
+  // Industry lens: items in the person's industry, and cross-cutting items with no industry, come first.
+  const { mine, others } = splitByIndustry(a.items, (i) => i.inIndustry || !i.domain);
+  const row = (i: Attention["items"][number], n: number) => (
         <li key={n}>
           <Link href={i.link} className="grid grid-cols-[20px_1fr_auto] items-start gap-3 px-4 py-3 hover:bg-surface-2">
             <span className="mt-0.5">{KIND_ICON[i.kind]}</span>
@@ -58,8 +61,14 @@ function AttentionQueue() {
             <span className="flex flex-col items-end gap-1"><Badge tone={URGENCY_TONE[i.urgency] ?? "neutral"}>{i.urgency}</Badge>{i.dataMode && <ModeBadge mode={i.dataMode} />}<span className="text-[13px] tabular text-ink-faint">{formatDate(i.at, true)}</span></span>
           </Link>
         </li>
-      ))}
-    </ul>
+  );
+  return (
+    <div>
+      <LensHeading industry={a.industry} count={mine.length} lang={lang === "ar" ? "ar" : "en"} />
+      {mine.length ? <ul className="divide-y divide-line">{mine.map(row)}</ul> : <p className="px-4 py-4 text-[13px] text-ink-muted">Nothing in this industry needs you right now.</p>}
+      {showOthers && <ul className="divide-y divide-line border-t border-line">{others.map((i, n) => row(i, n + 1000))}</ul>}
+      <OthersToggle count={others.length} open={showOthers} onToggle={() => setShowOthers((v) => !v)} />
+    </div>
   );
 }
 

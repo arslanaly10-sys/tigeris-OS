@@ -12,7 +12,7 @@ export async function api<T>(path: string, init?: RequestInit & { json?: unknown
 }
 
 export interface AuthContext {
-  principal: { id: string; name: string; title: string; role: import("@tigeris/shared").Role };
+  principal: { id: string; name: string; title: string; role: import("@tigeris/shared").Role; industry: import("@tigeris/shared").IndustryKey; industryTitle: string | null; industryTitleAr: string | null };
   permissions: import("@tigeris/shared").Permission[];
   density: "spacious" | "dense";
   institution: { id: string; name: string; shortName: string; buyerCategory: string; country: string; residency: string; environment: string };

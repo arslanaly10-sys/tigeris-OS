@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CalendarClock, CheckCircle2, ChevronRight, MessageSquare, ShieldAlert } from "lucide-react";
 import { CASE_STATES, ROLE_LABELS, type CaseState, type Role } from "@tigeris/shared";
 import { api } from "@/lib/api";
+import { LensHeading, OthersToggle, industryName, splitByIndustry } from "../industry";
 import { formatDate } from "@/lib/format";
 import { PageHeader } from "../page-header";
 import { Panel, PanelHeader } from "../ui/panel";
@@ -41,25 +42,32 @@ export function StateTrack({ state }: { state: CaseState }) {
   );
 }
 
-interface CaseRow { id: string; case_key: string; title: string; domain: string; depth: string; state: CaseState; closure: string | null; owner_label: string; last_activity_at: string; signals: number; comments: number }
+interface CaseRow { id: string; case_key: string; title: string; domain: string; in_industry: boolean; depth: string; state: CaseState; closure: string | null; owner_label: string; last_activity_at: string; signals: number; comments: number }
 
 export function CasesList() {
   const [rows, setRows] = useState<CaseRow[] | null>(null);
   const [next, setNext] = useState<Record<string, Role[]>>({});
-  useEffect(() => { api<{ cases: CaseRow[]; nextActor: Record<string, Role[]> }>("/cases").then((r) => { if (r.ok) { setRows(r.data.cases); setNext(r.data.nextActor); } }); }, []);
+  const [industry, setIndustry] = useState("");
+  const [showOthers, setShowOthers] = useState(false);
+  const { lang } = usePrefs();
+  useEffect(() => { api<{ cases: CaseRow[]; nextActor: Record<string, Role[]>; industry: string }>("/cases").then((r) => { if (r.ok) { setRows(r.data.cases); setNext(r.data.nextActor); setIndustry(r.data.industry); } }); }, []);
+  const split = splitByIndustry(rows ?? [], (c) => c.in_industry);
+  const shown = showOthers ? [...split.mine, ...split.others] : split.mine;
   return (
     <>
       <PageHeader nav="nav.cases" description="The primary work object. Each case keeps its signals, evidence, impact paths, scenarios, options, decision and memory together, with a full history." />
       <Panel>
         <PanelHeader eyebrow="Cases" title="All cases" actions={rows && <Badge className="tabular">{rows.filter((r) => r.state !== "closed").length} open</Badge>} />
         {!rows && <div className="m-4 h-64 animate-pulse rounded bg-surface-2" />}
+        {rows && <LensHeading industry={industry} count={split.mine.length} lang={lang === "ar" ? "ar" : "en"} />}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-[13px]">
             <thead><tr className="border-b border-line text-ink-faint">{["Case", "State", "Waiting for", "Owner", "Activity", ""].map((h) => <th key={h} className="px-4 py-2 text-start font-medium">{h}</th>)}</tr></thead>
             <tbody>
-              {rows?.map((c) => (
-                <tr key={c.id} className="border-b border-line/60 last:border-0 hover:bg-surface-2">
-                  <td className="px-4 py-3"><Link href={`/cases/${c.case_key}`} className="font-medium hover:underline">{c.title}</Link><div className="flex flex-wrap items-center gap-1.5 text-[13px] text-ink-faint"><span translate="no" className="font-mono">{c.case_key}</span> · {DEPTH_LABEL[c.depth]} · {c.domain.replace(/_/g, " ")}</div></td>
+              {rows && !split.mine.length && <tr><td colSpan={6} className="px-4 py-4 text-ink-muted">No cases in this industry yet.</td></tr>}
+              {shown.map((c, n) => (
+                <tr key={c.id} className={cn("border-b border-line/60 last:border-0 hover:bg-surface-2", n === split.mine.length && "border-t-2 border-t-line-strong")}>
+                  <td className="px-4 py-3"><Link href={`/cases/${c.case_key}`} className="font-medium hover:underline">{c.title}</Link><div className="flex flex-wrap items-center gap-1.5 text-[13px] text-ink-faint"><span translate="no" className="font-mono">{c.case_key}</span> · {DEPTH_LABEL[c.depth]} · {industryName(c.domain)}</div></td>
                   <td className="px-4 py-3"><Badge tone={c.state === "closed" ? "neutral" : c.state === "decision" ? "warn" : "info"}>{STATE_LABEL[c.state]}{c.closure ? ` · ${c.closure.replace("_", " ")}` : ""}</Badge></td>
                   <td className="px-4 py-3 text-ink-muted">{(next[c.state] ?? []).map((r) => ROLE_LABELS[r]).join(" or ") || "—"}</td>
                   <td className="px-4 py-3 text-ink-muted">{c.owner_label}</td>
@@ -70,6 +78,7 @@ export function CasesList() {
             </tbody>
           </table>
         </div>
+        <OthersToggle count={split.others.length} open={showOthers} onToggle={() => setShowOthers((v) => !v)} />
       </Panel>
     </>
   );
