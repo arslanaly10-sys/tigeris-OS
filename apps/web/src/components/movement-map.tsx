@@ -202,7 +202,6 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       renderWorldCopies: false,
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
-    m.addControl(new maplibregl.AttributionControl({ customAttribution: "Natural Earth · TIGERIS curated reference (approximate) · simulated movement · AIS snapshot via aisstream.io · ADS-B snapshot from adsb.lol (ODbL)" }), "bottom-right");
     m.on("load", () => {
       registerIcons(m);
       m.addSource("lanes", { type: "geojson", data: fc([]) });
@@ -384,6 +383,8 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const holding = movers.filter((p) => p.status === "holding").length;
   const rerouted = movers.filter((p) => p.status === "rerouted").length;
   const h = height ?? (compact ? 360 : 620);
+  // Source credits sit under the map, not on it, so map buttons never cover them (MAP §6 attribution).
+  const credits = "Natural Earth · TIGERIS curated reference (approximate) · simulated movement · AIS snapshot via aisstream.io · ADS-B snapshot from adsb.lol (ODbL)";
 
   return (
     <div className="grid gap-3">
@@ -435,6 +436,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
           {compact && <Button size="sm" variant="secondary" asChild><Link href="/map">Open full map</Link></Button>}
         </div>
       </div>
+      <p className="text-[13px] text-ink-faint">Sources: {credits}</p>
 
       {view === "table" && <MoversTable movers={movers} observed={observed?.vessels ?? []} observedAir={observedAir?.aircraft ?? []} entities={data?.entities ?? []} onSelect={setSelected} />}
 
