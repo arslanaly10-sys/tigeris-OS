@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
-import "@fontsource-variable/host-grotesk";
+import "@fontsource-variable/manrope";
+import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/jetbrains-mono";
 import "@fontsource/ibm-plex-sans-arabic/400.css";
 import "@fontsource/ibm-plex-sans-arabic/500.css";

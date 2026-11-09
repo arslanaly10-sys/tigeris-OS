@@ -57,11 +57,11 @@ const LAYERS = [
 type LayerKey = (typeof LAYERS)[number]["key"];
 
 const ENTITY_LAYER: Record<string, LayerKey> = { port: "ports", terminal: "ports", refinery: "refineries", field: "refineries", facility: "refineries", desalination: "desal", power_plant: "power", airport: "airports", chokepoint: "chokepoints" };
-const ASSET_COLOR: Record<string, string> = { ports: "#79a8de", refineries: "#dc9a45", desal: "#5cc8d6", power: "#e58fa8", airports: "#9aa6b8", chokepoints: "#d8645a" };
-export const MOVER_COLOR: Record<string, string> = { crude_tanker: "#dc9a45", product_tanker: "#e8b86a", lng_carrier: "#79a8de", container: "#45b88c", bulk_grain: "#c9a45c", truck: "#e8e6df", airliner_wide: "#a9c8ee", airliner_narrow: "#d5dde9", freighter: "#e8b86a" };
-const AIR_COLOR: Record<PlaneShape, string> = { airliner_wide: "#a9c8ee", airliner_narrow: "#d5dde9", freighter: "#e8b86a" };
+const ASSET_COLOR: Record<string, string> = { ports: "#007785", refineries: "#86581d", desal: "#2a8fa0", power: "#6e519d", airports: "#4b4037", chokepoints: "#c13d34" };
+export const MOVER_COLOR: Record<string, string> = { crude_tanker: "#9a5b14", product_tanker: "#c07a1e", lng_carrier: "#007785", container: "#317a45", bulk_grain: "#657b3d", truck: "#4b4037", airliner_wide: "#1447e6", airliner_narrow: "#5b78d6", freighter: "#6e519d" };
+const AIR_COLOR: Record<PlaneShape, string> = { airliner_wide: "#1447e6", airliner_narrow: "#5b78d6", freighter: "#6e519d" };
 const AIR_ESTIMATE_LIMIT_MIN = 20;
-const OBSERVED_COLOR: Record<AisCategory, string> = { tanker: "#dc9a45", cargo: "#45b88c", passenger: "#e58fa8", service: "#9aa6b8", fishing: "#5cc8d6", other: "#e8e6df" };
+const OBSERVED_COLOR: Record<AisCategory, string> = { tanker: "#9a5b14", cargo: "#317a45", passenger: "#6e519d", service: "#4b4037", fishing: "#007785", other: "#5e5144" };
 const HORMUZ_VIEW = { center: [56.45, 26.35] as [number, number], zoom: 7.4 };
 const SCENARIOS: { key: Scenario; label: string; note: string }[] = [
   { key: "baseline", label: "Baseline", note: "Normal simulated traffic" },
@@ -190,10 +190,10 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
           borders: { type: "geojson", data: "/geo/borders.geojson" },
         },
         layers: [
-          { id: "ocean", type: "background", paint: { "background-color": "#07101c" } },
-          { id: "land", type: "fill", source: "land", paint: { "fill-color": "#111d2e" } },
-          { id: "region", type: "fill", source: "countries", paint: { "fill-color": ["case", ["get", "gcc"], "#17273d", "#131f31"] } },
-          { id: "borders", type: "line", source: "borders", paint: { "line-color": "#2c4060", "line-width": 0.8 } },
+          { id: "ocean", type: "background", paint: { "background-color": "#e9dfcd" } },
+          { id: "land", type: "fill", source: "land", paint: { "fill-color": "#f7f1e6" } },
+          { id: "region", type: "fill", source: "countries", paint: { "fill-color": ["case", ["get", "gcc"], "#f3eadb", "#f7f1e6"] } },
+          { id: "borders", type: "line", source: "borders", paint: { "line-color": "#b9a281", "line-width": 0.8 } },
         ],
       },
       center: compact ? [52.5, 24.8] : [51.5, 24.5],
@@ -213,10 +213,10 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       m.addSource("anomalyShips", { type: "geojson", data: fc([]) });
       m.addSource("observedTracks", { type: "geojson", data: fc([]) });
       m.addSource("anomalyMarks", { type: "geojson", data: fc([]) });
-      m.addLayer({ id: "lanes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "sea"], paint: { "line-color": "#2f5f8f", "line-width": 1.2, "line-opacity": 0.55 } });
+      m.addLayer({ id: "lanes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "sea"], paint: { "line-color": "#8a6a45", "line-width": 1.1, "line-opacity": 0.45 } });
       m.addLayer({ id: "cape", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "scenario"], paint: { "line-color": "#d9bd84", "line-width": 1.6, "line-dasharray": [3, 2] } });
-      m.addLayer({ id: "roads", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "road"], paint: { "line-color": "#6d6247", "line-width": 1.4, "line-dasharray": [2, 1.5] } });
-      m.addLayer({ id: "air-routes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "air"], paint: { "line-color": "#8fa3c4", "line-width": 1, "line-opacity": 0.35, "line-dasharray": [1, 3] } });
+      m.addLayer({ id: "roads", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "road"], paint: { "line-color": "#a08a6a", "line-width": 1.3, "line-dasharray": [2, 1.5] } });
+      m.addLayer({ id: "air-routes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "air"], paint: { "line-color": "#6e519d", "line-width": 1, "line-opacity": 0.3, "line-dasharray": [1, 3] } });
       m.addLayer({ id: "pipelines", type: "line", source: "pipelines", paint: { "line-color": "#c9a45c", "line-width": 2, "line-dasharray": [4, 2] } });
       m.addLayer({ id: "assets", type: "symbol", source: "assets", layout: {
         "icon-image": ["concat", "infra-", ["get", "layer"]], "icon-allow-overlap": true, "icon-ignore-placement": true,
@@ -234,7 +234,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         "icon-image": ["concat", "obsair-", ["get", "kind"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
         "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.45, 6, 0.65, 9, 1],
       } });
-      m.addLayer({ id: "observedTracks", type: "line", source: "observedTracks", paint: { "line-color": "#ece8de", "line-width": 1.4, "line-opacity": 0.55, "line-dasharray": [2, 1.5] } });
+      m.addLayer({ id: "observedTracks", type: "line", source: "observedTracks", paint: { "line-color": "#1447e6", "line-width": 1.4, "line-opacity": 0.6, "line-dasharray": [2, 1.5] } });
       m.addLayer({ id: "anomalyMarks", type: "symbol", source: "anomalyMarks", layout: { "icon-image": ["concat", "anomaly-", ["get", "kind"]], "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.7, 8, 1.1] } });
       m.addLayer({ id: "anomalyShips", type: "symbol", source: "anomalyShips", layout: {
         "icon-image": ["concat", ["get", "type"], "-", ["get", "state"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",

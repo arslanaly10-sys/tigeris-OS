@@ -2,7 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/cn";
 
 /** Status always carries text, never colour alone (FD accessibility). */
-export const badgeVariants = cva("inline-flex items-center gap-1 rounded-[4px] border px-1.5 py-[3px] text-[13px] font-medium leading-none whitespace-nowrap [&_svg]:size-3", {
+export const badgeVariants = cva("inline-flex items-center gap-1 rounded-[2px] border px-1.5 py-[3px] text-[13px] font-medium leading-none whitespace-nowrap [&_svg]:size-3", {
   variants: {
     tone: {
       neutral: "border-line-strong/70 bg-surface-2 text-ink-muted",

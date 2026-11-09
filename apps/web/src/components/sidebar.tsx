@@ -26,7 +26,7 @@ export function Sidebar() {
           href={`/${m.slug}`}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex items-center gap-2.5 rounded-[6px] px-2.5 py-[7px] text-[13.5px] transition-colors",
+            "flex items-center gap-2.5 rounded-[2px] px-2.5 py-[7px] text-[13.5px] transition-colors",
             active ? "bg-surface-3 font-medium text-ink shadow-[inset_2px_0_0_var(--primary)] rtl:shadow-[inset_-2px_0_0_var(--primary)]" : "text-ink-muted hover:bg-surface-2 hover:text-ink",
           )}
         >

@@ -3,7 +3,7 @@
 About 25 minutes, then questions. It follows the in-app **Guide**: the button at the bottom corner of every screen shows the same ten steps. Switch roles from the menu at the top right. Everything shown is public or synthetic data about fictional institutions.
 
 ## Before you start (5 minutes before)
-1. Open the app and sign in as **Analyst · Gulf Sovereign Fund** (demo entry; the code is shown on screen).
+1. Open the app and sign in as **Analyst · GCC Sovereign Fund A** (demo entry; the code is shown on screen).
 2. Header menu → **Reset demo** (press twice). This takes about 30 seconds and gives a clean state.
 3. Check the header badges: **Foreign models off · local model**, **Demonstration Mode**.
 4. Optional warm-up: on case GSF-2026-0001, open **Agents** and press **Run analysis** once. Later runs reuse its cached model text, so the live run takes seconds.

@@ -64,7 +64,7 @@ describe("sign-in and MFA (FR-01, FR-02, FR-04)", () => {
   it("returns the institution context and permissions after MFA", async () => {
     const cookie = await signIn(GSF.id, "analyst");
     const ctx = (await app.inject({ method: "GET", url: "/auth/context", headers: { cookie } })).json();
-    expect(ctx.institution.name).toBe("Gulf Sovereign Fund");
+    expect(ctx.institution.name).toBe("GCC Sovereign Fund A");
     expect(ctx.principal.role).toBe("analyst");
     expect(ctx.permissions).toContain("recommendation.draft");
     expect(ctx.permissions).not.toContain("decision.approve");

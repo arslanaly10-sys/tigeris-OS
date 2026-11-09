@@ -1,17 +1,14 @@
 import { cn } from "@/lib/cn";
 
-/** Text wordmark only until the client supplies a logo (Q013). */
+/**
+ * Typographic wordmark in the client's style (tigercapital.ai uses text, not a logo mark): "TIGERIS" in Space
+ * Grotesk bold with wide tracking, and a mono descriptor. Replace with the client's SVG logo when supplied.
+ */
 export function Wordmark({ size = "md", className }: { size?: "md" | "lg"; className?: string }) {
   return (
-    <div className={cn("flex items-center gap-2.5 leading-none", className)} dir="ltr">
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={cn("shrink-0 text-primary", size === "lg" ? "size-9" : "size-[22px]")}>
-        <path d="M12 1.5 14.6 9.4 22.5 12 14.6 14.6 12 22.5 9.4 14.6 1.5 12 9.4 9.4Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-        <circle cx="12" cy="12" r="2.2" fill="currentColor" />
-      </svg>
-      <span className="flex flex-col">
-        <span className={cn("font-serif font-medium text-ink", size === "lg" ? "text-[28px]" : "text-[16px]")}>TIGERIS</span>
-        <span className={cn("mt-1 font-sans font-medium text-ink-faint", size === "lg" ? "text-[13px]" : "text-[12px]", "whitespace-nowrap")}>Sovereign Intelligence OS</span>
-      </span>
+    <div className={cn("flex flex-col leading-none", className)} dir="ltr">
+      <span className={cn("font-serif font-bold tracking-[0.18em] text-ink", size === "lg" ? "text-[30px]" : "text-[17px]")}>TIGERIS</span>
+      <span className={cn("mt-1.5 whitespace-nowrap font-mono uppercase tracking-[0.12em] text-ink-faint", size === "lg" ? "text-[12px]" : "text-[10.5px]")}>Sovereign Intelligence OS</span>
     </div>
   );
 }

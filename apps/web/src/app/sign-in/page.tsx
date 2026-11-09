@@ -8,7 +8,8 @@ import { api } from "@/lib/api";
 import { usePrefs } from "@/components/prefs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ShipBackdrop } from "@/components/ship-backdrop";
+import { BriefingScene } from "@/components/scenes/BriefingScene";
+import { DOCTRINE } from "@/content/client-copy";
 import { Badge } from "@/components/ui/badge";
 import { Wordmark } from "@/components/wordmark";
 import { PrefToggles } from "@/components/pref-toggles";
@@ -74,21 +75,16 @@ export default function SignInPage() {
 
   return (
     <div className="grid min-h-full lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,1fr)]">
-      {/* Brand side */}
-      {/* The ship map is dark in both themes, so the hero over it always uses the dark tokens (text stays legible). */}
-      <aside data-theme="dark" className="relative hidden flex-col justify-between overflow-hidden border-e border-line bg-surface px-12 py-10 text-ink lg:flex">
-        <ShipBackdrop />
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--surface)_92%,transparent)_0%,color-mix(in_oklab,var(--surface)_55%,transparent)_42%,transparent_70%)]" />
-        <span className="absolute bottom-[84px] end-12 z-[1] rounded border border-line-strong bg-surface px-2 py-1 text-[13px] text-ink-muted">Simulated ships and flights, Riyadh time</span>
+      {/* Brand side: the client's ivory briefing look, with scene 06 without its chrome. */}
+      <aside className="relative hidden min-w-0 flex-col justify-between gap-8 border-e border-line px-12 py-10 lg:flex">
         <div className="relative"><Wordmark size="lg" /></div>
-        <div className="relative max-w-lg space-y-5">
-          <p className="eyebrow text-accent">{t("product.descriptor")}</p>
-          <p className="enter-mask text-[48px] font-medium leading-[1.05] tracking-[-0.035em] text-ink"><span className="enter-line">{t("product.tagline")}</span></p>
-          <p className="enter-follow max-w-[46ch] text-[16px] text-ink-muted">
-            An institution-owned intelligence and decision layer. Evidence is validated, linked and reasoned over, then put before a named person to decide.
-          </p>
+        <div className="relative max-w-xl space-y-5">
+          <p className="eyebrow">Private Institutional Briefing · Sovereign Alignment</p>
+          <p className="statement text-[52px] text-ink">{DOCTRINE}</p>
+          <p className="max-w-[46ch] text-[16px] text-ink-muted">{t("product.tagline")} An institution-owned intelligence and decision layer: evidence is validated, linked and reasoned over, then put before a named person to decide.</p>
         </div>
-        <ul className="enter-follow relative flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink-muted">
+        <BriefingScene chrome={false} className="block h-auto w-full" />
+        <ul className="relative flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink-muted">
           <li className="flex items-center gap-2"><Server className="size-4 text-accent" />{t("signin.sovereign")}</li>
           <li className="flex items-center gap-2"><Building2 className="size-4 text-accent" />{t("signin.onPrem")}</li>
           <li className="flex items-center gap-2"><ScrollText className="size-4 text-accent" />{t("signin.audited")}</li>

@@ -31,7 +31,7 @@ export const DEMO_INSTITUTIONS = [
   {
     id: "11111111-1111-4111-8111-111111111111",
     slug: "gulf-sovereign-fund",
-    name: "Gulf Sovereign Fund",
+    name: "GCC Sovereign Fund A",
     shortName: "GSF",
     buyerCategory: "Sovereign wealth fund",
     country: "Saudi Arabia",
