@@ -21,13 +21,14 @@ export function BriefingScene(props: SceneProps) {
   const uid = useId().replace(/:/g, "");
   const { entry, loop, speed } = useSceneRun(ref, props);
   const chrome = props.chrome ?? true;
-  const { onEvent } = props;
+  const onEvent = useRef(props.onEvent);
+  onEvent.current = props.onEvent;
 
   useEffect(() => {
-    if (!entry) { onEvent?.({ type: "entry-complete" }); return; }
-    const t = setTimeout(() => onEvent?.({ type: "entry-complete" }), 4200 / speed);
+    if (!entry) { onEvent.current?.({ type: "entry-complete" }); return; }
+    const t = setTimeout(() => onEvent.current?.({ type: "entry-complete" }), 4200 / speed);
     return () => clearTimeout(t);
-  }, [entry, speed, onEvent, props.playKey]);
+  }, [entry, speed, props.playKey]);
 
   const from = <T,>(initial: T) => (entry ? initial : false);
   const lineReveal = (i: number) => ({ initial: from({ y: 90 }), animate: { y: 0 }, transition: enter(1.0, 1.5 + i * 0.18, speed) });

@@ -69,14 +69,16 @@ export function SceneChrome({ n, section, pill, fig, entry, speed, sectionRuleFr
   n: string; section: string[]; pill: string; fig: string; entry: boolean; speed: number; sectionRuleFrom: number;
 }) {
   const up = (d: number) => (entry ? { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, transition: enter(0.6, d, speed) } : {});
+  // Pill text width as on the plates: about 7.4 design px per character of wide-tracked 10 px mono.
+  const pillW = pill.length * 7.4;
   const draw = (d: number) => (entry ? { initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: enter(0.7, d, speed) } : {});
   return (
     <g>
       <motion.g {...up(0.1)}>
         <text x="72" y="59" fill="var(--ink)" style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 15, letterSpacing: "0.02em" }}>TIGER CAPITAL AI</text>
         <text x="72" y="76" fill="var(--ink-muted)" textLength={196} lengthAdjust="spacing" style={{ fontFamily: "var(--font-sans)", fontSize: 9.5, letterSpacing: "0.06em", textTransform: "uppercase" }}>Sovereign Intelligence Architecture</text>
-        <rect x="1650" y="39" width="198" height="35" fill="none" stroke="var(--primary)" strokeOpacity="0.6" />
-        <text x="1668" y="61" fill="var(--primary)" textLength={163} lengthAdjust="spacing" style={{ ...mono, fontSize: 10 }}>{pill}</text>
+        <rect x={1848 - pillW - 36} y="39" width={pillW + 36} height="35" fill="none" stroke="var(--primary)" strokeOpacity="0.6" />
+        <text x={1848 - pillW - 18} y="61" fill="var(--primary)" textLength={pillW} lengthAdjust="spacing" style={{ ...mono, fontSize: 10 }}>{pill}</text>
       </motion.g>
       <motion.path d="M0 104H1920" stroke="var(--line)" {...draw(0)} />
       <motion.g {...up(0.35)}>
