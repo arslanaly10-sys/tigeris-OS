@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Activity, AlertTriangle, BookMarked, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Gavel, History, ShieldAlert, ShieldCheck, XCircle } from "lucide-react";
+import { Activity, AlertTriangle, Box, Plus, BookMarked, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Gavel, History, ShieldAlert, ShieldCheck, XCircle } from "lucide-react";
 import { api } from "@/lib/api";
 import { verdict } from "@/lib/format";
 import { requireText, clearInvalid, useUnsavedWarning } from "@/lib/forms";
@@ -13,6 +13,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { useCan, useSession } from "./session-context";
 import { PrecedentList, type Hit } from "./memory-ui";
+import { INDUSTRIES } from "@tigeris/shared";
 
 /* ---------- shared ---------- */
 interface RuleTrace { rule: string; description: string; applied: boolean; passed: boolean; effect: string | null; message: string | null }
@@ -36,9 +37,10 @@ export function TraceList({ trace }: { trace: RuleTrace[] }) {
 const STATUS_TONE: Record<string, "ok" | "warn" | "crit" | "info" | "neutral"> = { approved: "ok", pending: "warn", rejected: "crit", deferred: "neutral", open: "neutral", in_progress: "info", done: "ok", blocked: "crit" };
 
 /* ---------- case: Decision and memory tab ---------- */
-interface Option { id: string; title: string; option_key: string; authority: string; governance: string; base_score: number; band: string; approval: { id: string; required: number; roles: string[]; description: string }; preview: { result: string; explanation: string; rule: string } }
+interface Option { id: string; title: string; option_key: string; authority: string; governance: string; base_score: number; band: string; approval: { id: string; required: number; roles: string[]; description: string }; preview: { result: string; explanation: string; rule: string }; envelopes?: EnvelopeFit[] }
+interface EnvelopeFit { id: string; name: string; fit: { result: string; explanation: string; rule: string } | null }
 interface Decision {
-  id: string; option_title: string; outcome: string; status: string; rationale: string; required_approvals: number; approval_roles: string[]; approval_rule: string | null; policy_version: number; policy_hash: string; policy_trace: RuleTrace[]; snapshot_hash: string;
+  id: string; option_title: string; outcome: string; status: string; rationale: string; required_approvals: number; approval_roles: string[]; approval_rule: string | null; envelope_name?: string | null; policy_version: number; policy_hash: string; policy_trace: RuleTrace[]; snapshot_hash: string;
   proposed_by_label: string; proposed_by_role: string; created_at: string; finalised_at: string | null; approvals: Array<{ approver_label: string; approver_role: string; vote: string; rationale: string; created_at: string }>;
 }
 interface Handoff { id: string; title: string; description: string; owner_role: string; due_at: string; status: string; updates: Array<{ status: string; note: string; actor_label: string; actor_role: string; created_at: string }> }
@@ -67,13 +69,14 @@ function RecordDecision({ caseKey, data, onDone }: { caseKey: string; data: Deci
   const [opt, setOpt] = useState(data.options[0]?.id ?? "");
   const [outcome, setOutcome] = useState<"approve" | "reject" | "defer">("approve");
   const [rationale, setRationale] = useState("");
+  const [route, setRoute] = useState<string>("committee");
   useUnsavedWarning(rationale.trim().length > 0);
   const [res, setRes] = useState<{ ok: boolean; message: string; trace?: RuleTrace[] } | null>(null);
   if (!data.options.length) return <Panel className="p-5 text-ink-muted">No ranked options yet. Run the agent analysis first; a decision is always taken on one option.</Panel>;
   const o = data.options.find((x) => x.id === opt)!;
   async function submit() {
-    const r = await api<{ decisionStatus: string; required: number; handoffs: number }>(`/cases/${caseKey}/decisions`, { json: { recommendationId: opt, outcome, rationale } });
-    if (r.ok) { setRes({ ok: true, message: `Decision recorded: ${r.data.decisionStatus}${r.data.decisionStatus === "pending" ? ` — needs ${r.data.required} approvals` : ""}${r.data.handoffs ? `; ${r.data.handoffs} handoff task(s) created` : ""}.` }); setRationale(""); onDone(); }
+    const r = await api<{ decisionStatus: string; required: number; handoffs: number; envelope: string | null }>(`/cases/${caseKey}/decisions`, { json: { recommendationId: opt, outcome, rationale, ...(outcome === "approve" && route !== "committee" ? { envelopeId: route } : {}) } });
+    if (r.ok) { setRes({ ok: true, message: `Decision recorded${r.data.envelope ? ` inside the "${r.data.envelope}" envelope` : ""}: ${r.data.decisionStatus}${r.data.decisionStatus === "pending" ? ` — needs ${r.data.required} approvals` : ""}${r.data.handoffs ? `; ${r.data.handoffs} handoff task(s) created` : ""}.` }); setRationale(""); onDone(); }
     else {
       const body = r as unknown as { message: string };
       setRes({ ok: false, message: body.message });
@@ -87,12 +90,28 @@ function RecordDecision({ caseKey, data, onDone }: { caseKey: string; data: Deci
           <legend className="mb-1 text-[13px] font-medium">Option</legend>
           {data.options.map((x) => (
             <label key={x.id} className={cn("grid cursor-pointer grid-cols-[18px_1fr_auto] items-start gap-2 rounded-md border p-2.5 text-[13px]", opt === x.id ? "border-primary bg-primary-soft/40" : "border-line")}>
-              <input type="radio" name="option" checked={opt === x.id} onChange={() => setOpt(x.id)} className="mt-1" />
+              <input type="radio" name="option" checked={opt === x.id} onChange={() => { setOpt(x.id); setRoute("committee"); }} className="mt-1" />
               <span><span className="font-medium">{x.title}</span><br /><span className="text-[13px] text-ink-muted">Score {num(x.base_score, 1)} · confidence {x.band} · option policy {x.governance} · {x.approval.required === 1 ? "one approval" : `${x.approval.required} approvals by different people`} ({x.authority})</span></span>
               <PolicyResultBadge result={x.preview.result} />
             </label>
           ))}
         </fieldset>
+        {outcome === "approve" && o.approval.required > 1 && !!o.envelopes?.length && (
+          <fieldset className="grid gap-2 rounded-md border border-line p-3">
+            <legend className="px-1 text-[13px] font-medium">Route</legend>
+            <label className="flex items-start gap-2 text-[13px]"><input type="radio" name="route" checked={route === "committee"} onChange={() => setRoute("committee")} className="mt-1" /><span>Committee: {o.approval.required} approvals by different people</span></label>
+            {o.envelopes.map((e) => {
+              const fits = e.fit?.result === "PASS";
+              return (
+                <label key={e.id} className={cn("flex items-start gap-2 text-[13px]", !fits && "text-ink-muted")}>
+                  <input type="radio" name="route" disabled={!fits} checked={route === e.id} onChange={() => setRoute(e.id)} className="mt-1" />
+                  <span className="grid gap-0.5"><span className="flex flex-wrap items-center gap-2">Inside the &ldquo;{e.name}&rdquo; envelope: one named authoriser <Badge tone={fits ? "ok" : "neutral"}>{fits ? <CheckCircle2 /> : <XCircle />}{fits ? "fits" : "outside"}</Badge></span>
+                    {!fits && <span className="text-ink-faint">{e.fit?.explanation ?? "The active policy has no envelope rules."}</span>}</span>
+                </label>
+              );
+            })}
+          </fieldset>
+        )}
         {o.preview.result !== "PASS" && <p className="rounded-md bg-warn-soft px-3 py-2 text-[13px] text-warn">Preview for you: {o.preview.explanation}</p>}
         <div className="flex flex-wrap gap-4 text-[13px]">
           {(["approve", "reject", "defer"] as const).map((x) => <label key={x} className="flex items-center gap-1.5"><input type="radio" name="outcome" checked={outcome === x} onChange={() => setOutcome(x)} />{x === "approve" ? "Approve" : x === "reject" ? "Reject" : "Defer"}</label>)}
@@ -138,6 +157,7 @@ function DecisionCard({ d, onDone }: { d: Decision; onDone: () => void }) {
         </div>
         {d.outcome === "approve" && <div className="text-end"><div className="tabular text-[20px] font-medium">{approvals}/{d.required_approvals}</div><div className="text-[13px] text-ink-faint">approvals</div></div>}
       </div>
+      {d.envelope_name && <p className="flex flex-wrap items-center gap-2 text-[13px] text-ink-muted"><Badge tone="info"><Box />Envelope</Badge>Decided inside the committee-approved &ldquo;{d.envelope_name}&rdquo; envelope, so one named authoriser was enough.</p>}
       <p className="font-serif text-[14.5px]">“{d.rationale}”</p>
       {d.approvals.length > 0 && <ul className="grid gap-1 text-[13px]">{d.approvals.map((a, i) => <li key={i} className="flex flex-wrap gap-2"><Badge tone={a.vote === "approve" ? "ok" : "crit"}>{a.vote}</Badge><span>{a.approver_label} ({a.approver_role.replace("_", " ")})</span><span className="text-ink-muted">“{a.rationale}”</span><span className="ms-auto tabular text-ink-faint">{formatDate(a.created_at, true)}</span></li>)}</ul>}
       {d.status === "pending" && can("decision.approve") && !voted && (
@@ -258,6 +278,7 @@ export function DecisionsModule() {
   return (
     <>
       <PageHeader nav="nav.decisions" description="Every named decision across the institution: who decided, under which policy version, how many approvals it needed, whether its handoff is complete, and whether anything it rested on has changed since." />
+      <Envelopes />
       <Panel>
         <PanelHeader eyebrow="Decisions" title="Decision register" actions={rows && <Badge className="tabular">{rows.length}</Badge>} />
         {!rows ? <div className="m-4 h-32 animate-pulse rounded bg-surface-2" /> : !rows.length ? <p className="geo-pattern p-8 text-center text-ink-muted">No decisions yet. Decisions are recorded on a case's Decision and memory tab.</p> : (
@@ -280,5 +301,106 @@ export function DecisionsModule() {
         )}
       </Panel>
     </>
+  );
+}
+
+/* ---------- decision envelopes ---------- */
+interface Envelope {
+  id: string; name: string; mandate: string; domain: string; authority: string; max_var_usd: number; authoriser_roles: string[]; expires_at: string; expired: boolean;
+  status: "proposed" | "active" | "revoked"; data_mode: string; proposed_by: string; proposed_by_label: string; activated_by_label: string | null; activated_at: string | null; revoke_reason: string | null; uses: number;
+}
+const usdBn = (v: number) => (v >= 1e9 ? `$${num(v / 1e9, 2)} bn` : `$${num(v / 1e6, 0)} m`);
+const ENV_TONE = { active: "ok", proposed: "warn", revoked: "neutral" } as const;
+
+/** Committee-approved decision envelopes: proposed by an executive, activated by a different person, revocable. */
+function Envelopes() {
+  const can = useCan();
+  const s = useSession();
+  const [rows, setRows] = useState<Envelope[] | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [note, setNote] = useState<Record<string, string>>({});
+  const load = useCallback(() => api<{ envelopes: Envelope[] }>("/envelopes").then((r) => r.ok && setRows(r.data.envelopes)), []);
+  useEffect(() => { load(); }, [load]);
+  async function act(e: Envelope, step: "activate" | "revoke") {
+    const text = note[e.id] ?? "";
+    const bad = requireText(text, 10, `env-${e.id}`, step === "activate" ? "The committee note" : "The reason");
+    if (bad) { setMsg(bad); return; }
+    clearInvalid(`env-${e.id}`);
+    const r = await api(`/envelopes/${e.id}/${step}`, { json: step === "activate" ? { note: text } : { reason: text } });
+    setMsg(r.ok ? `Envelope "${e.name}" ${step === "activate" ? "activated" : "revoked"}.` : r.message);
+    if (r.ok) { setNote((n) => ({ ...n, [e.id]: "" })); load(); }
+  }
+  return (
+    <Panel>
+      <PanelHeader eyebrow="Decision envelopes" title="Pre-approved by the committee, authorised by one named person"
+        actions={can("decision.approve") && s.principal.role === "executive" && <Button size="sm" variant="ghost" onClick={() => setAdding((v) => !v)}><Plus />Propose an envelope</Button>} />
+      <p className="max-w-[80ch] px-4 pt-3 text-[13px] text-ink-muted">The committee sets the limits once: the domain, the authority it delegates, how much 90-day value at risk an option may leave, who may authorise and until when. A decision that fits needs one named authoriser; anything outside goes to the committee as before. The fit is checked by the active policy, and every step is audited. Nothing executes.</p>
+      {adding && <ProposeEnvelope onDone={() => { setAdding(false); load(); }} />}
+      {!rows ? <div className="m-4 h-24 animate-pulse rounded bg-surface-2" /> : !rows.length ? <p className="p-6 text-center text-ink-muted">No envelopes yet. An executive proposes one; a different approver or executive activates it.</p> : (
+        <ul className="grid gap-3 p-4">
+          {rows.map((e) => {
+            const status = e.status === "active" && e.expired ? "expired" : e.status;
+            const mine = e.proposed_by === s.principal.id;
+            return (
+              <li key={e.id} className="grid gap-2 rounded-md border border-line p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Box className="size-4 text-accent" />
+                  <span className="text-[15px] font-medium">{e.name}</span>
+                  <Badge tone={status === "expired" ? "neutral" : ENV_TONE[e.status]}>{status}</Badge>
+                  {e.data_mode === "synthetic" && <Badge>synthetic</Badge>}
+                  <span className="ms-auto tabular text-[13px] text-ink-faint">{e.uses} decision{e.uses === 1 ? "" : "s"} inside</span>
+                </div>
+                <p className="text-[13px] text-ink-muted">{e.mandate}</p>
+                <dl className="grid gap-x-6 gap-y-1 text-[13px] sm:grid-cols-2 lg:grid-cols-4">
+                  <div><dt className="text-ink-faint">Domain and authority</dt><dd>{e.domain.replace(/_/g, " ")} · {e.authority} items</dd></div>
+                  <div><dt className="text-ink-faint">Limit</dt><dd className="tabular">option leaves 90-day value at risk ≤ {usdBn(e.max_var_usd)}</dd></div>
+                  <div><dt className="text-ink-faint">Who may authorise</dt><dd>{e.authoriser_roles.join(" or ")}</dd></div>
+                  <div><dt className="text-ink-faint">Expires</dt><dd className="tabular">{formatDate(e.expires_at)}</dd></div>
+                </dl>
+                <p className="text-[13px] text-ink-faint">Proposed by {e.proposed_by_label}{e.activated_by_label ? ` · activated by ${e.activated_by_label} on ${formatDate(e.activated_at!)}` : ""}{e.revoke_reason ? ` · revoked: ${e.revoke_reason}` : ""}</p>
+                {can("decision.approve") && (e.status === "proposed" || e.status === "active") && (
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className="grid min-w-[240px] flex-1 gap-1 text-[13px] text-ink-muted">{e.status === "proposed" ? "Committee note" : "Reason to revoke"}
+                      <input autoComplete="off" id={`env-${e.id}`} value={note[e.id] ?? ""} onChange={(ev) => setNote((n) => ({ ...n, [e.id]: ev.target.value }))} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label>
+                    {e.status === "proposed" && <Button size="sm" variant="primary" onClick={() => act(e, "activate")} disabled={mine} title={mine ? "The proposer cannot activate it" : undefined}>Activate</Button>}
+                    {e.status === "active" && <Button size="sm" variant="danger" onClick={() => act(e, "revoke")}>Revoke</Button>}
+                    {e.status === "proposed" && mine && <span className="text-[13px] text-ink-faint">A different person must activate it.</span>}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {msg && <p role="status" className="px-4 pb-4 text-[13px] text-ink-muted">{msg}</p>}
+    </Panel>
+  );
+}
+
+function ProposeEnvelope({ onDone }: { onDone: () => void }) {
+  const [f, setF] = useState({ name: "", mandate: "", domain: "energy", authority: "Board investment committee", limitBn: "1", approver: true, executive: true, validDays: "90" });
+  const [msg, setMsg] = useState<string | null>(null);
+  async function submit() {
+    const roles = [f.approver && "approver", f.executive && "executive"].filter(Boolean);
+    const r = await api<{ envelopeId: string }>("/envelopes", { json: { name: f.name, mandate: f.mandate, domain: f.domain, authority: f.authority, maxVarUsd: Number(f.limitBn) * 1e9, authoriserRoles: roles, validDays: Number(f.validDays) } });
+    if (r.ok) onDone(); else setMsg(r.message);
+  }
+  const field = "h-8 rounded-md border border-line bg-surface-2 px-2 text-ink";
+  return (
+    <div className="mx-4 mt-3 grid gap-3 rounded-md border border-primary/50 p-3 text-[13px]">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="grid gap-1 text-ink-muted">Name<input autoComplete="off" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className={field} /></label>
+        <label className="grid gap-1 text-ink-muted">Domain<select value={f.domain} onChange={(e) => setF({ ...f, domain: e.target.value })} className={field}>{INDUSTRIES.map((i) => <option key={i.key} value={i.key}>{i.name}</option>)}</select></label>
+        <label className="grid gap-1 text-ink-muted sm:col-span-2">Mandate<textarea autoComplete="off" rows={2} value={f.mandate} onChange={(e) => setF({ ...f, mandate: e.target.value })} className="rounded-md border border-line bg-surface-2 p-2 text-ink" /></label>
+        <label className="grid gap-1 text-ink-muted">Delegates<select value={f.authority} onChange={(e) => setF({ ...f, authority: e.target.value })} className={field}><option>Board investment committee</option><option>Executive committee</option></select></label>
+        <label className="grid gap-1 text-ink-muted">Limit: 90-day value at risk left by the option (US$ bn)<input inputMode="decimal" value={f.limitBn} onChange={(e) => setF({ ...f, limitBn: e.target.value })} className={field} /></label>
+        <fieldset className="flex flex-wrap items-center gap-3 text-ink-muted"><legend className="mb-1">Who may authorise</legend>
+          <label className="flex items-center gap-1.5"><input type="checkbox" checked={f.approver} onChange={(e) => setF({ ...f, approver: e.target.checked })} />Approver</label>
+          <label className="flex items-center gap-1.5"><input type="checkbox" checked={f.executive} onChange={(e) => setF({ ...f, executive: e.target.checked })} />Executive</label></fieldset>
+        <label className="grid gap-1 text-ink-muted">Valid for (days)<input inputMode="numeric" value={f.validDays} onChange={(e) => setF({ ...f, validDays: e.target.value })} className={field} /></label>
+      </div>
+      <div className="flex flex-wrap items-center gap-3"><Button size="sm" variant="primary" onClick={submit}>Propose</Button><span className="text-ink-faint">It does nothing until a different approver or executive activates it.</span>{msg && <span role="status" className="text-warn">{msg}</span>}</div>
+    </div>
   );
 }

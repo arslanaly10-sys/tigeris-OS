@@ -6,6 +6,7 @@ import { evaluate, compile, approvalFor } from "../policy/engine";
 import { activePolicy, brief, decide } from "../policy/store";
 import { buildPayload, engine, type EngineResult } from "../routes/scenarios";
 import { notifyRole } from "./notify";
+import { envelopeFit, type EnvelopeRow } from "./envelopes";
 
 /**
  * Named decisions (FR-33..FR-36, Q096..Q101). A decision is taken by a person on one ranked option.
@@ -62,11 +63,13 @@ async function createHandoffs(tx: Tx, inst: string, d: { id: string; case_id: st
   return tasks.length;
 }
 
-export async function recordDecision(tx: Tx, inst: string, actor: Actor, caseKey: string, b: { recommendationId: string; outcome: "approve" | "reject" | "defer"; rationale: string }) {
-  const c = (await tx.query("SELECT id, case_key, title, state, created_by FROM cases WHERE case_key = $1 FOR UPDATE", [caseKey])).rows[0];
+export async function recordDecision(tx: Tx, inst: string, actor: Actor, caseKey: string, b: { recommendationId: string; outcome: "approve" | "reject" | "defer"; rationale: string; envelopeId?: string }) {
+  const c = (await tx.query("SELECT id, case_key, title, state, created_by, domain FROM cases WHERE case_key = $1 FOR UPDATE", [caseKey])).rows[0];
   if (!c) return { status: 404 as const, message: "No such case." };
   const rec = await recommendationFor(tx, c.id, b.recommendationId);
   if (!rec) return { status: 404 as const, message: "No such option on this case." };
+  const live = (await tx.query("SELECT status FROM decisions WHERE case_id = $1 AND status IN ('pending','approved') LIMIT 1", [c.id])).rows[0];
+  if (live) return { status: 409 as const, message: `This case already has a ${live.status} decision. Reject it, or open a new case, before recording another.` };
   const ctx = recordContext(actor, b.outcome, b.rationale, c, rec);
   const pol = await decide(tx, "decision.record", ctx);
   if (pol.result !== "PASS") {
@@ -74,23 +77,37 @@ export async function recordDecision(tx: Tx, inst: string, actor: Actor, caseKey
     return { status: (pol.result === "BLOCK" ? 403 : 409) as 403 | 409, policy: pol, message: pol.explanation };
   }
   const active = await activePolicy(tx);
-  const appr = b.outcome === "approve" ? approvalFor(active.policy, ctx) : { id: "none", required: 1, roles: [actor.role], description: "No approvals needed to reject or defer" };
+  let appr = b.outcome === "approve" ? approvalFor(active.policy, ctx) : { id: "none", required: 1, roles: [actor.role], description: "No approvals needed to reject or defer" };
+  // Inside a committee-approved envelope, one named authoriser replaces the committee's approvals.
+  let envelope: { id: string; name: string; policy: ReturnType<typeof brief> } | null = null;
+  if (b.envelopeId && b.outcome === "approve") {
+    const e = (await tx.query("SELECT * FROM decision_envelopes WHERE id = $1 FOR SHARE", [b.envelopeId])).rows[0] as (EnvelopeRow & { name: string }) | undefined;
+    if (!e) return { status: 404 as const, message: "No such envelope." };
+    const fit = await envelopeFit(tx, e, actor, c, rec);
+    if (!fit.pol) return { status: 409 as const, message: "The active policy has no envelope rules, so envelopes are switched off." };
+    if (fit.pol.result !== "PASS") {
+      await appendAudit(tx, inst, { actorType: "human", actorId: actor.id, actorLabel: actor.label, actorRole: actor.role, action: "decision.refused", resourceType: "recommendation", resourceId: rec.id, caseId: c.id, details: { outcome: b.outcome, envelope: { id: e.id, name: e.name }, policy: brief(fit.pol) } });
+      return { status: (fit.pol.result === "BLOCK" ? 403 : 409) as 403 | 409, policy: fit.pol, message: fit.pol.explanation };
+    }
+    envelope = { id: e.id, name: e.name, policy: brief(fit.pol) };
+    appr = { id: `envelope:${e.name}`, required: 1, roles: [actor.role], description: `Inside the "${e.name}" envelope: one named authoriser` };
+  }
   const snap = await snapshot(tx, c.id, rec, ctx);
   const status = b.outcome === "approve" ? (appr.required <= 1 ? "approved" : "pending") : b.outcome === "reject" ? "rejected" : "deferred";
   const d = (await tx.query(
-    `INSERT INTO decisions (institution_id, case_id, recommendation_id, option_key, option_title, outcome, status, rationale, required_approvals, approval_roles, approval_rule, policy_version_id, policy_hash, policy_trace, snapshot, snapshot_hash, proposed_by, proposed_by_label, proposed_by_role, finalised_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) RETURNING id, case_id, option_title`,
-    [inst, c.id, rec.id, rec.option_key, rec.title, b.outcome, status, b.rationale, appr.required, appr.roles, appr.id, pol.policyVersionId, pol.policyHash, JSON.stringify(pol.trace), JSON.stringify(snap), sha(snap), actor.id, actor.label, actor.role, status === "pending" ? null : new Date().toISOString()],
+    `INSERT INTO decisions (institution_id, case_id, recommendation_id, option_key, option_title, outcome, status, rationale, required_approvals, approval_roles, approval_rule, policy_version_id, policy_hash, policy_trace, snapshot, snapshot_hash, proposed_by, proposed_by_label, proposed_by_role, finalised_at, envelope_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING id, case_id, option_title`,
+    [inst, c.id, rec.id, rec.option_key, rec.title, b.outcome, status, b.rationale, appr.required, appr.roles, appr.id, pol.policyVersionId, pol.policyHash, JSON.stringify(pol.trace), JSON.stringify(snap), sha(snap), actor.id, actor.label, actor.role, status === "pending" ? null : new Date().toISOString(), envelope?.id ?? null],
   )).rows[0];
   if (b.outcome === "approve") await tx.query("INSERT INTO decision_approvals (institution_id, decision_id, approver_id, approver_label, approver_role, vote, rationale, policy_trace) VALUES ($1,$2,$3,$4,$5,'approve',$6,$7)", [inst, d.id, actor.id, actor.label, actor.role, b.rationale, JSON.stringify(pol.trace)]);
   const handoffs = status === "approved" ? await createHandoffs(tx, inst, d, rec) : 0;
-  await tx.query("INSERT INTO case_events (institution_id, case_id, kind, actor_id, actor_label, actor_role, rationale, payload) VALUES ($1,$2,'decision_recorded',$3,$4,$5,$6,$7)", [inst, c.id, actor.id, actor.label, actor.role, b.rationale, JSON.stringify({ decisionId: d.id, option: rec.title, outcome: b.outcome, status, required: appr.required, label: `Decision: ${b.outcome} "${rec.title}"` })]);
+  await tx.query("INSERT INTO case_events (institution_id, case_id, kind, actor_id, actor_label, actor_role, rationale, payload) VALUES ($1,$2,'decision_recorded',$3,$4,$5,$6,$7)", [inst, c.id, actor.id, actor.label, actor.role, b.rationale, JSON.stringify({ decisionId: d.id, option: rec.title, outcome: b.outcome, status, required: appr.required, envelope: envelope?.name, label: `Decision: ${b.outcome} "${rec.title}"${envelope ? ` inside the "${envelope.name}" envelope` : ""}` })]);
   await tx.query("UPDATE cases SET last_activity_at = now() WHERE id = $1", [c.id]);
   await appendAudit(tx, inst, { actorType: "human", actorId: actor.id, actorLabel: actor.label, actorRole: actor.role, action: "decision.recorded", resourceType: "decision", resourceId: d.id, caseId: c.id,
-    details: { option: rec.option_key, outcome: b.outcome, status, requiredApprovals: appr.required, approvalRule: appr.id, policy: brief(pol), snapshotHash: sha(snap), handoffs } });
+    details: { option: rec.option_key, outcome: b.outcome, status, requiredApprovals: appr.required, approvalRule: appr.id, policy: brief(pol), envelope, snapshotHash: sha(snap), handoffs } });
   if (status === "pending") await notifyRole(tx, inst, appr.roles as never, { kind: "approval_needed", title: `${c.case_key}: a second approval is needed`, body: `${actor.label} approved "${rec.title}". ${appr.description}.`, link: `/cases/${c.case_key}?tab=Decision and memory` }, actor.id);
   if (handoffs) await notifyRole(tx, inst, ["operations_owner"], { kind: "handoff", title: `${c.case_key}: ${handoffs} handoff task(s)`, body: `Decision approved: ${rec.title}.`, link: `/cases/${c.case_key}?tab=Decision and memory` }, actor.id);
-  return { status: 200 as const, decisionId: d.id, decisionStatus: status, required: appr.required, policy: pol, handoffs };
+  return { status: 200 as const, decisionId: d.id, decisionStatus: status, required: appr.required, policy: pol, handoffs, envelope: envelope?.name ?? null };
 }
 
 export async function approveDecision(tx: Tx, inst: string, actor: Actor, decisionId: string, b: { vote: "approve" | "reject"; rationale: string }) {

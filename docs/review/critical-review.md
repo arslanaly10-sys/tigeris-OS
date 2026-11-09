@@ -75,8 +75,9 @@ What a buyer will still poke at:
    a portfolio to watch, a board pack to send. → Section 6.
 2. **Agent taxonomy does not match Tiger's.** The prototype has ten bounded agents named by function; the sites use six
    specialists. → Section 6.
-3. **Horizons do not match.** The scenario engine's horizons differ from Tiger's four. → Section 6.
-4. **"Execution envelope" is on Tiger's site but not in the product.** → Section 6, built as a real feature.
+3. **Horizons already match.** The scenario engine runs at 72 hours, 90 days, 1 year and 5 years, the same four as
+   Tiger's foresight page. (An earlier draft of this review listed this as a gap; that was wrong.)
+4. **"Execution envelope" is on Tiger's site but was not in the product.** → Now built: see section 6.
 5. **Sign-in is simulated SSO.** Fine for a demo; production needs the institution's identity provider (SAML/OIDC) and
    hardware-key MFA.
 6. **No certification yet.** The architecture is built for it (RLS, append-only audit, egress off, keys in the
@@ -110,11 +111,11 @@ What a buyer will still poke at:
 
 ## 6. What is being built next, in order
 
-1. **Decision envelopes.** The committee pre-approves an envelope (mandate, size limit, expiry, who may authorise) under
+1. **Decision envelopes. Built** (docs/progress/decision-envelopes.md). The committee pre-approves an envelope (mandate, size limit, expiry, who may authorise) under
    policy-as-code. A decision inside it needs one named authoriser; anything outside it goes back to committee. Audited end
    to end. This turns Tiger's "execution envelope" into something real and safe.
-2. **Tiger's six specialists and four horizons.** The ten bounded agents are regrouped under Sentinel, Macro, Resilience,
-   Capital, Mandate and Governance. Scenarios run at 72 hours, 90 days, 1 year and 5 years.
+2. **Tiger's six specialists.** The ten bounded agents are regrouped under Sentinel, Macro, Resilience, Capital, Mandate
+   and Governance. (The four horizons already match.)
 3. **Four fund apps**, on synthetic labelled data: deal screening, IC memo preparation, portfolio monitoring, and board and
    LP reports. Each is the "first application" a buyer can pay for.
 

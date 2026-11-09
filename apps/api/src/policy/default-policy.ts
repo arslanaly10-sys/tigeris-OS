@@ -141,6 +141,64 @@ rules:
     effect: HOLD
     message: "This decision is already {decision.status}."
 
+  # ---- decision envelopes: the committee sets limits once; one named authoriser inside them ----
+  - id: envelope.propose_authority
+    action: envelope.propose
+    require: { actor.role: executive }
+    effect: BLOCK
+    message: "Only an executive can propose a decision envelope."
+  - id: envelope.activate_authority
+    action: envelope.activate
+    require: { actor.role: { in: [approver, executive] } }
+    effect: BLOCK
+    message: "Only an approver or an executive can activate a decision envelope."
+  - id: envelope.activate_distinct_person
+    description: A committee envelope needs two people, the proposer and a different activator.
+    action: envelope.activate
+    require: { actor.id: { not_equals: $envelope.proposed_by } }
+    effect: BLOCK
+    message: "The person who proposed the envelope cannot activate it."
+  - id: envelope.activate_proposed_only
+    action: envelope.activate
+    require: { envelope.status: proposed }
+    effect: HOLD
+    message: "This envelope is already {envelope.status}."
+  - id: envelope.revoke_authority
+    action: envelope.revoke
+    require: { actor.role: { in: [approver, executive] } }
+    effect: BLOCK
+    message: "Only an approver or an executive can revoke a decision envelope."
+  - id: envelope.fit_active
+    action: decision.envelope
+    require: { envelope.status: active }
+    effect: BLOCK
+    message: "The envelope is {envelope.status}, not active. The decision goes to the committee."
+  - id: envelope.fit_in_date
+    action: decision.envelope
+    require: { envelope.expired: false }
+    effect: BLOCK
+    message: "The envelope expired. The decision goes to the committee."
+  - id: envelope.fit_domain
+    action: decision.envelope
+    require: { case.domain: { equals: $envelope.domain } }
+    effect: BLOCK
+    message: "The envelope covers {envelope.domain}; this case is {case.domain}. The decision goes to the committee."
+  - id: envelope.fit_authority
+    action: decision.envelope
+    require: { recommendation.authority: { equals: $envelope.authority } }
+    effect: BLOCK
+    message: "The envelope delegates {envelope.authority} items; this option needs {recommendation.authority}."
+  - id: envelope.fit_size
+    action: decision.envelope
+    require: { recommendation.var_90d: { lte: $envelope.max_var_usd } }
+    effect: BLOCK
+    message: "The option leaves 90-day value at risk above the envelope's limit. The decision goes to the committee."
+  - id: envelope.fit_authoriser
+    action: decision.envelope
+    require: { actor.may_authorise: true }
+    effect: BLOCK
+    message: "Your role is not named as an authoriser in this envelope."
+
   # ---- handoff ----
   - id: handoff.owner
     action: handoff.update
@@ -234,6 +292,20 @@ tests:
     context: { actor: { id: u2, role: approver }, decision: { proposed_by: u2, status: pending }, vote: approve, rationale: { length: 30 } }
     expect: BLOCK
     rule: approval.distinct_person
+  - name: envelope proposer cannot activate it
+    action: envelope.activate
+    context: { actor: { id: u4, role: executive }, envelope: { proposed_by: u4, status: proposed } }
+    expect: BLOCK
+    rule: envelope.activate_distinct_person
+  - name: an option above the envelope limit goes to committee
+    action: decision.envelope
+    context: { actor: { id: u2, role: approver, may_authorise: true }, case: { domain: energy }, recommendation: { authority: Board investment committee, var_90d: 900 }, envelope: { status: active, expired: false, domain: energy, authority: Board investment committee, max_var_usd: 500 } }
+    expect: BLOCK
+    rule: envelope.fit_size
+  - name: an option inside an active envelope fits
+    action: decision.envelope
+    context: { actor: { id: u2, role: approver, may_authorise: true }, case: { domain: energy }, recommendation: { authority: Board investment committee, var_90d: 400 }, envelope: { status: active, expired: false, domain: energy, authority: Board investment committee, max_var_usd: 500 } }
+    expect: PASS
   - name: partner export needs an executive
     action: export.create
     context: { actor: { id: u3, role: analyst }, audience: partner, case: { sensitivity: confidential } }

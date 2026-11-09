@@ -7,6 +7,7 @@ import { requirePermission, type Principal } from "../session";
 import { approveDecision, decisionDrift, recordDecision, replayDecision, updateHandoff } from "../workflow/decisions";
 import { activePolicy, brief, decide } from "../policy/store";
 import { approvalFor, compile, evaluate, runTests, ACTIONS } from "../policy/engine";
+import { activateEnvelope, envelopeFitPreview, listEnvelopes, proposeEnvelope, revokeEnvelope, type EnvelopeRow } from "../workflow/envelopes";
 import { draftEntry, embed, EMBED_MODEL, precedentText, searchMemory, vecLiteral } from "../memory/memory";
 
 const actorOf = (p: Principal) => ({ id: p.principalId, label: p.displayName, role: p.role });
@@ -19,21 +20,23 @@ export async function decisionRoutes(app: FastifyInstance) {
     const { key } = caseKey.parse(req.params);
     const p = req.principal!;
     const d = await withTenant(p.institutionId, async (tx) => {
-      const c = (await tx.query("SELECT id, state, created_by FROM cases WHERE case_key = $1", [key])).rows[0];
+      const c = (await tx.query("SELECT id, state, created_by, domain FROM cases WHERE case_key = $1", [key])).rows[0];
       if (!c) return undefined;
-      const decisions = (await tx.query("SELECT id, recommendation_id, option_key, option_title, outcome, status, rationale, required_approvals, approval_roles, approval_rule, policy_hash, policy_trace, snapshot_hash, proposed_by, proposed_by_label, proposed_by_role, created_at, finalised_at, (SELECT version FROM policy_versions v WHERE v.id = d.policy_version_id) AS policy_version FROM decisions d WHERE case_id = $1 ORDER BY created_at DESC", [c.id])).rows;
+      const decisions = (await tx.query("SELECT id, recommendation_id, (SELECT name FROM decision_envelopes e WHERE e.id = d.envelope_id) AS envelope_name, option_key, option_title, outcome, status, rationale, required_approvals, approval_roles, approval_rule, policy_hash, policy_trace, snapshot_hash, proposed_by, proposed_by_label, proposed_by_role, created_at, finalised_at, (SELECT version FROM policy_versions v WHERE v.id = d.policy_version_id) AS policy_version FROM decisions d WHERE case_id = $1 ORDER BY created_at DESC", [c.id])).rows;
       for (const x of decisions) x.approvals = (await tx.query("SELECT approver_label, approver_role, vote, rationale, created_at FROM decision_approvals WHERE decision_id = $1 ORDER BY created_at", [x.id])).rows;
       const handoffs = (await tx.query("SELECT id, decision_id, title, description, owner_role, due_at, status, updated_at FROM handoffs WHERE case_id = $1 ORDER BY created_at", [c.id])).rows;
       for (const h of handoffs) h.updates = (await tx.query("SELECT status, note, actor_label, actor_role, created_at FROM handoff_updates WHERE handoff_id = $1 ORDER BY created_at", [h.id])).rows;
       const run = (await tx.query("SELECT id, requested_by FROM agent_runs WHERE case_id = $1 AND kind = 'case_analysis' AND status = 'completed' ORDER BY started_at DESC LIMIT 1", [c.id])).rows[0];
       const active = await activePolicy(tx);
+      const envelopes = (await tx.query("SELECT * FROM decision_envelopes WHERE status = 'active' AND expires_at > now() ORDER BY created_at")).rows as Array<EnvelopeRow & { name: string }>;
       const options = run ? (await tx.query(
-        `SELECT r.id, r.title, r.option_key, r.authority, r.governance->>'result' AS governance, r.base_score,
+        `SELECT r.id, r.title, r.option_key, r.authority, r.governance->>'result' AS governance, r.base_score, (r.effect->'var_90d'->>'with')::float8 AS var_with,
                 coalesce((SELECT to_band FROM confidence_adjustments a WHERE a.target_type = 'recommendation' AND a.target_id = r.id ORDER BY created_at DESC LIMIT 1), r.confidence->>'band') AS band
            FROM recommendations r WHERE r.run_id = $1 ORDER BY r.base_score DESC`, [run.id])).rows.map((o) => {
         const ctx = { actor: { id: p.principalId, role: p.role }, outcome: "approve", rationale: { length: 100 }, case: { state: c.state, created_by: c.created_by }, recommendation: { option_key: o.option_key, authority: o.authority, governance: o.governance, confidence_band: o.band, drafted_by: run.requested_by } };
         const e = evaluate(active.policy, "decision.record", ctx, { hash: active.hash, version: active.version });
-        return { ...o, approval: approvalFor(active.policy, ctx), preview: { result: e.result, explanation: e.explanation, rule: e.rule } };
+        const envelopeFits = envelopes.map((env) => ({ id: env.id, name: env.name, fit: envelopeFitPreview(active.policy, { hash: active.hash, version: active.version }, env, { id: p.principalId, role: p.role }, c, o) }));
+        return { ...o, approval: approvalFor(active.policy, ctx), preview: { result: e.result, explanation: e.explanation, rule: e.rule }, envelopes: envelopeFits };
       }) : [];
       return { state: c.state, decisions, handoffs, options, policy: { version: active.version, hash: active.hash.slice(0, 16) } };
     });
@@ -42,11 +45,46 @@ export async function decisionRoutes(app: FastifyInstance) {
 
   app.post("/cases/:key/decisions", { preHandler: requirePermission("decision.approve") }, async (req, reply) => {
     const { key } = caseKey.parse(req.params);
-    const b = z.object({ recommendationId: z.string().uuid(), outcome: z.enum(["approve", "reject", "defer"]), rationale: z.string().max(2000) }).parse(req.body);
+    const b = z.object({ recommendationId: z.string().uuid(), outcome: z.enum(["approve", "reject", "defer"]), rationale: z.string().max(2000), envelopeId: z.string().uuid().optional() }).parse(req.body);
     const p = req.principal!;
     const r = await withTenant(p.institutionId, (tx) => recordDecision(tx, p.institutionId, actorOf(p), key, b));
     if (r.status !== 200) return reply.code(r.status).send({ error: r.status === 404 ? "not_found" : r.status === 403 ? "block" : "hold", message: r.message, policy: "policy" in r ? r.policy : undefined });
     return r;
+  });
+
+  // ---------------- decision envelopes ----------------
+  app.get("/envelopes", { preHandler: requirePermission("case.read") }, async (req) => {
+    const p = req.principal!;
+    return withTenant(p.institutionId, async (tx) => ({ envelopes: await listEnvelopes(tx) }));
+  });
+
+  const envelopeBody = z.object({
+    name: z.string().trim().min(3).max(120), mandate: z.string().trim().min(10).max(1000), domain: z.string().max(60),
+    authority: z.enum(["Board investment committee", "Executive committee"]), maxVarUsd: z.number().positive().max(1e13),
+    authoriserRoles: z.array(z.enum(["approver", "executive"])).min(1), validDays: z.number().int().min(1).max(365),
+  });
+  app.post("/envelopes", { preHandler: requirePermission("decision.approve") }, async (req, reply) => {
+    const b = envelopeBody.parse(req.body);
+    const p = req.principal!;
+    const r = await withTenant(p.institutionId, (tx) => proposeEnvelope(tx, p.institutionId, actorOf(p), b));
+    if (r.status !== 200) return reply.code(r.status).send({ error: "refused", message: r.message, policy: "policy" in r ? r.policy : undefined });
+    return r;
+  });
+  app.post("/envelopes/:id/activate", { preHandler: requirePermission("decision.approve") }, async (req, reply) => {
+    const { id } = uuid.parse(req.params);
+    const { note } = z.object({ note: z.string().trim().min(10).max(1000) }).parse(req.body);
+    const p = req.principal!;
+    const r = await withTenant(p.institutionId, (tx) => activateEnvelope(tx, p.institutionId, actorOf(p), id, note));
+    if (r.status !== 200) return reply.code(r.status).send({ error: r.status === 404 ? "not_found" : "refused", message: r.message, policy: "policy" in r ? r.policy : undefined });
+    return { status: "active" };
+  });
+  app.post("/envelopes/:id/revoke", { preHandler: requirePermission("decision.approve") }, async (req, reply) => {
+    const { id } = uuid.parse(req.params);
+    const { reason } = z.object({ reason: z.string().trim().min(10).max(1000) }).parse(req.body);
+    const p = req.principal!;
+    const r = await withTenant(p.institutionId, (tx) => revokeEnvelope(tx, p.institutionId, actorOf(p), id, reason));
+    if (r.status !== 200) return reply.code(r.status).send({ error: r.status === 404 ? "not_found" : "refused", message: r.message, policy: "policy" in r ? r.policy : undefined });
+    return { status: "revoked" };
   });
 
   app.post("/decisions/:id/approvals", { preHandler: requirePermission("decision.approve") }, async (req, reply) => {

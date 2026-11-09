@@ -11,7 +11,8 @@ import { z } from "zod";
  *   tests      example contexts with the expected result; a version can only be activated if all pass
  * Evaluation is deterministic and returns a trace of every rule that applied. No model is involved.
  */
-export const ACTIONS = ["case.transition", "decision.record", "decision.approve", "handoff.update", "export.create", "memory.approve"] as const;
+export const ACTIONS = ["case.transition", "decision.record", "decision.approve", "handoff.update", "export.create", "memory.approve",
+  "envelope.propose", "envelope.activate", "envelope.revoke", "decision.envelope"] as const;
 export type Action = (typeof ACTIONS)[number];
 export type Result = "PASS" | "HOLD" | "BLOCK";
 

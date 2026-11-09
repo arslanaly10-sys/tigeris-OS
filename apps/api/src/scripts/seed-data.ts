@@ -1,5 +1,9 @@
 import { compile, runTests } from "../policy/engine";
 import { DEFAULT_POLICY } from "../policy/default-policy";
+import { activateEnvelope, proposeEnvelope } from "../workflow/envelopes";
+
+/** Sample envelope limit on an option's remaining 90-day value at risk (synthetic). */
+export const ENVELOPE_SAMPLE_LIMIT_USD = 1_000_000_000;
 import { seedPrecedents } from "../memory/memory";
 import { RESET_LOCK } from "../evidence/jobs";
 import { ROLES, ROLE_LABELS, type Role } from "@tigeris/shared";
@@ -93,6 +97,17 @@ const SAMPLE_DIAGNOSTIC: Record<string, { aumUsd: number; scores: Record<string,
   GSF: { aumUsd: 650e9, scores: { "frag.handoffs": 1, "frag.view": 1, "gov.speed": 1, "gov.rules": 2, "mem.find": 2, "mem.leavers": 1, "cap.mapped": 2, "cap.exposure": 1, "drift.record": 2, "drift.check": 1, "sov.hosting": 2, "sov.models": 1, "val.production": 1, "val.tracking": 2 } },
   ANIA: { aumUsd: 300e9, scores: { "frag.handoffs": 2, "frag.view": 1, "gov.speed": 2, "gov.rules": 2, "mem.find": 1, "mem.leavers": 1, "cap.mapped": 1, "cap.exposure": 1, "drift.record": 2, "drift.check": 2, "sov.hosting": 3, "sov.models": 2, "val.production": 1, "val.tracking": 1 } },
 };
+/** One synthetic, committee-approved decision envelope per institution, so the single-authoriser path can be shown. */
+async function seedEnvelope(tx: Tx, institutionId: string, exec: { id: string; name: string }, approver: { id: string; name: string }) {
+  const r = await proposeEnvelope(tx, institutionId, { id: exec.id, label: exec.name, role: "executive" }, {
+    name: "Energy continuity, board items", mandate: "Protect export continuity and national supply in an energy disruption, within the board's risk appetite, without waiting for an emergency committee.",
+    domain: "energy", authority: "Board investment committee", maxVarUsd: ENVELOPE_SAMPLE_LIMIT_USD, authoriserRoles: ["approver", "executive"], validDays: 90,
+  });
+  if (r.status !== 200) throw new Error(`Sample envelope refused: ${r.message}`);
+  await activateEnvelope(tx, institutionId, { id: approver.id, label: approver.name, role: "approver" }, r.envelopeId, "Approved by the board investment committee for the demonstration (synthetic).");
+  await tx.query("UPDATE decision_envelopes SET data_mode = 'synthetic' WHERE id = $1", [r.envelopeId]);
+}
+
 async function seedDiagnostic(tx: Tx, institutionId: string, shortName: string, analyst: { id: string; name: string }) {
   const sample = SAMPLE_DIAGNOSTIC[shortName] ?? SAMPLE_DIAGNOSTIC.GSF!;
   await saveAssessment(tx, institutionId, { id: analyst.id, label: analyst.name, role: "analyst" }, {
@@ -108,7 +123,7 @@ export async function resetDemo() {
   try {
     await c.query("BEGIN");
     await c.query("SELECT pg_advisory_xact_lock($1)", [RESET_LOCK]); // waits for any running import, then keeps the worker out
-    await c.query("TRUNCATE diagnostic_assessments, backtest_runs, precedents, handoff_updates, handoffs, decision_approvals, decisions, policy_versions, case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
+    await c.query("TRUNCATE decision_envelopes, diagnostic_assessments, backtest_runs, precedents, handoff_updates, handoffs, decision_approvals, decisions, policy_versions, case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
     for (const r of ROLES) await c.query("INSERT INTO roles (key, label) VALUES ($1,$2)", [r, ROLE_LABELS[r]]);
     for (const inst of DEMO_INSTITUTIONS) {
       await c.query(
@@ -178,6 +193,7 @@ export async function resetDemo() {
         const people = new Map((await tx.query("SELECT pr.role_key, p.id, p.display_name AS name FROM principals p JOIN principal_roles pr ON pr.principal_id = p.id")).rows.map((r) => [r.role_key, { id: r.id, name: r.name }]));
         await seedStoryline(tx, inst.id, inst.shortName, people);
         await seedDiagnostic(tx, inst.id, inst.shortName, people.get("analyst")!);
+        await seedEnvelope(tx, inst.id, people.get("executive")!, people.get("approver")!);
       });
     }
   } catch (e) {
