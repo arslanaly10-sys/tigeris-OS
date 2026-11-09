@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CheckCircle2, FolderKanban, Inbox, Map as MapIcon, MinusCircle, RadioTower, ShieldAlert, FileSearch } from "lucide-react";
 import { api } from "@/lib/api";
 import { SovereigntyPanel } from "./sovereignty";
+import { ReadinessPanel } from "../diagnostic-ui";
 import { LensHeading, OthersToggle, splitByIndustry } from "../industry";
 import { formatDate } from "@/lib/format";
 import { ModeBadge, URGENCY_TONE } from "./signals";
@@ -35,6 +36,7 @@ const PERMISSION_TEXT: Record<Permission, string> = {
   "audit.verify": "Verify the audit chain",
   "export.create": "Export briefs and reports",
   "sovereignty.control": "Control offline mode and model allowlist",
+  "diagnostic.run": "Run a sovereign gap diagnostic",
 };
 
 interface Attention { industry: string; items: { kind: string; title: string; reason: string; urgency: string; link: string; at: string; dataMode?: string; domain?: string; inIndustry?: boolean }[]; counts: { newSignals: number; decisionsPending: number; openCases: number } }
@@ -85,6 +87,7 @@ export function CommandCentre() {
             <PanelHeader eyebrow={t("cc.attentionEyebrow")} title={t("cc.attention")} />
             <AttentionQueue />
           </Panel>
+          <ReadinessPanel />
           <SovereigntyPanel />
         </div>
         <Panel>

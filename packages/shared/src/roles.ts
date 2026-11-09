@@ -34,16 +34,17 @@ export const PERMISSIONS = [
   "audit.verify",
   "export.create",
   "sovereignty.control", // offline switch, model allowlist
+  "diagnostic.run", // run and save a sovereign gap diagnostic
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
-  executive: ["case.read", "case.comment", "evidence.read", "decision.approve", "export.create", "policy.read", "audit.read"],
+  executive: ["case.read", "case.comment", "evidence.read", "decision.approve", "export.create", "policy.read", "audit.read", "diagnostic.run"],
   analyst: [
     "case.read", "case.create", "case.edit", "case.comment", "evidence.read", "evidence.dispose", "evidence.upload",
-    "scenario.run", "recommendation.draft", "export.create", "policy.read",
+    "scenario.run", "recommendation.draft", "export.create", "policy.read", "diagnostic.run",
   ],
-  domain_expert: ["case.read", "case.comment", "evidence.read", "evidence.dispose", "evidence.upload", "scenario.run", "policy.read"],
+  domain_expert: ["case.read", "case.comment", "evidence.read", "evidence.dispose", "evidence.upload", "scenario.run", "policy.read", "diagnostic.run"],
   approver: ["case.read", "case.comment", "evidence.read", "decision.approve", "policy.read", "audit.read"],
   operations_owner: ["case.read", "case.comment", "evidence.read", "handoff.update"],
   administrator: [

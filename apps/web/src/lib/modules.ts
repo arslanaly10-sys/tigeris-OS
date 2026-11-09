@@ -22,6 +22,12 @@ export const MODULES: ModuleDef[] = [
     requirements: ["PRD §6", "UX §8"],
   },
   {
+    slug: "diagnostic", nav: "nav.diagnostic", group: "operate", icon: "Gauge",
+    purpose: "Sovereign gap diagnostic: seven gaps scored with their evidence, value at stake as a planning range, and before and after TIGERIS.",
+    arrives: [{ week: 9, items: ["Gap diagnostic with saved, audited assessments", "Public readiness check for the website"] }],
+    requirements: ["Commercial model, steps 1 to 3"],
+  },
+  {
     slug: "signals", nav: "nav.signals", group: "operate", icon: "RadioTower",
     purpose: "Validated, unvalidated, conflicting and dismissed signals, with source, freshness, corroboration and disposition.",
     arrives: [

@@ -20,7 +20,9 @@ Validated evidence, a shared intelligence graph, governed reasoning and named hu
 
 ## What it does
 
-TIGERIS follows a question from the first signal to a recorded decision:
+It starts with a diagnosis. The **Gap Diagnostic** scores an institution on seven gaps (fragmentation, governance velocity, institutional memory, capital orchestration, decision drift, sovereign control, value realization), shows the value at stake as a planning range, and recommends a first mandate. A public version runs at `/readiness` with no sign-in, and `/trust` sets out how TIGERIS is deployed and controlled.
+
+From there TIGERIS follows a question from the first signal to a recorded decision:
 
 1. **Signals and early warning.** Public sources and simulated feeds raise signals. Each one says why it was surfaced and how confident it is.
 2. **Intelligence cases.** A signal becomes a case with an owner, a state machine (detected → triaged → analysis → scenario → review → decision → handoff → closed) and a policy-checked next step.

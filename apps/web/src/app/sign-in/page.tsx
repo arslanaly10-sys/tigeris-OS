@@ -6,6 +6,7 @@ import { INDUSTRIES, ROLE_LABELS, jobTitle, type IndustryKey, type Role } from "
 import { IndustryIcon, industryName } from "@/components/industry";
 import { api } from "@/lib/api";
 import { usePrefs } from "@/components/prefs";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ShipBackdrop } from "@/components/ship-backdrop";
 import { Badge } from "@/components/ui/badge";
@@ -254,7 +255,7 @@ export default function SignInPage() {
           )}
         </div>
 
-        <footer className="text-center text-[13px] text-ink-faint">{t("footer.notice")} · Demonstration build · Fictional institutions and people</footer>
+        <footer className="text-center text-[13px] text-ink-faint">{t("footer.notice")} · Demonstration build · Fictional institutions and people<span className="mt-1 block"><Link href="/readiness" className="tap text-accent hover:underline">Sovereign readiness check</Link> · <Link href="/trust" className="tap text-accent hover:underline">Trust and security</Link></span></footer>
       </main>
     </div>
   );

@@ -12,7 +12,8 @@ import { createHash, createPublicKey } from "node:crypto";
 import { SOURCE_CATALOG } from "../evidence/catalog";
 import { enqueue, processNext } from "../evidence/jobs";
 import { allBundledPackages } from "../routes/evidence";
-import { withTenant } from "../db";
+import { withTenant, type Tx } from "../db";
+import { saveAssessment } from "../routes/diagnostic";
 import { seedStoryline } from "../workflow/storyline";
 
 const PUBKEY = path.resolve(import.meta.dirname, "../../../../data/keys/collector-ed25519.pub.pem");
@@ -84,6 +85,22 @@ const DOMAIN_PACKS = [
 const slugName = (n: string) => n.toLowerCase().replace(/^dr\.\s*/, "").replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "");
 
 /** Drops all demo data and seeds a clean state. Runs as the database owner. */
+/**
+ * One sample gap diagnostic per institution, so the module opens on a report. The answers are synthetic and
+ * the row says so; the asset figure is a fictional round number for a fictional institution.
+ */
+const SAMPLE_DIAGNOSTIC: Record<string, { aumUsd: number; scores: Record<string, number> }> = {
+  GSF: { aumUsd: 650e9, scores: { "frag.handoffs": 1, "frag.view": 1, "gov.speed": 1, "gov.rules": 2, "mem.find": 2, "mem.leavers": 1, "cap.mapped": 2, "cap.exposure": 1, "drift.record": 2, "drift.check": 1, "sov.hosting": 2, "sov.models": 1, "val.production": 1, "val.tracking": 2 } },
+  ANIA: { aumUsd: 300e9, scores: { "frag.handoffs": 2, "frag.view": 1, "gov.speed": 2, "gov.rules": 2, "mem.find": 1, "mem.leavers": 1, "cap.mapped": 1, "cap.exposure": 1, "drift.record": 2, "drift.check": 2, "sov.hosting": 3, "sov.models": 2, "val.production": 1, "val.tracking": 1 } },
+};
+async function seedDiagnostic(tx: Tx, institutionId: string, shortName: string, analyst: { id: string; name: string }) {
+  const sample = SAMPLE_DIAGNOSTIC[shortName] ?? SAMPLE_DIAGNOSTIC.GSF!;
+  await saveAssessment(tx, institutionId, { id: analyst.id, label: analyst.name, role: "analyst" }, {
+    title: "Sample gap diagnostic (synthetic answers)", subjectLabel: `${shortName} · whole institution`, priority: "How exposed are our holdings and national supply if the Strait of Hormuz is disrupted for 30 days, and who decides what?", aumUsd: sample.aumUsd, dataMode: "synthetic",
+    answers: Object.entries(sample.scores).map(([questionId, score]) => ({ questionId, score, evidence: "self_report" as const })),
+  });
+}
+
 export async function resetDemo() {
   await migrate(() => {});
   const pool = ownerPool();
@@ -91,7 +108,7 @@ export async function resetDemo() {
   try {
     await c.query("BEGIN");
     await c.query("SELECT pg_advisory_xact_lock($1)", [RESET_LOCK]); // waits for any running import, then keeps the worker out
-    await c.query("TRUNCATE backtest_runs, precedents, handoff_updates, handoffs, decision_approvals, decisions, policy_versions, case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
+    await c.query("TRUNCATE diagnostic_assessments, backtest_runs, precedents, handoff_updates, handoffs, decision_approvals, decisions, policy_versions, case_briefs, confidence_adjustments, recommendation_feedback, recommendations, model_calls, agent_steps, agent_runs, sovereignty_settings, scenario_result_inputs, scenario_results, scenario_assumptions, scenario_runs, notifications, case_comments, case_events, case_entities, case_evidence, case_signals, case_participants, cases, signal_entities, signal_evidence, signals, graph_snapshots, relationship_evidence, entity_relationships, entity_aliases, entities, domain_packs, evidence_facts, validation_runs, evidence_objects, ingestion_jobs, trusted_signers, sources, audit_events, sessions, principal_roles, principals, divisions, institutions, roles CASCADE");
     for (const r of ROLES) await c.query("INSERT INTO roles (key, label) VALUES ($1,$2)", [r, ROLE_LABELS[r]]);
     for (const inst of DEMO_INSTITUTIONS) {
       await c.query(
@@ -160,6 +177,7 @@ export async function resetDemo() {
       await withTenant(inst.id, async (tx) => {
         const people = new Map((await tx.query("SELECT pr.role_key, p.id, p.display_name AS name FROM principals p JOIN principal_roles pr ON pr.principal_id = p.id")).rows.map((r) => [r.role_key, { id: r.id, name: r.name }]));
         await seedStoryline(tx, inst.id, inst.shortName, people);
+        await seedDiagnostic(tx, inst.id, inst.shortName, people.get("analyst")!);
       });
     }
   } catch (e) {
