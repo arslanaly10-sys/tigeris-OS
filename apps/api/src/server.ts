@@ -17,6 +17,7 @@ import { sovereigntyRoutes } from "./routes/sovereignty";
 import { intelRoutes } from "./routes/intel";
 import { backtestRoutes } from "./routes/backtests";
 import { diagnosticRoutes } from "./routes/diagnostic";
+import { playbookRoutes } from "./routes/playbooks";
 import { reportRoutes } from "./routes/reports";
 
 export async function buildApp() {
@@ -50,6 +51,7 @@ export async function buildApp() {
   await app.register(intelRoutes);
   await app.register(backtestRoutes);
   await app.register(diagnosticRoutes);
+  await app.register(playbookRoutes);
   await app.register(reportRoutes);
   return app;
 }

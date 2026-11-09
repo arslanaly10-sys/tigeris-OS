@@ -28,6 +28,12 @@ export const MODULES: ModuleDef[] = [
     requirements: ["Commercial model, steps 1 to 3"],
   },
   {
+    slug: "playbooks", nav: "nav.playbooks", group: "operate", icon: "BookOpenCheck",
+    purpose: "Thirteen governed sovereign playbooks from Tiger Capital's doctrine: six-stage loop, specialist hand-off, recommended path against counterfactual; start a case from any.",
+    arrives: [{ week: 9, items: ["Thirteen playbooks with the six-stage loop", "Start a case from a playbook"] }],
+    requirements: ["tigerisos.ai sovereign scenarios"],
+  },
+  {
     slug: "signals", nav: "nav.signals", group: "operate", icon: "RadioTower",
     purpose: "Validated, unvalidated, conflicting and dismissed signals, with source, freshness, corroboration and disposition.",
     arrives: [

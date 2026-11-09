@@ -16,6 +16,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { useCan } from "./session-context";
 import { usePrefs } from "./prefs";
+import { PlaybookLinks } from "./playbooks-ui";
 
 /**
  * Sovereign gap diagnostic (commercial model, steps 1 to 3). The report and the questionnaire are shared by
@@ -128,7 +129,7 @@ export function GapReport({ result, meta, actions, publicView = false }: {
                 return (
                   <li key={k} className="grid grid-cols-[28px_1fr] gap-2 text-[14px]">
                     <span className="grid size-7 place-items-center rounded-full bg-primary-soft text-[13px] font-medium text-accent">{i + 1}</span>
-                    <span><span className="font-medium">{g.name}</span><span className="block text-[13px] text-ink-muted">{gapDef(k).metric}. Today: {gapDef(k).before}.</span></span>
+                    <span><span className="font-medium">{g.name}</span><span className="block text-[13px] text-ink-muted">{gapDef(k).metric}. Today: {gapDef(k).before}.</span>{!publicView && <span className="mt-1 block"><PlaybookLinks gap={k} /></span>}</span>
                   </li>
                 );
               })}

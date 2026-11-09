@@ -18,6 +18,7 @@ import { MapModule } from "@/components/modules/map";
 import { ScenariosModule } from "@/components/modules/scenarios-module";
 import { SovereigntyModule } from "@/components/modules/sovereignty";
 import { DiagnosticModule } from "@/components/diagnostic-ui";
+import { PlaybooksModule } from "@/components/playbooks-ui";
 
 const CUSTOM: Record<string, () => React.ReactNode> = {
   "command-centre": () => <CommandCentre />,
@@ -37,6 +38,7 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
   architecture: () => <ArchitecturePage />,
   sovereignty: () => <Suspense><SovereigntyModule /></Suspense>,
   diagnostic: () => <Suspense><DiagnosticModule /></Suspense>,
+  playbooks: () => <Suspense><PlaybooksModule /></Suspense>,
 };
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {
