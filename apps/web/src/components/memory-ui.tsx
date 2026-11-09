@@ -12,6 +12,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Drawer } from "./drawer";
 import { useCan } from "./session-context";
+import { ScatteredMemory } from "./context-visuals";
 
 export interface Hit { id: string; key: string; title: string; summary: string; domain: string; region: string; period: string; outcome: string; lessons: string[]; claim_class: string; source_label: string; case_id: string | null; matchedBy: string[]; keywordRank: number | null; similarity: number | null }
 const CLAIM_TONE: Record<string, "info" | "neutral" | "ok" | "gold"> = { illustrative: "neutral", synthetic: "info", observed: "ok", sourced: "ok" };
@@ -74,6 +75,7 @@ export function MemoryModule() {
   return (
     <>
       <PageHeader nav="nav.memory" description="Precedents and the institution's own approved case records, searchable by keyword and by meaning. Meaning search uses a small embedding model on this machine; nothing leaves it. Every entry says whether it is an illustrative summary, a synthetic record or the institution's own." />
+      <ScatteredMemory />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="grid content-start gap-5">
           <Panel className="p-4">

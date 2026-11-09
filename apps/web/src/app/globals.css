@@ -461,6 +461,11 @@ html[dir="rtl"] :is(.link, main a.text-accent) {
   transition: none;
 }
 
+/* Context visual: the scattered-memory labels breathe slowly. */
+.sm-label { animation: sm-pulse 4s ease-in-out infinite; }
+@keyframes sm-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sm-label { animation: none; opacity: 0.85; } }
+
 /* Reduced motion: everything rests and stays visible; colours may still change. */
 @media (prefers-reduced-motion: reduce) {
   *,

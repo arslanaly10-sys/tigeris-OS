@@ -9,6 +9,7 @@ import { Panel, PanelHeader } from "./ui/panel";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { useCan, useSession } from "./session-context";
+import { ContextLayer } from "./context-visuals";
 
 interface Reports {
   briefs: Array<{ id: string; version: number; classification: string; content_hash: string; created_at: string; created_by_label: string; case_key: string; title: string; state: string; versions: number }>;
@@ -109,6 +110,7 @@ export function ArchitecturePage() {
   return (
     <>
       <PageHeader nav="nav.architecture" description="How TIGERIS is built, with live figures from this deployment. Everything shown runs inside the institution's boundary; foreign models are optional and off by default." />
+      <ContextLayer />
       <Panel className="p-4">
         <svg viewBox="0 0 1000 300" className="w-full" role="img" aria-label="Data flows from collection through validation, knowledge, reasoning and bounded agents to governed decisions and memory. An append-only audit chain and the sovereignty boundary span every stage.">
           <rect x="6" y="6" width="988" height="288" rx="10" fill="none" stroke="var(--accent)" strokeDasharray="6 5" />
