@@ -133,7 +133,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
             <tbody>
               {Object.entries(tpl.drivers).map(([k, spec]) => (
                 <tr key={k} className="border-b border-line/60 last:border-0">
-                  <td className="px-4 py-2"><div>{spec.label}</div><div className="text-[13px] text-ink-faint">{spec.unit} · ASSUMPTION</div></td>
+                  <td className="px-4 py-2"><div>{spec.label}</div><div className="text-[13px] text-ink-faint">{spec.unit} · assumption</div></td>
                   {variants.map((v, i) => (
                     <td key={i} className="px-3 py-2">
                       <div className="flex items-center gap-2">

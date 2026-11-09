@@ -12,7 +12,7 @@ const CLAIM: Record<string, { label: string; tone: "ok" | "info" | "warn" | "gol
 
 /** Persistent claim badges (FD §6). */
 export function ClaimBadge({ claim }: { claim: string }) {
-  const c = CLAIM[claim] ?? { label: claim.toUpperCase(), tone: "neutral" as const };
+  const c = CLAIM[claim] ?? { label: claim.charAt(0).toUpperCase() + claim.slice(1), tone: "neutral" as const };
   return <Badge tone={c.tone} className="text-[13px] font-medium">{c.label}</Badge>;
 }
 

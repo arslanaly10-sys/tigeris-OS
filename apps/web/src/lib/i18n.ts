@@ -26,7 +26,7 @@ const en = {
   "nav.administration": "Administration",
   "nav.architecture": "Architecture",
   "nav.about": "About TIGERIS",
-  "header.search": "Search signals, entities, cases and memory",
+  "header.search": "Search signals, cases, memory…",
   "header.demo": "Demonstration Mode",
   "header.dataMode": "Public + synthetic data",
   "header.environment": "Controlled demo",

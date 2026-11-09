@@ -78,7 +78,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
 
       <Popover.Root open={results.length > 0}>
         <Popover.Anchor asChild>
-          <label className="relative flex h-9 min-w-0 max-w-[420px] flex-1 items-center">
+          <label className="relative flex h-9 min-w-0 max-w-[420px] flex-1 items-center sm:min-w-[160px] xl:min-w-[220px]">
             <Search className="pointer-events-none absolute start-3 size-4 text-ink-faint" />
             <input autoComplete="off"
               id="global-search"
@@ -105,11 +105,11 @@ export function Header({ onMenu }: { onMenu: () => void }) {
 
       <div className="ms-auto flex items-center gap-2">
         <div className="hidden items-center gap-1.5 xl:flex">
-          <Badge tone="info" title="Deployment profile"><Server />{t("header.environment")}</Badge>
-          <Badge tone="neutral" title="Data mode"><Database />{t("header.dataMode")}</Badge>
+          <Badge tone="info" title="Deployment profile" className="hidden 2xl:inline-flex"><Server />{t("header.environment")}</Badge>
+          <Badge tone="neutral" title="Data mode" className="hidden min-[1400px]:inline-flex"><Database />{t("header.dataMode")}</Badge>
         </div>
         <ModelBadge />
-        <Badge tone="gold" className="hidden sm:inline-flex">{t("header.demo")}</Badge>
+        <Badge tone="gold" className="hidden sm:inline-flex" title={t("header.demo")}><span className="xl:hidden">Demo</span><span className="hidden xl:inline">{t("header.demo")}</span></Badge>
         {lang === "ar" && <Badge tone="info" className="hidden md:inline-flex">{t("arabicDraft")}</Badge>}
 
         <Popover.Root>
@@ -139,7 +139,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
           <Dropdown.Trigger asChild>
             <button type="button" id="user-menu-trigger" className="flex items-center gap-2.5 rounded-md border border-line bg-surface-2 py-1 ps-1.5 pe-2.5 text-start hover:border-line-strong">
               <span className="grid size-7 place-items-center rounded bg-primary-soft text-accent"><UserRound className="size-4" /></span>
-              <span className="hidden min-w-0 md:block">
+              <span className="hidden min-w-0 xl:block">
                 <span className="block max-w-[180px] truncate text-[13px] font-medium leading-tight">{s.principal.name}</span>
                 <span className="block max-w-[180px] truncate text-[13px] leading-tight text-ink-muted">{ROLE_LABELS[s.principal.role]} · {s.institution.shortName}</span>
               </span>
@@ -193,7 +193,7 @@ function ModelBadge() {
   const local = s.default_provider === "local" ? "local model" : s.default_provider === "deterministic" ? "no model" : s.default_provider;
   return (
     <Link href="/governance#ai" className="hidden md:inline-flex" title="Model sovereignty controls">
-      <Badge tone={s.foreign_models_enabled ? "warn" : "ok"}>{s.foreign_models_enabled ? <Globe2 /> : <Lock />}{s.foreign_models_enabled ? "Foreign models on" : "Foreign models off"} · {local}</Badge>
+      <Badge tone={s.foreign_models_enabled ? "warn" : "ok"}>{s.foreign_models_enabled ? <Globe2 /> : <Lock />}<span className="hidden xl:inline">{s.foreign_models_enabled ? "Foreign models on" : "Foreign models off"} · </span>{s.foreign_models_enabled ? <span className="xl:hidden">Foreign on</span> : null}<span className={s.foreign_models_enabled ? "hidden xl:inline" : ""}>{local}</span></Badge>
     </Link>
   );
 }
