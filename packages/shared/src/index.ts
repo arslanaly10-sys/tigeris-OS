@@ -6,3 +6,4 @@ export * from "./movement";
 export * from "./ais";
 export * from "./industries";
 export * from "./adsb";
+export * from "./anomalies";

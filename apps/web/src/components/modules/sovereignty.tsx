@@ -10,6 +10,7 @@ import { PageHeader } from "../page-header";
 import { Panel, PanelHeader } from "../ui/panel";
 import { Badge } from "../ui/badge";
 import { usePrefs } from "../prefs";
+import { CorrelationView } from "../correlation";
 
 type CheckStatus = "pass" | "warn" | "fail" | "planned";
 type LayerStatus = "sovereign" | "partial" | "at_risk";
@@ -28,7 +29,8 @@ export const LAYER_STATUS: Record<LayerStatus, { label: string; ar: string; tone
 const CHECK: Record<CheckStatus, { label: string; tone: "ok" | "warn" | "crit" | "neutral"; Icon: LucideIcon }> = {
   pass: { label: "pass", tone: "ok", Icon: CheckCircle2 }, warn: { label: "warn", tone: "warn", Icon: AlertTriangle }, fail: { label: "fail", tone: "crit", Icon: XCircle }, planned: { label: "planned", tone: "neutral", Icon: Clock3 },
 };
-const TABS = [{ key: "stack", en: "Sovereignty stack", ar: "طبقات السيادة" }, { key: "keys", en: "Data and keys", ar: "البيانات والمفاتيح" }] as const;
+const TABS = [{ key: "stack", en: "Sovereignty stack", ar: "طبقات السيادة" }, { key: "keys", en: "Data and keys", ar: "البيانات والمفاتيح" }, { key: "correlation", en: "Intelligence correlation", ar: "ربط المعلومات الاستخباراتية" }] as const;
+type TabKey = (typeof TABS)[number]["key"];
 
 export function SovereigntyModule() {
   const { lang } = usePrefs();
@@ -36,11 +38,11 @@ export function SovereigntyModule() {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [tab, setTab] = useState<"stack" | "keys">(params.get("tab") === "keys" ? "keys" : "stack");
+  const [tab, setTab] = useState<TabKey>(TABS.find((t) => t.key === params.get("tab"))?.key ?? "stack");
   const [d, setD] = useState<Sovereignty | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { api<Sovereignty>("/sovereignty").then((r) => (r.ok ? setD(r.data) : setError(r.message))); }, []);
-  const open = (t: "stack" | "keys") => { setTab(t); router.replace(t === "stack" ? pathname : `${pathname}?tab=${t}`, { scroll: false }); };
+  const open = (t: TabKey) => { setTab(t); router.replace(t === "stack" ? pathname : `${pathname}?tab=${t}`, { scroll: false }); };
 
   return (
     <>
@@ -53,10 +55,11 @@ export function SovereigntyModule() {
         ))}
       </div>
       {error && <p role="alert" className="rounded-md border border-crit/40 bg-crit-soft p-3 text-crit">{error}</p>}
-      {!d && !error && <div className="h-72 animate-pulse rounded-lg bg-surface-2" />}
+      {!d && !error && tab !== "correlation" && <div className="h-72 animate-pulse rounded-lg bg-surface-2" />}
       {d && tab === "stack" && <Stack d={d} ar={ar} />}
       {d && tab === "keys" && <Keys d={d} />}
-      {d && <p className="mt-5 text-[13px] text-ink-faint">Checked {formatDate(d.checkedAt, true)} for {d.institution}. Framework: {d.framework}.</p>}
+      {tab === "correlation" && <CorrelationView />}
+      {d && tab !== "correlation" && <p className="mt-5 text-[13px] text-ink-faint">Checked {formatDate(d.checkedAt, true)} for {d.institution}. Framework: {d.framework}.</p>}
     </>
   );
 }

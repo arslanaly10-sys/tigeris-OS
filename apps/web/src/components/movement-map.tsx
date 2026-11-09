@@ -6,7 +6,7 @@ import maplibregl, { type GeoJSONSource, type Map as MLMap } from "maplibre-gl";
 import Link from "next/link";
 import { Crosshair, Globe2, Layers, Map as MapIcon, Pause, Play, Radio, Rows3, SkipBack } from "lucide-react";
 import {
-  AIRCRAFT_LABEL, AIR_ROUTES, AIS_CATEGORY_LABEL, ESTIMATE_LIMIT_MIN, estimatePosition, flightsAt, industryOf, makeFlights, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
+  ANOMALY_LABEL, SCRIPTED_SHIPS, scriptedPosition, type AnomalyKind, AIRCRAFT_LABEL, AIR_ROUTES, AIS_CATEGORY_LABEL, ESTIMATE_LIMIT_MIN, estimatePosition, flightsAt, industryOf, makeFlights, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
   type AisCategory, type MovingPoint, type Scenario,
 } from "@tigeris/shared";
 import { api } from "@/lib/api";
@@ -18,7 +18,7 @@ import { Drawer, Field } from "./drawer";
 import { ClaimBadge } from "./labels";
 import { FactValue, useLineage } from "./lineage";
 import { cn } from "@/lib/cn";
-import { AIS_SHAPE, infraImage, planeImage, shipImage, truckImage, type InfraShape, type PlaneShape, type ShipShape } from "./map-icons";
+import { AIS_SHAPE, anomalyImage, infraImage, planeImage, shipImage, truckImage, type InfraShape, type PlaneShape, type ShipShape } from "./map-icons";
 
 interface MapEntity { key: string; name: string; type: string; country: string | null; lat: number; lon: number; claim_class: string; location_quality: string | null; attributes: Record<string, unknown> }
 interface ObservedFact { id: string; num: number | null; text: string | null; unit: string | null }
@@ -26,7 +26,10 @@ interface ObservedVessel { key: string; mmsi: string; name: string; observedAt: 
 interface ObservedAircraft { key: string; hex: string; callsign: string; observedAt: string | null; kind: PlaneShape; lat: number; lon: number; facts: Record<string, ObservedFact | undefined> }
 interface ObservedAirData { capture: { evidenceId: string; retrievedAt: string; window: string; summary: string | null } | null; aircraft: ObservedAircraft[] }
 interface ObservedData { capture: { evidenceId: string; validation: string; retrievedAt: string; window: string; summary: string | null; countFactId: string | null } | null; vessels: ObservedVessel[] }
-type Selection = { kind: "entity"; key: string } | { kind: "mover"; id: string } | { kind: "observed"; key: string } | { kind: "observed_air"; key: string };
+interface MapAnomaly { id: string; kind: AnomalyKind; label: string; vesselIds: string[]; lngLat: [number, number]; at: string; until: string; confidence: string; summary: string; metrics: Record<string, number>; signalId: string | null }
+interface AnomalyData { anomalies: MapAnomaly[]; thresholds: Record<string, number>; real: { vessels: number; note: string } }
+const ANOMALY_LETTER: Record<AnomalyKind, string> = { going_dark: "D", loitering: "L", ship_to_ship: "S", route_deviation: "R", ais_spoofing: "J" };
+type Selection = { kind: "entity"; key: string } | { kind: "mover"; id: string } | { kind: "observed"; key: string } | { kind: "observed_air"; key: string } | { kind: "anomaly"; id: string };
 interface MapSignal { id: string; title: string; urgency: string; data_mode: string; entity_key: string; lat: number; lon: number }
 
 const LAYERS = [
@@ -34,6 +37,7 @@ const LAYERS = [
   { key: "vessels", label: "Simulated ships", group: "Movement" },
   { key: "observed_air", label: "Observed aircraft (ADS-B)", group: "Movement" },
   { key: "aircraft", label: "Simulated aircraft", group: "Movement" },
+  { key: "anomalies", label: "Voyage anomalies", group: "Movement" },
   { key: "trucks", label: "Trucks", group: "Movement" },
   { key: "lanes", label: "Shipping corridors", group: "Movement" },
   { key: "roads", label: "Road corridors", group: "Movement" },
@@ -82,6 +86,8 @@ export function registerIcons(m: MLMap) {
   for (const k of Object.keys(AIR_COLOR) as PlaneShape[]) { add(`${k}-underway`, planeImage(k, AIR_COLOR[k])); add(`obsair-${k}`, planeImage(k, AIR_COLOR[k], { observed: true })); }
   for (const [cat, color] of Object.entries(OBSERVED_COLOR)) { const img = shipImage(AIS_SHAPE[cat] ?? "generic", color, { observed: true }); add(`obs-${cat}-moving`, img); add(`obs-${cat}-still`, img); }
   for (const [k, color] of Object.entries(ASSET_COLOR)) add(`infra-${k}`, infraImage(k as InfraShape, color));
+  for (const t of ["crude_tanker", "product_tanker", "bulk_grain", "container"] as ShipShape[]) { add(`${t}-flagged`, shipImage(t, MOVER_COLOR[t]!, { flagged: true })); add(`${t}-dark`, shipImage(t, MOVER_COLOR[t]!, { holding: true, flagged: true })); }
+  for (const [k, l] of Object.entries(ANOMALY_LETTER)) add(`anomaly-${k}`, anomalyImage(l));
 }
 
 export const moverLabel = (p: MovingPoint) => (p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : p.kind === "aircraft" ? AIRCRAFT_LABEL[p.type as keyof typeof AIRCRAFT_LABEL] : "Truck");
@@ -97,6 +103,8 @@ const MAP_KEY: Array<[string, () => ImageData]> = [
   ["Aircraft", () => planeImage("airliner_wide", AIR_COLOR.airliner_wide)],
   ["Real aircraft (ADS-B)", () => planeImage("airliner_narrow", AIR_COLOR.airliner_narrow, { observed: true })],
   ["Truck", () => truckImage(MOVER_COLOR.truck!)],
+  ["Ship with a voyage anomaly", () => shipImage("crude_tanker", MOVER_COLOR.crude_tanker!, { flagged: true })],
+  ["Anomaly (D dark, L loiter, S ship-to-ship, R route, J jumps)", () => anomalyImage("S")],
 ];
 
 function LegendIcon({ draw }: { draw: () => ImageData }) {
@@ -139,6 +147,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const [selected, setSelected] = useState<Selection | null>(null);
   const [observed, setObserved] = useState<ObservedData | null>(null);
   const [observedAir, setObservedAir] = useState<ObservedAirData | null>(null);
+  const [anomalies, setAnomalies] = useState<AnomalyData | null>(null);
 
   const fleet = useMemo(() => makeFleet(), []);
   const trucks = useMemo(() => makeTrucks(), []);
@@ -149,6 +158,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   useEffect(() => { api<{ entities: MapEntity[]; signals: MapSignal[] }>("/map/layers").then((r) => r.ok && setData(r.data)); }, []);
   useEffect(() => { api<ObservedData>("/map/observed-vessels").then((r) => r.ok && setObserved(r.data)); }, []);
   useEffect(() => { api<ObservedAirData>("/map/observed-aircraft").then((r) => r.ok && setObservedAir(r.data)); }, []);
+  useEffect(() => { api<AnomalyData>("/anomalies").then((r) => r.ok && setAnomalies(r.data)); }, []);
 
   // Clock on Motion's frame loop (about 12 frames a second): live follows the wall clock in Riyadh time and
   // moves ships smoothly between seconds; replay advances by the chosen speed. Reduced motion: one step a second.
@@ -198,6 +208,8 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       m.addSource("movers", { type: "geojson", data: fc([]) });
       m.addSource("observed", { type: "geojson", data: fc([]) });
       m.addSource("observedAir", { type: "geojson", data: fc([]) });
+      m.addSource("anomalyShips", { type: "geojson", data: fc([]) });
+      m.addSource("anomalyMarks", { type: "geojson", data: fc([]) });
       m.addLayer({ id: "lanes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "sea"], paint: { "line-color": "#2f5f8f", "line-width": 1.2, "line-opacity": 0.55 } });
       m.addLayer({ id: "cape", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "scenario"], paint: { "line-color": "#d9bd84", "line-width": 1.6, "line-dasharray": [3, 2] } });
       m.addLayer({ id: "roads", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "road"], paint: { "line-color": "#6d6247", "line-width": 1.4, "line-dasharray": [2, 1.5] } });
@@ -219,8 +231,13 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         "icon-image": ["concat", "obsair-", ["get", "kind"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
         "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.45, 6, 0.65, 9, 1],
       } });
+      m.addLayer({ id: "anomalyMarks", type: "symbol", source: "anomalyMarks", layout: { "icon-image": ["concat", "anomaly-", ["get", "kind"]], "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.7, 8, 1.1] } });
+      m.addLayer({ id: "anomalyShips", type: "symbol", source: "anomalyShips", layout: {
+        "icon-image": ["concat", ["get", "type"], "-", ["get", "state"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
+        "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.5, 6, 0.75, 8, 1.25, 10, 1.8],
+      } });
       const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "tigeris-popup", offset: 10 });
-      for (const id of ["assets", "movers", "observed", "observedAir"]) {
+      for (const id of ["assets", "movers", "observed", "observedAir", "anomalyMarks", "anomalyShips"]) {
         m.on("mousemove", id, (e) => {
           m.getCanvas().style.cursor = "pointer";
           const f = e.features?.[0];
@@ -230,7 +247,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         m.on("click", id, (e) => {
           const f = e.features?.[0];
           if (!f) return;
-          setSelected(id === "assets" ? { kind: "entity", key: String(f.properties.key) } : id === "observed" ? { kind: "observed", key: String(f.properties.key) } : id === "observedAir" ? { kind: "observed_air", key: String(f.properties.key) } : { kind: "mover", id: String(f.properties.id) });
+          setSelected(id === "assets" ? { kind: "entity", key: String(f.properties.key) } : id === "observed" ? { kind: "observed", key: String(f.properties.key) } : id === "observedAir" ? { kind: "observed_air", key: String(f.properties.key) } : id === "anomalyMarks" || id === "anomalyShips" ? { kind: "anomaly", id: String(f.properties.anomaly) } : { kind: "mover", id: String(f.properties.id) });
         });
       }
       setReady(true);
@@ -261,7 +278,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     m.setFilter("assets", ["in", ["get", "layer"], ["literal", assetLayers]]);
     const kinds = [on.has("vessels") ? "vessel" : "", on.has("trucks") ? "truck" : "", on.has("aircraft") ? "aircraft" : ""].filter(Boolean);
     m.setFilter("movers", ["in", ["get", "kind"], ["literal", kinds]]);
-    vis("observed", on.has("observed")); vis("observedAir", on.has("observed_air"));
+    vis("observed", on.has("observed")); vis("observedAir", on.has("observed_air")); vis("anomalyMarks", on.has("anomalies")); vis("anomalyShips", on.has("anomalies"));
     markers.current.forEach((x) => x.remove());
     markers.current = on.has("labels") ? LABELS.map(([t, lon, lat, gcc]) => {
       const el = document.createElement("div");
@@ -308,6 +325,23 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       }, geometry: { type: "Point", coordinates: [e.lon, e.lat] } };
     })));
   }, [ready, observed, nowMs]);
+
+  // Voyage anomalies: the scripted ships at the current minute (hollow while AIS is off) and a marker per anomaly.
+  useEffect(() => {
+    const m = map.current;
+    if (!ready || !m || !anomalies) return;
+    const byShip = (id: string) => anomalies.anomalies.find((a) => a.vesselIds.includes(id));
+    (m.getSource("anomalyShips") as GeoJSONSource).setData(fc(SCRIPTED_SHIPS.map((s) => {
+      const p = scriptedPosition(s, minutes);
+      const a = byShip(s.id);
+      return { type: "Feature", properties: { id: s.id, name: s.name, type: s.type, state: p.dark ? "dark" : "flagged", bearing: p.bearing, anomaly: a?.id ?? "", sub: `${ANOMALY_LABEL[s.behaviour]} · ${p.dark ? "AIS off: position estimated" : "simulated"} · synthetic` }, geometry: { type: "Point", coordinates: p.lngLat } };
+    })));
+  }, [ready, anomalies, minutes]);
+  useEffect(() => {
+    const m = map.current;
+    if (!ready || !m || !anomalies) return;
+    (m.getSource("anomalyMarks") as GeoJSONSource).setData(fc(anomalies.anomalies.map((a) => ({ type: "Feature", properties: { anomaly: a.id, kind: a.kind, name: a.label, sub: `${a.confidence} confidence · simulated` }, geometry: { type: "Point", coordinates: a.lngLat } }))));
+  }, [ready, anomalies]);
 
   // Observed aircraft: estimated from the last ADS-B report for at most 20 minutes, then held.
   useEffect(() => {
@@ -421,7 +455,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         </p>
       )}
 
-      <SelectionDrawer selected={selected} movers={movers} observed={observed} observedAir={observedAir} nowMs={nowMs} onClose={() => setSelected(null)} />
+      <SelectionDrawer selected={selected} movers={movers} observed={observed} observedAir={observedAir} anomalies={anomalies} nowMs={nowMs} onClose={() => setSelected(null)} />
     </div>
   );
 }
@@ -529,7 +563,7 @@ function ObservedAircraftDetails({ a, capture, nowMs }: { a: ObservedAircraft; c
   );
 }
 
-function SelectionDrawer({ selected, movers, observed, observedAir, nowMs, onClose }: { selected: Selection | null; movers: MovingPoint[]; observed: ObservedData | null; observedAir: ObservedAirData | null; nowMs: number; onClose: () => void }) {
+function SelectionDrawer({ selected, movers, observed, observedAir, anomalies, nowMs, onClose }: { selected: Selection | null; movers: MovingPoint[]; observed: ObservedData | null; observedAir: ObservedAirData | null; anomalies: AnomalyData | null; nowMs: number; onClose: () => void }) {
   const [entity, setEntity] = useState<{ entity: { key: string; name: string; type: string; claim_class: string; location_quality: string | null; attributes: Record<string, unknown>; source_name: string | null }; edges: { id: string; predicate_label: string; other_name: string; other_key: string; relationship_class: string; direction: string }[] } | null>(null);
   useEffect(() => {
     if (selected?.kind !== "entity") return;
@@ -539,8 +573,22 @@ function SelectionDrawer({ selected, movers, observed, observedAir, nowMs, onClo
   const mover = selected?.kind === "mover" ? movers.find((m) => m.id === selected.id) : undefined;
   const ship = selected?.kind === "observed" ? observed?.vessels.find((v) => v.key === selected.key) : undefined;
   const plane = selected?.kind === "observed_air" ? observedAir?.aircraft.find((a) => a.key === selected.key) : undefined;
+  const anomaly = selected?.kind === "anomaly" ? anomalies?.anomalies.find((a) => a.id === selected.id) : undefined;
   return (
-    <Drawer open={!!selected} onClose={onClose} eyebrow={selected?.kind === "observed" ? "Vessel · observed (AIS)" : selected?.kind === "observed_air" ? "Aircraft · observed (ADS-B)" : selected?.kind === "mover" ? (mover?.kind === "truck" ? "Truck · synthetic" : mover?.kind === "aircraft" ? "Aircraft · synthetic" : "Vessel · synthetic") : "Infrastructure"} title={plane?.callsign ?? ship?.name ?? mover?.name ?? entity?.entity.name ?? "Loading"}>
+    <Drawer open={!!selected} onClose={onClose} eyebrow={selected?.kind === "anomaly" ? "Voyage anomaly · simulated" : selected?.kind === "observed" ? "Vessel · observed (AIS)" : selected?.kind === "observed_air" ? "Aircraft · observed (ADS-B)" : selected?.kind === "mover" ? (mover?.kind === "truck" ? "Truck · synthetic" : mover?.kind === "aircraft" ? "Aircraft · synthetic" : "Vessel · synthetic") : "Infrastructure"} title={anomaly?.label ?? plane?.callsign ?? ship?.name ?? mover?.name ?? entity?.entity.name ?? "Loading"}>
+      {anomaly && (
+        <div className="grid gap-4 text-[13px]">
+          <div className="flex flex-wrap gap-1.5"><Badge tone="gold">Simulated</Badge><Badge tone={anomaly.confidence === "high" ? "crit" : "warn"}>{anomaly.confidence} confidence</Badge></div>
+          <p className="text-[14px]">{anomaly.summary}</p>
+          <dl className="grid grid-cols-2 gap-3">
+            <Field label="Ships">{anomaly.vesselIds.map((id) => SCRIPTED_SHIPS.find((s) => s.id === id)?.name ?? id).join(" and ")}</Field>
+            <Field label="Window">{formatDate(anomaly.at, true)} – {formatDate(anomaly.until, true)}</Field>
+            {Object.entries(anomaly.metrics).map(([k, v]) => <Field key={k} label={k.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())}>{num(v, 1)}</Field>)}
+          </dl>
+          {anomaly.signalId && <Button asChild variant="secondary" size="sm"><Link href={`/signals?focus=${anomaly.signalId}`}>Open the signal</Link></Button>}
+          <p className="rounded-md border border-warn/40 bg-warn-soft p-3 text-warn">Found by a fixed rule on a fictional ship's simulated track; the thresholds are listed in the source package on Sovereignty → Intelligence correlation. {anomalies?.real.note}</p>
+        </div>
+      )}
       {plane && observedAir?.capture && <ObservedAircraftDetails a={plane} capture={observedAir.capture} nowMs={nowMs} />}
       {ship && observed?.capture && <ObservedDetails v={ship} capture={observed.capture} nowMs={nowMs} />}
       {mover && (

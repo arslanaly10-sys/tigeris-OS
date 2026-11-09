@@ -1,6 +1,7 @@
 import type { Tx } from "../db";
 import { raiseSignal, SIMULATED_EVENTS } from "./signals";
 import { nextCaseKey } from "./cases";
+import { anomalySignals } from "../intel/correlation";
 
 /**
  * Demonstration storyline (SCOPE §7): real geography and history, hypothetical events.
@@ -124,6 +125,17 @@ export async function seedStoryline(tx: Tx, institutionId: string, shortName: st
     }
   }
   await tx.query("UPDATE signals SET status = 'new' WHERE id = ANY($1) AND id NOT IN (SELECT signal_id FROM case_signals)", [[hormuz, gps, redSea, desal, banking, food, pandemic, sanctions]]);
+  // Voyage anomalies from the scripted ships (slice 4): one SIMULATED signal each; spoofing and the AIS gap also
+  // corroborate the navigation-safety case.
+  const navCase = (await tx.query("SELECT id FROM cases WHERE title = 'Navigation safety and AIS spoofing near Hormuz'")).rows[0]?.id as string | undefined;
+  for (const a of anomalySignals()) {
+    const { anomaly, ...signal } = a;
+    const id = (await raiseSignal(tx, institutionId, signal)).id;
+    if (navCase && (anomaly.kind === "ais_spoofing" || anomaly.kind === "going_dark")) {
+      await tx.query("INSERT INTO case_signals (institution_id, case_id, signal_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING", [institutionId, navCase, id]);
+      await tx.query("UPDATE signals SET status = 'in_case', disposition_by = $2, disposition_note = 'Added to the navigation-safety case' WHERE id = $1", [id, analyst.name]);
+    }
+  }
   // Fresh, unassigned signals for the attention queue and live triage
   await raiseSignal(tx, institutionId, { key: "story:hormuz-insurance", title: "War-risk cover for Gulf transits under review by marine insurers", summary: "Synthetic market note: several insurers are reviewing cover terms for transits inside the Gulf.", domain: "insurance", eventType: "insurance_terms", urgency: "high", impact: "medium", dataMode: "synthetic", eventTime: hoursAgo(2), whySurfaced: "Insurance terms change shipping costs and availability at the strait before volumes move.", detectedBy: "rule.insurance_terms", entityKeys: ["chokepoint:hormuz", "port:fujairah"] });
   return { cases: ids.length };

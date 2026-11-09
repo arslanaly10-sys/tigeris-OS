@@ -42,7 +42,7 @@ export const INDUSTRIES: Industry[] = [
   {
     key: "energy", name: "Energy, oil and gas", nameAr: "الطاقة والنفط والغاز",
     focus: "Fields, processing, pipelines, terminals and export routes", focusAr: "الحقول والمعالجة وخطوط الأنابيب والمحطات ومسارات التصدير",
-    icon: "Flame", entityTypes: ["field", "facility", "pipeline", "refinery", "terminal", "chokepoint"], mapLayers: ["vessels", "observed", "lanes", "pipelines", "refineries", "ports", "chokepoints"],
+    icon: "Flame", entityTypes: ["field", "facility", "pipeline", "refinery", "terminal", "chokepoint"], mapLayers: ["vessels", "observed", "lanes", "pipelines", "refineries", "ports", "chokepoints", "anomalies"],
     titles: {
       executive: ["Chief Executive, Energy", "الرئيس التنفيذي للطاقة"], analyst: ["Energy Market Analyst", "محلل أسواق الطاقة"],
       domain_expert: ["Head of Crude Trading", "رئيس تداول النفط الخام"], approver: ["Chief Risk Officer, Energy", "رئيس المخاطر للطاقة"],
@@ -64,7 +64,7 @@ export const INDUSTRIES: Industry[] = [
   {
     key: "supply_chain", name: "Supply chain and logistics", nameAr: "سلاسل الإمداد والخدمات اللوجستية",
     focus: "Ports, corridors, routes, cargo and alternatives", focusAr: "الموانئ والممرات والمسارات والشحنات والبدائل",
-    icon: "Container", entityTypes: ["port", "route", "airport", "commodity", "vessel"], mapLayers: ["vessels", "observed", "trucks", "lanes", "roads", "ports", "chokepoints", "observed_air"],
+    icon: "Container", entityTypes: ["port", "route", "airport", "commodity", "vessel"], mapLayers: ["vessels", "observed", "trucks", "lanes", "roads", "ports", "chokepoints", "observed_air", "anomalies"],
     titles: {
       executive: ["Chief Supply Chain Officer", "رئيس سلاسل الإمداد"], analyst: ["Logistics Intelligence Analyst", "محلل استخبارات الخدمات اللوجستية"],
       domain_expert: ["Maritime and Freight Adviser", "مستشار الشحن البحري"], approver: ["Head of Procurement Risk", "رئيس مخاطر المشتريات"],
@@ -108,7 +108,7 @@ export const INDUSTRIES: Industry[] = [
   {
     key: "insurance", name: "Insurance", nameAr: "التأمين",
     focus: "Marine, war-risk and sanctions exposure", focusAr: "انكشاف التأمين البحري ومخاطر الحرب والعقوبات",
-    icon: "ShieldCheck", entityTypes: ["vessel", "sanctions_regime", "holding"], mapLayers: ["vessels", "observed", "chokepoints", "lanes"],
+    icon: "ShieldCheck", entityTypes: ["vessel", "sanctions_regime", "holding"], mapLayers: ["vessels", "observed", "chokepoints", "lanes", "anomalies"],
     titles: {
       executive: ["Chief Executive, Insurance", "الرئيس التنفيذي للتأمين"], analyst: ["Marine Risk Analyst", "محلل المخاطر البحرية"],
       domain_expert: ["Underwriting Adviser", "مستشار الاكتتاب"], approver: ["Chief Underwriting Officer", "رئيس الاكتتاب"],
@@ -119,7 +119,7 @@ export const INDUSTRIES: Industry[] = [
   {
     key: "defence_security", name: "Defence and security", nameAr: "الدفاع والأمن",
     focus: "Maritime security, critical sites and navigation safety", focusAr: "الأمن البحري والمواقع الحيوية وسلامة الملاحة",
-    icon: "Shield", entityTypes: ["chokepoint", "port", "airport", "facility"], mapLayers: ["vessels", "observed", "chokepoints", "ports", "airports", "signals", "aircraft", "observed_air"],
+    icon: "Shield", entityTypes: ["chokepoint", "port", "airport", "facility"], mapLayers: ["vessels", "observed", "chokepoints", "ports", "airports", "signals", "aircraft", "observed_air", "anomalies"],
     titles: {
       executive: ["Director General, Security", "المدير العام للأمن"], analyst: ["Maritime Security Analyst", "محلل الأمن البحري"],
       domain_expert: ["Navigation Safety Adviser", "مستشار سلامة الملاحة"], approver: ["Head of Security Risk", "رئيس المخاطر الأمنية"],

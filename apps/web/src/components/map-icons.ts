@@ -44,7 +44,7 @@ const DIMS: Record<ShipShape, [number, number]> = {
  * A ship silhouette. `holding` draws it hollow (waiting at anchor), `rerouted` adds a dashed circle,
  * `observed` adds a solid ivory ring (a real ship from AIS rather than the simulation).
  */
-export function shipImage(shape: ShipShape, color: string, opts: { holding?: boolean; rerouted?: boolean; observed?: boolean } = {}): ImageData {
+export function shipImage(shape: ShipShape, color: string, opts: { holding?: boolean; rerouted?: boolean; observed?: boolean; flagged?: boolean } = {}): ImageData {
   const { g, size } = canvas(40, 1.8);
   const [L, B] = DIMS[shape];
   hull(g, L, B);
@@ -100,6 +100,16 @@ export function shipImage(shape: ShipShape, color: string, opts: { holding?: boo
   }
   if (opts.rerouted) { g.beginPath(); g.arc(0, 0, 17, 0, Math.PI * 2); g.setLineDash([2.5, 2.5]); g.strokeStyle = color; g.lineWidth = 1.2; g.stroke(); g.setLineDash([]); }
   if (opts.observed) { g.beginPath(); g.arc(0, 0, 17.5, 0, Math.PI * 2); g.strokeStyle = LIGHT; g.lineWidth = 1.6; g.stroke(); }
+  if (opts.flagged) { for (const r of [16, 19]) { g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.strokeStyle = "#d8645a"; g.lineWidth = 1.4; g.stroke(); } }
+  return g.getImageData(0, 0, size, size);
+}
+
+/** A voyage-anomaly marker: a warning triangle with the kind's initial (D dark, L loiter, S ship-to-ship, R route, J jumps). */
+export function anomalyImage(letter: string): ImageData {
+  const { g, size } = canvas(30, 1.4);
+  g.beginPath(); g.moveTo(0, -11); g.lineTo(11, 9); g.lineTo(-11, 9); g.closePath();
+  g.fillStyle = "rgba(7,16,28,0.92)"; g.fill(); g.strokeStyle = "#d8645a"; g.lineWidth = 2; g.lineJoin = "round"; g.stroke();
+  g.fillStyle = "#f0b4ac"; g.font = "600 11px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(letter, 0, 2.5);
   return g.getImageData(0, 0, size, size);
 }
 
