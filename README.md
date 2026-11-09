@@ -11,7 +11,12 @@ Validated evidence, a shared intelligence graph, governed reasoning and named hu
 
 ![Sign-in: the Gulf at night with simulated ships moving through the Strait of Hormuz](docs/screenshots/v2/1-sign-in.png)
 
-![Command Centre (dark theme): attention queue and the live Gulf map](docs/screenshots/v2/2-command-centre.png)
+<table>
+  <tr>
+    <td><img src="docs/screenshots/v2/2-command-centre.png" alt="Command Centre in the dark theme: attention queue and the live Gulf map" /></td>
+    <td><img src="docs/screenshots/v2/7-command-centre-light.png" alt="Command Centre in the light theme" /></td>
+  </tr>
+</table>
 
 ## What it does
 
