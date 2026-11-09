@@ -22,3 +22,4 @@ data/packages/ais-hormuz-*.tigpkg
 *.tsbuildinfo
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+data/packages/adsb-gulf-*.tigpkg

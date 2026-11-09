@@ -77,7 +77,7 @@ export default function SignInPage() {
       <aside className="relative hidden flex-col justify-between overflow-hidden border-e border-line bg-surface px-12 py-10 lg:flex">
         <ShipBackdrop />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--surface)_92%,transparent)_0%,color-mix(in_oklab,var(--surface)_55%,transparent)_42%,transparent_70%)]" />
-        <span className="absolute bottom-[84px] end-12 z-[1] rounded border border-line-strong bg-surface/80 px-2 py-1 text-[13px] text-ink-muted">Simulated ships, Riyadh time</span>
+        <span className="absolute bottom-[84px] end-12 z-[1] rounded border border-line-strong bg-surface/80 px-2 py-1 text-[13px] text-ink-muted">Simulated ships and flights, Riyadh time</span>
         <div className="relative"><Wordmark size="lg" /></div>
         <div className="relative max-w-lg space-y-5">
           <p className="eyebrow text-accent">{t("product.descriptor")}</p>

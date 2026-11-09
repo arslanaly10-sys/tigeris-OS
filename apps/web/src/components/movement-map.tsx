@@ -6,7 +6,7 @@ import maplibregl, { type GeoJSONSource, type Map as MLMap } from "maplibre-gl";
 import Link from "next/link";
 import { Crosshair, Globe2, Layers, Map as MapIcon, Pause, Play, Radio, Rows3, SkipBack } from "lucide-react";
 import {
-  AIS_CATEGORY_LABEL, ESTIMATE_LIMIT_MIN, estimatePosition, industryOf, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
+  AIRCRAFT_LABEL, AIR_ROUTES, AIS_CATEGORY_LABEL, ESTIMATE_LIMIT_MIN, estimatePosition, flightsAt, industryOf, makeFlights, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
   type AisCategory, type MovingPoint, type Scenario,
 } from "@tigeris/shared";
 import { api } from "@/lib/api";
@@ -18,20 +18,26 @@ import { Drawer, Field } from "./drawer";
 import { ClaimBadge } from "./labels";
 import { FactValue, useLineage } from "./lineage";
 import { cn } from "@/lib/cn";
+import { AIS_SHAPE, infraImage, planeImage, shipImage, truckImage, type InfraShape, type PlaneShape, type ShipShape } from "./map-icons";
 
 interface MapEntity { key: string; name: string; type: string; country: string | null; lat: number; lon: number; claim_class: string; location_quality: string | null; attributes: Record<string, unknown> }
 interface ObservedFact { id: string; num: number | null; text: string | null; unit: string | null }
 interface ObservedVessel { key: string; mmsi: string; name: string; observedAt: string | null; category: AisCategory; typeLabel: string; lat: number; lon: number; facts: Record<string, ObservedFact | undefined> }
+interface ObservedAircraft { key: string; hex: string; callsign: string; observedAt: string | null; kind: PlaneShape; lat: number; lon: number; facts: Record<string, ObservedFact | undefined> }
+interface ObservedAirData { capture: { evidenceId: string; retrievedAt: string; window: string; summary: string | null } | null; aircraft: ObservedAircraft[] }
 interface ObservedData { capture: { evidenceId: string; validation: string; retrievedAt: string; window: string; summary: string | null; countFactId: string | null } | null; vessels: ObservedVessel[] }
-type Selection = { kind: "entity"; key: string } | { kind: "mover"; id: string } | { kind: "observed"; key: string };
+type Selection = { kind: "entity"; key: string } | { kind: "mover"; id: string } | { kind: "observed"; key: string } | { kind: "observed_air"; key: string };
 interface MapSignal { id: string; title: string; urgency: string; data_mode: string; entity_key: string; lat: number; lon: number }
 
 const LAYERS = [
   { key: "observed", label: "Observed ships (AIS)", group: "Movement" },
   { key: "vessels", label: "Simulated ships", group: "Movement" },
+  { key: "observed_air", label: "Observed aircraft (ADS-B)", group: "Movement" },
+  { key: "aircraft", label: "Simulated aircraft", group: "Movement" },
   { key: "trucks", label: "Trucks", group: "Movement" },
   { key: "lanes", label: "Shipping corridors", group: "Movement" },
   { key: "roads", label: "Road corridors", group: "Movement" },
+  { key: "air_routes", label: "Air corridors", group: "Movement" },
   { key: "ports", label: "Ports and terminals", group: "Infrastructure" },
   { key: "pipelines", label: "Pipelines", group: "Infrastructure" },
   { key: "refineries", label: "Refineries and fields", group: "Infrastructure" },
@@ -47,7 +53,9 @@ type LayerKey = (typeof LAYERS)[number]["key"];
 
 const ENTITY_LAYER: Record<string, LayerKey> = { port: "ports", terminal: "ports", refinery: "refineries", field: "refineries", facility: "refineries", desalination: "desal", power_plant: "power", airport: "airports", chokepoint: "chokepoints" };
 const ASSET_COLOR: Record<string, string> = { ports: "#79a8de", refineries: "#dc9a45", desal: "#5cc8d6", power: "#e58fa8", airports: "#9aa6b8", chokepoints: "#d8645a" };
-export const MOVER_COLOR: Record<string, string> = { crude_tanker: "#dc9a45", product_tanker: "#e8b86a", lng_carrier: "#79a8de", container: "#45b88c", bulk_grain: "#c9a45c", truck: "#e8e6df" };
+export const MOVER_COLOR: Record<string, string> = { crude_tanker: "#dc9a45", product_tanker: "#e8b86a", lng_carrier: "#79a8de", container: "#45b88c", bulk_grain: "#c9a45c", truck: "#e8e6df", airliner_wide: "#a9c8ee", airliner_narrow: "#d5dde9", freighter: "#e8b86a" };
+const AIR_COLOR: Record<PlaneShape, string> = { airliner_wide: "#a9c8ee", airliner_narrow: "#d5dde9", freighter: "#e8b86a" };
+const AIR_ESTIMATE_LIMIT_MIN = 20;
 const OBSERVED_COLOR: Record<AisCategory, string> = { tanker: "#dc9a45", cargo: "#45b88c", passenger: "#e58fa8", service: "#9aa6b8", fishing: "#5cc8d6", other: "#e8e6df" };
 const HORMUZ_VIEW = { center: [56.45, 26.35] as [number, number], zoom: 7.4 };
 const SCENARIOS: { key: Scenario; label: string; note: string }[] = [
@@ -64,42 +72,44 @@ const LABELS: Array<[string, number, number, boolean?]> = [
 const fc = (features: GeoJSON.Feature[]): GeoJSON.FeatureCollection => ({ type: "FeatureCollection", features });
 const line = (points: [number, number][], props: Record<string, unknown>): GeoJSON.Feature => ({ type: "Feature", properties: props, geometry: { type: "LineString", coordinates: points } });
 
-export function arrowImage(color: string, holding: boolean, rerouted: boolean, truck: boolean): ImageData {
-  const s = 22;
-  const c = document.createElement("canvas");
-  c.width = c.height = s;
-  const g = c.getContext("2d")!;
-  g.translate(s / 2, s / 2);
-  if (truck) {
-    g.fillStyle = color; g.strokeStyle = "#0a1220"; g.lineWidth = 1.5;
-    g.beginPath(); g.rect(-4, -6, 8, 12); g.fill(); g.stroke();
-  } else {
-    g.beginPath(); g.moveTo(0, -9); g.lineTo(6, 7); g.lineTo(0, 3.5); g.lineTo(-6, 7); g.closePath();
-    g.fillStyle = holding ? "rgba(0,0,0,0)" : color; g.strokeStyle = holding ? color : "#0a1220"; g.lineWidth = holding ? 2 : 1.2;
-    g.fill(); g.stroke();
-    if (rerouted) { g.beginPath(); g.arc(0, 0, 10, 0, Math.PI * 2); g.setLineDash([2, 2]); g.strokeStyle = color; g.lineWidth = 1; g.stroke(); }
+/** Registers every map icon once: ship, truck and aircraft silhouettes by type and status, and infrastructure symbols. */
+export function registerIcons(m: MLMap) {
+  const add = (id: string, img: ImageData) => { if (!m.hasImage(id)) m.addImage(id, img, { pixelRatio: 2 }); };
+  for (const t of ["crude_tanker", "product_tanker", "lng_carrier", "container", "bulk_grain"] as ShipShape[]) {
+    add(`${t}-underway`, shipImage(t, MOVER_COLOR[t]!)); add(`${t}-holding`, shipImage(t, MOVER_COLOR[t]!, { holding: true })); add(`${t}-rerouted`, shipImage(t, MOVER_COLOR[t]!, { rerouted: true }));
   }
-  return g.getImageData(0, 0, s, s);
+  add("truck-underway", truckImage(MOVER_COLOR.truck!));
+  for (const k of Object.keys(AIR_COLOR) as PlaneShape[]) { add(`${k}-underway`, planeImage(k, AIR_COLOR[k])); add(`obsair-${k}`, planeImage(k, AIR_COLOR[k], { observed: true })); }
+  for (const [cat, color] of Object.entries(OBSERVED_COLOR)) { const img = shipImage(AIS_SHAPE[cat] ?? "generic", color, { observed: true }); add(`obs-${cat}-moving`, img); add(`obs-${cat}-still`, img); }
+  for (const [k, color] of Object.entries(ASSET_COLOR)) add(`infra-${k}`, infraImage(k as InfraShape, color));
 }
 
-/** Observed ships: a solid ivory ring around the mark, so they read differently from simulated arrows without relying on colour. */
-function observedImage(color: string, moving: boolean): ImageData {
-  const s = 26;
-  const c = document.createElement("canvas");
-  c.width = c.height = s;
-  const g = c.getContext("2d")!;
-  g.translate(s / 2, s / 2);
-  g.beginPath(); g.arc(0, 0, 11, 0, Math.PI * 2); g.fillStyle = "rgba(7,16,28,0.85)"; g.fill();
-  g.lineWidth = 1.6; g.strokeStyle = "#ece8de"; g.stroke();
-  if (moving) { g.beginPath(); g.moveTo(0, -8); g.lineTo(5, 6); g.lineTo(0, 3); g.lineTo(-5, 6); g.closePath(); g.fillStyle = color; g.fill(); }
-  else { g.beginPath(); g.rect(-3.5, -3.5, 7, 7); g.fillStyle = color; g.fill(); }
-  return g.getImageData(0, 0, s, s);
+export const moverLabel = (p: MovingPoint) => (p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : p.kind === "aircraft" ? AIRCRAFT_LABEL[p.type as keyof typeof AIRCRAFT_LABEL] : "Truck");
+/** Map key entries: drawn with the same functions as the map, so the key always matches. */
+const MAP_KEY: Array<[string, () => ImageData]> = [
+  ["Crude or product tanker", () => shipImage("crude_tanker", MOVER_COLOR.crude_tanker!)],
+  ["LNG carrier", () => shipImage("lng_carrier", MOVER_COLOR.lng_carrier!)],
+  ["Container ship", () => shipImage("container", MOVER_COLOR.container!)],
+  ["Bulk carrier", () => shipImage("bulk_grain", MOVER_COLOR.bulk_grain!)],
+  ["Real ship (AIS)", () => shipImage("crude_tanker", OBSERVED_COLOR.tanker, { observed: true })],
+  ["Holding at anchor", () => shipImage("crude_tanker", MOVER_COLOR.crude_tanker!, { holding: true })],
+  ["Rerouted", () => shipImage("container", MOVER_COLOR.container!, { rerouted: true })],
+  ["Aircraft", () => planeImage("airliner_wide", AIR_COLOR.airliner_wide)],
+  ["Real aircraft (ADS-B)", () => planeImage("airliner_narrow", AIR_COLOR.airliner_narrow, { observed: true })],
+  ["Truck", () => truckImage(MOVER_COLOR.truck!)],
+];
+
+function LegendIcon({ draw }: { draw: () => ImageData }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => { const img = draw(); const c = ref.current; if (!c) return; c.width = img.width; c.height = img.height; c.getContext("2d")!.putImageData(img, 0, 0); }, [draw]);
+  return <canvas ref={ref} aria-hidden className="size-5 shrink-0" />;
 }
 
 const riyadhMinutes = (ms: number) => { const d = new Date(ms); return ((d.getUTCHours() + 3) % 24) * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60 + d.getUTCMilliseconds() / 60000; };
 const estimateOf = (v: ObservedVessel, nowMs: number) => estimatePosition({ lat: v.lat, lon: v.lon, sogKn: v.facts.speed_over_ground?.num ?? null, cogDeg: v.facts.course_over_ground?.num ?? v.facts.heading?.num ?? null, observedAt: v.observedAt ?? new Date(nowMs).toISOString() }, nowMs);
 const ago = (min: number) => (min < 1 ? "just now" : min < 90 ? `${Math.round(min)} min ago` : min < 48 * 60 ? `${Math.round(min / 60)} h ago` : `${Math.round(min / 1440)} days ago`);
 const vesselBearing = (v: ObservedVessel) => v.facts.heading?.num ?? v.facts.course_over_ground?.num ?? 0;
+const airEstimate = (a: ObservedAircraft, nowMs: number) => estimatePosition({ lat: a.lat, lon: a.lon, sogKn: a.facts.on_ground ? 0 : a.facts.ground_speed?.num ?? null, cogDeg: a.facts.track?.num ?? null, observedAt: a.observedAt ?? new Date(nowMs).toISOString() }, nowMs, AIR_ESTIMATE_LIMIT_MIN);
 const isMoving = (v: ObservedVessel) => (v.facts.speed_over_ground?.num ?? 0) >= 0.5 && (v.facts.heading?.num != null || v.facts.course_over_ground?.num != null);
 
 export function MovementMap({ compact = false, height }: { compact?: boolean; height?: number }) {
@@ -128,14 +138,17 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const [layersOpen, setLayersOpen] = useState(!compact);
   const [selected, setSelected] = useState<Selection | null>(null);
   const [observed, setObserved] = useState<ObservedData | null>(null);
+  const [observedAir, setObservedAir] = useState<ObservedAirData | null>(null);
 
   const fleet = useMemo(() => makeFleet(), []);
   const trucks = useMemo(() => makeTrucks(), []);
-  const movers = useMemo(() => positionsAt(fleet, trucks, minutes, scenario), [fleet, trucks, minutes, scenario]);
+  const flights = useMemo(() => makeFlights(), []);
+  const movers = useMemo(() => [...positionsAt(fleet, trucks, minutes, scenario), ...flightsAt(flights, minutes)], [fleet, trucks, flights, minutes, scenario]);
   const transits = useMemo(() => ({ base: hormuzTransits(fleet, 0, 1440), now: hormuzTransits(fleet, 0, 1440, scenario) }), [fleet, scenario]);
 
   useEffect(() => { api<{ entities: MapEntity[]; signals: MapSignal[] }>("/map/layers").then((r) => r.ok && setData(r.data)); }, []);
   useEffect(() => { api<ObservedData>("/map/observed-vessels").then((r) => r.ok && setObserved(r.data)); }, []);
+  useEffect(() => { api<ObservedAirData>("/map/observed-aircraft").then((r) => r.ok && setObservedAir(r.data)); }, []);
 
   // Clock on Motion's frame loop (about 12 frames a second): live follows the wall clock in Riyadh time and
   // moves ships smoothly between seconds; replay advances by the chosen speed. Reduced motion: one step a second.
@@ -176,36 +189,38 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       renderWorldCopies: false,
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
-    m.addControl(new maplibregl.AttributionControl({ customAttribution: "Natural Earth · TIGERIS curated reference (approximate) · simulated movement · AIS snapshot via aisstream.io" }), "bottom-right");
+    m.addControl(new maplibregl.AttributionControl({ customAttribution: "Natural Earth · TIGERIS curated reference (approximate) · simulated movement · AIS snapshot via aisstream.io · ADS-B snapshot from adsb.lol (ODbL)" }), "bottom-right");
     m.on("load", () => {
-      for (const [type, color] of Object.entries(MOVER_COLOR)) {
-        for (const status of ["underway", "holding", "rerouted"]) m.addImage(`${type}-${status}`, arrowImage(color, status === "holding", status === "rerouted", type === "truck"), { pixelRatio: 2 });
-      }
-      for (const [cat, color] of Object.entries(OBSERVED_COLOR)) { m.addImage(`obs-${cat}-moving`, observedImage(color, true), { pixelRatio: 2 }); m.addImage(`obs-${cat}-still`, observedImage(color, false), { pixelRatio: 2 }); }
+      registerIcons(m);
       m.addSource("lanes", { type: "geojson", data: fc([]) });
       m.addSource("pipelines", { type: "geojson", data: fc(Object.entries(PIPELINE_PATHS).map(([k, p]) => line(p, { key: k }))) });
       m.addSource("assets", { type: "geojson", data: fc([]) });
       m.addSource("movers", { type: "geojson", data: fc([]) });
       m.addSource("observed", { type: "geojson", data: fc([]) });
+      m.addSource("observedAir", { type: "geojson", data: fc([]) });
       m.addLayer({ id: "lanes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "sea"], paint: { "line-color": "#2f5f8f", "line-width": 1.2, "line-opacity": 0.55 } });
       m.addLayer({ id: "cape", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "scenario"], paint: { "line-color": "#d9bd84", "line-width": 1.6, "line-dasharray": [3, 2] } });
       m.addLayer({ id: "roads", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "road"], paint: { "line-color": "#6d6247", "line-width": 1.4, "line-dasharray": [2, 1.5] } });
+      m.addLayer({ id: "air-routes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "air"], paint: { "line-color": "#8fa3c4", "line-width": 1, "line-opacity": 0.35, "line-dasharray": [1, 3] } });
       m.addLayer({ id: "pipelines", type: "line", source: "pipelines", paint: { "line-color": "#c9a45c", "line-width": 2, "line-dasharray": [4, 2] } });
-      m.addLayer({ id: "assets", type: "circle", source: "assets", paint: {
-        "circle-radius": ["case", ["==", ["get", "layer"], "chokepoints"], 9, ["==", ["get", "layer"], "ports"], 4.5, 3.5],
-        "circle-color": ["case", ["==", ["get", "layer"], "chokepoints"], "rgba(216,100,90,0.18)", ["get", "color"]],
-        "circle-stroke-color": ["case", ["==", ["get", "layer"], "chokepoints"], "#d8645a", "#07101c"], "circle-stroke-width": ["case", ["==", ["get", "layer"], "chokepoints"], 2, 1],
+      m.addLayer({ id: "assets", type: "symbol", source: "assets", layout: {
+        "icon-image": ["concat", "infra-", ["get", "layer"]], "icon-allow-overlap": true, "icon-ignore-placement": true,
+        "icon-size": ["interpolate", ["linear"], ["zoom"], 3, ["case", ["==", ["get", "layer"], "chokepoints"], 0.9, 0.6], 8, ["case", ["==", ["get", "layer"], "chokepoints"], 1.3, 1.05]],
       } });
       m.addLayer({ id: "movers", type: "symbol", source: "movers", layout: {
         "icon-image": ["concat", ["get", "type"], "-", ["get", "status"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
-        "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.75, 7, 1.15],
+        "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.45, 6, 0.7, 8, 1.25, 10, 1.8],
       } });
       m.addLayer({ id: "observed", type: "symbol", source: "observed", layout: {
         "icon-image": ["concat", "obs-", ["get", "category"], "-", ["get", "motion"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
-        "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.7, 8, 1.15],
+        "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.45, 6, 0.7, 8, 1.25, 10, 1.8],
+      } });
+      m.addLayer({ id: "observedAir", type: "symbol", source: "observedAir", layout: {
+        "icon-image": ["concat", "obsair-", ["get", "kind"]], "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
+        "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.45, 6, 0.65, 9, 1],
       } });
       const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "tigeris-popup", offset: 10 });
-      for (const id of ["assets", "movers", "observed"]) {
+      for (const id of ["assets", "movers", "observed", "observedAir"]) {
         m.on("mousemove", id, (e) => {
           m.getCanvas().style.cursor = "pointer";
           const f = e.features?.[0];
@@ -215,7 +230,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         m.on("click", id, (e) => {
           const f = e.features?.[0];
           if (!f) return;
-          setSelected(id === "assets" ? { kind: "entity", key: String(f.properties.key) } : id === "observed" ? { kind: "observed", key: String(f.properties.key) } : { kind: "mover", id: String(f.properties.id) });
+          setSelected(id === "assets" ? { kind: "entity", key: String(f.properties.key) } : id === "observed" ? { kind: "observed", key: String(f.properties.key) } : id === "observedAir" ? { kind: "observed_air", key: String(f.properties.key) } : { kind: "mover", id: String(f.properties.id) });
         });
       }
       setReady(true);
@@ -228,7 +243,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   useEffect(() => {
     const m = map.current;
     if (!ready || !m) return;
-    const lanes = [...LANES.map((l) => line(l.points, { kind: "sea", name: l.name })), ...ROADS.map((l) => line(l.points, { kind: "road", name: l.name })), ...(scenario === "red_sea_reroute" ? [line(CAPE_LANE.points, { kind: "scenario", name: CAPE_LANE.name })] : [])];
+    const lanes = [...LANES.map((l) => line(l.points, { kind: "sea", name: l.name })), ...ROADS.map((l) => line(l.points, { kind: "road", name: l.name })), ...(scenario === "red_sea_reroute" ? [line(CAPE_LANE.points, { kind: "scenario", name: CAPE_LANE.name })] : []), ...AIR_ROUTES.map((l) => line(l.points, { kind: "air", name: l.name }))];
     (m.getSource("lanes") as GeoJSONSource).setData(fc(lanes));
     if (data) {
       const assets = data.entities.filter((e) => ENTITY_LAYER[e.type]).map((e) => ({ type: "Feature" as const, properties: { key: e.key, name: e.name, layer: ENTITY_LAYER[e.type], color: ASSET_COLOR[ENTITY_LAYER[e.type]!], sub: `${e.type.replace("_", " ")} · approximate location` }, geometry: { type: "Point" as const, coordinates: [e.lon, e.lat] } }));
@@ -241,12 +256,12 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     const m = map.current;
     if (!ready || !m) return;
     const vis = (id: string, show: boolean) => m.getLayer(id) && m.setLayoutProperty(id, "visibility", show ? "visible" : "none");
-    vis("lanes", on.has("lanes")); vis("cape", on.has("lanes")); vis("roads", on.has("roads")); vis("pipelines", on.has("pipelines")); vis("borders", on.has("borders"));
+    vis("lanes", on.has("lanes")); vis("cape", on.has("lanes")); vis("roads", on.has("roads")); vis("pipelines", on.has("pipelines")); vis("borders", on.has("borders")); vis("air-routes", on.has("air_routes"));
     const assetLayers = (["ports", "refineries", "desal", "power", "airports", "chokepoints"] as LayerKey[]).filter((k) => on.has(k));
     m.setFilter("assets", ["in", ["get", "layer"], ["literal", assetLayers]]);
-    const kinds = [on.has("vessels") ? "vessel" : "", on.has("trucks") ? "truck" : ""].filter(Boolean);
+    const kinds = [on.has("vessels") ? "vessel" : "", on.has("trucks") ? "truck" : "", on.has("aircraft") ? "aircraft" : ""].filter(Boolean);
     m.setFilter("movers", ["in", ["get", "kind"], ["literal", kinds]]);
-    vis("observed", on.has("observed"));
+    vis("observed", on.has("observed")); vis("observedAir", on.has("observed_air"));
     markers.current.forEach((x) => x.remove());
     markers.current = on.has("labels") ? LABELS.map(([t, lon, lat, gcc]) => {
       const el = document.createElement("div");
@@ -278,7 +293,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   useEffect(() => {
     const m = map.current;
     if (!ready || !m) return;
-    (m.getSource("movers") as GeoJSONSource).setData(fc(movers.map((p) => ({ type: "Feature", properties: { id: p.id, name: p.name, kind: p.kind, type: p.type, status: p.status, bearing: p.bearing, sub: `${p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"} · ${p.speedLabel} · synthetic` }, geometry: { type: "Point", coordinates: p.lngLat } }))));
+    (m.getSource("movers") as GeoJSONSource).setData(fc(movers.map((p) => ({ type: "Feature", properties: { id: p.id, name: p.name, kind: p.kind, type: p.type, status: p.status, bearing: p.bearing, sub: `${moverLabel(p)} · ${p.speedLabel} · synthetic` }, geometry: { type: "Point", coordinates: p.lngLat } }))));
   }, [ready, movers]);
 
   // Observed ships: estimated from each ship's last report (course and speed), moving with the wall clock.
@@ -293,6 +308,19 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       }, geometry: { type: "Point", coordinates: [e.lon, e.lat] } };
     })));
   }, [ready, observed, nowMs]);
+
+  // Observed aircraft: estimated from the last ADS-B report for at most 20 minutes, then held.
+  useEffect(() => {
+    const m = map.current;
+    if (!ready || !m || !observedAir) return;
+    (m.getSource("observedAir") as GeoJSONSource).setData(fc(observedAir.aircraft.map((a) => {
+      const e = airEstimate(a, nowMs);
+      return { type: "Feature", properties: {
+        key: a.key, name: a.callsign, kind: a.kind, bearing: a.facts.track?.num ?? 0,
+        sub: `${a.facts.aircraft_type?.text ?? "Type not reported"} · ${a.facts.on_ground ? "on the ground" : `${a.facts.altitude_ft?.num != null ? `${num(a.facts.altitude_ft.num, 0)} ft` : "altitude n/a"}`} · ${e.moving ? `estimated, last seen ${ago(e.minutes)}` : `seen ${ago(e.minutes)}`} (ADS-B)`,
+      }, geometry: { type: "Point", coordinates: [e.lon, e.lat] } };
+    })));
+  }, [ready, observedAir, nowMs]);
 
   useEffect(() => {
     const m = map.current;
@@ -343,13 +371,11 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
                     ))}
                   </fieldset>
                 ))}
-                {on.has("observed") && (
-                  <div className="grid gap-1 border-t border-line pt-2">
-                    <div className="eyebrow text-ink-faint">Observed ship types</div>
-                    {(Object.keys(OBSERVED_COLOR) as AisCategory[]).map((c) => <div key={c} className="flex items-center gap-2 text-ink-muted"><span aria-hidden className="size-2.5 rounded-sm" style={{ background: OBSERVED_COLOR[c] }} />{AIS_CATEGORY_LABEL[c]}</div>)}
-                    <div className="text-[13px] text-ink-faint">Arrow: under way · square: stopped or not reported</div>
-                  </div>
-                )}
+                <div className="grid gap-1 border-t border-line pt-2">
+                  <div className="eyebrow text-ink-faint">Map key</div>
+                  {MAP_KEY.map(([label, draw]) => <div key={label} className="flex items-center gap-2 text-ink-muted"><LegendIcon draw={draw} />{label}</div>)}
+                  <div className="text-[13px] text-ink-faint">Icons turn with each heading. A light ring marks a real ship or aircraft; no ring is simulated.</div>
+                </div>
               </div>
             )}
           </div>
@@ -361,7 +387,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         </div>
       </div>
 
-      {view === "table" && <MoversTable movers={movers} observed={observed?.vessels ?? []} entities={data?.entities ?? []} onSelect={setSelected} />}
+      {view === "table" && <MoversTable movers={movers} observed={observed?.vessels ?? []} observedAir={observedAir?.aircraft ?? []} entities={data?.entities ?? []} onSelect={setSelected} />}
 
       {!compact && (
         <div className="grid gap-3 rounded-lg border border-line bg-surface p-3 lg:grid-cols-[minmax(0,1fr)_auto]">
@@ -389,31 +415,42 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       {!compact && (
         <p className="text-[13px] text-ink-faint">
           {observed?.capture
-            ? <>Ringed marks are real ships observed by AIS in the Strait of Hormuz and its approaches (including Dubai and Fujairah anchorages), captured {formatDate(observed.capture.retrievedAt, true)} by the collector and imported as a signed snapshot. Between reports each one moves on an estimate from its last course and speed (for at most 6 hours), shown as "estimated" in its details; it is not a live track. Coverage depends on shore stations, and AIS is self-reported, so ships can be missing or misreported. </>
+            ? <>Ringed ships are real ships observed by AIS in the Strait of Hormuz and its approaches (including Dubai and Fujairah anchorages), captured {formatDate(observed.capture.retrievedAt, true)} by the collector and imported as a signed snapshot. Between reports each one moves on an estimate from its last course and speed (for at most 6 hours), shown as "estimated" in its details; it is not a live track. Coverage depends on shore stations, and AIS is self-reported, so ships can be missing or misreported. </>
             : <>No AIS snapshot has been imported, so only simulated ships are shown. Run the AIS collector and import its package from Data &amp; Sources to add observed ships near Hormuz. </>}
-          Arrows without a ring are fictional ships and trucks from the movement simulation.
+          Icons without a ring are fictional ships, aircraft and trucks from the movement simulation.{observedAir?.capture ? ` ${observedAir.aircraft.length} real airline flights come from an ADS-B snapshot (adsb.lol, ODbL) captured ${formatDate(observedAir.capture.retrievedAt, true)}; each moves on its last track for at most ${AIR_ESTIMATE_LIMIT_MIN} minutes.` : ""}
         </p>
       )}
 
-      <SelectionDrawer selected={selected} movers={movers} observed={observed} nowMs={nowMs} onClose={() => setSelected(null)} />
+      <SelectionDrawer selected={selected} movers={movers} observed={observed} observedAir={observedAir} nowMs={nowMs} onClose={() => setSelected(null)} />
     </div>
   );
 }
 
-function MoversTable({ movers, observed, entities, onSelect }: { movers: MovingPoint[]; observed: ObservedVessel[]; entities: MapEntity[]; onSelect: (s: Selection) => void }) {
+function MoversTable({ movers, observed, observedAir, entities, onSelect }: { movers: MovingPoint[]; observed: ObservedVessel[]; observedAir: ObservedAircraft[]; entities: MapEntity[]; onSelect: (s: Selection) => void }) {
   const [showAll, setShowAll] = useState(false);
-  const [tab, setTab] = useState<"observed" | "movers" | "assets">(observed.length ? "observed" : "movers");
+  const [tab, setTab] = useState<"observed" | "air" | "movers" | "assets">(observed.length ? "observed" : "movers");
   const rowKeys = (ev: React.KeyboardEvent<HTMLTableRowElement>) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.currentTarget.click(); } };
-  const total = tab === "observed" ? observed.length : tab === "movers" ? movers.length : entities.filter((e) => ENTITY_LAYER[e.type]).length;
+  const total = tab === "observed" ? observed.length : tab === "air" ? observedAir.length : tab === "movers" ? movers.length : entities.filter((e) => ENTITY_LAYER[e.type]).length;
   return (
     <div className="rounded-lg border border-line bg-surface">
       <div role="tablist" aria-label="Table view" className="flex border-b border-line">
-        {(["observed", "movers", "assets"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => { setTab(t); setShowAll(false); }} className={cn("-mb-px border-b-2 px-4 py-2 text-[13px]", tab === t ? "border-primary font-medium" : "border-transparent text-ink-muted hover:text-ink")}>{t === "observed" ? `Observed ships (${observed.length})` : t === "movers" ? `Simulated ships and trucks (${movers.length})` : `Infrastructure (${entities.filter((e) => ENTITY_LAYER[e.type]).length})`}</button>)}
+        {(["observed", "air", "movers", "assets"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => { setTab(t); setShowAll(false); }} className={cn("-mb-px border-b-2 px-4 py-2 text-[13px]", tab === t ? "border-primary font-medium" : "border-transparent text-ink-muted hover:text-ink")}>{t === "observed" ? `Observed ships (${observed.length})` : t === "air" ? `Observed aircraft (${observedAir.length})` : t === "movers" ? `Simulated ships, aircraft and trucks (${movers.length})` : `Infrastructure (${entities.filter((e) => ENTITY_LAYER[e.type]).length})`}</button>)}
       </div>
       <div className="max-h-[560px] overflow-auto">
         <table className="w-full min-w-[720px] text-[13px]">
-          <thead className="sticky top-0 bg-surface"><tr className="border-b border-line text-ink-faint">{(tab === "observed" ? ["Name", "Type", "Status", "Destination", "Speed", "Position", "Seen"] : tab === "movers" ? ["Name", "Type", "Status", "Route", "Speed", "Position"] : ["Name", "Type", "Country", "Position", "Class"]).map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr></thead>
+          <thead className="sticky top-0 bg-surface"><tr className="border-b border-line text-ink-faint">{(tab === "observed" ? ["Name", "Type", "Status", "Destination", "Speed", "Position", "Seen"] : tab === "air" ? ["Callsign", "Aircraft type", "Altitude", "Speed", "Position", "Seen"] : tab === "movers" ? ["Name", "Type", "Status", "Route", "Speed", "Position"] : ["Name", "Type", "Country", "Position", "Class"]).map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr></thead>
           <tbody>
+            {tab === "air" && !observedAir.length && <tr><td colSpan={6} className="px-3 py-4 text-ink-muted">No ADS-B snapshot imported yet.</td></tr>}
+            {tab === "air" && observedAir.slice(0, showAll ? undefined : 50).map((a) => (
+              <tr key={a.key} role="button" tabIndex={0} aria-label={`Show details for ${a.callsign}`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "observed_air", key: a.key })} onKeyDown={rowKeys}>
+                <td className="px-3 py-1.5">{a.callsign} <span translate="no" className="font-mono text-[13px] text-ink-faint">{a.hex}</span></td>
+                <td className="px-3 py-1.5">{a.facts.aircraft_type?.text ?? "—"} <span className="text-ink-faint">· {AIRCRAFT_LABEL[a.kind]}</span></td>
+                <td className="px-3 py-1.5 tabular">{a.facts.on_ground ? "On the ground" : a.facts.altitude_ft?.num != null ? `${num(a.facts.altitude_ft.num, 0)}\u00a0ft` : "—"}</td>
+                <td className="px-3 py-1.5 tabular">{a.facts.ground_speed?.num != null ? `${num(a.facts.ground_speed.num, 0)}\u00a0kn` : "—"}</td>
+                <td className="px-3 py-1.5 font-mono text-[13px] tabular text-ink-faint">{num(a.lat, 3)}, {num(a.lon, 3)}</td>
+                <td className="px-3 py-1.5 tabular text-ink-faint">{a.observedAt ? formatDate(a.observedAt, true) : "—"}</td>
+              </tr>
+            ))}
             {tab === "observed" && !observed.length && <tr><td colSpan={7} className="px-3 py-4 text-ink-muted">No AIS snapshot imported yet.</td></tr>}
             {tab === "observed" ? observed.slice(0, showAll ? undefined : 50).map((v) => (
               <tr key={v.key} role="button" tabIndex={0} aria-label={`Show details for ${v.name}`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "observed", key: v.key })} onKeyDown={rowKeys}>
@@ -471,7 +508,28 @@ function ObservedDetails({ v, capture, nowMs }: { v: ObservedVessel; capture: No
   );
 }
 
-function SelectionDrawer({ selected, movers, observed, nowMs, onClose }: { selected: Selection | null; movers: MovingPoint[]; observed: ObservedData | null; nowMs: number; onClose: () => void }) {
+function ObservedAircraftDetails({ a, capture, nowMs }: { a: ObservedAircraft; capture: NonNullable<ObservedAirData["capture"]>; nowMs: number }) {
+  const open = useLineage();
+  const e = airEstimate(a, nowMs);
+  const n = (k: string, digits = 0) => { const f = a.facts[k]; return f && f.num != null ? <FactValue id={f.id} value={Math.round(f.num * 10 ** digits) / 10 ** digits} unit={f.unit} /> : <span className="text-ink-faint">Not reported</span>; };
+  const t = (k: string) => { const f = a.facts[k]; return f?.text ? <button type="button" onClick={() => open(f.id)} title="Show where this value comes from" className="rounded px-1 py-0.5 text-start underline decoration-line-strong decoration-dotted underline-offset-4 hover:bg-surface-2 hover:decoration-accent">{f.text}</button> : <span className="text-ink-faint">Not reported</span>; };
+  return (
+    <div className="grid gap-4 text-[13px]">
+      <div className="flex flex-wrap gap-1.5"><ClaimBadge claim="observed" /><Badge tone="info">ADS-B</Badge><Badge>{AIRCRAFT_LABEL[a.kind]}</Badge></div>
+      <dl className="grid grid-cols-2 gap-3">
+        <Field label="Callsign">{t("callsign")}</Field><Field label="Operator code">{t("operator_code")}</Field>
+        <Field label="Aircraft type">{t("aircraft_type")}</Field><Field label="ICAO address"><span translate="no" className="font-mono">{a.hex}</span></Field>
+        <Field label="Position at capture">{n("position_lat", 3)}, {n("position_lon", 3)}</Field><Field label="Seen">{a.observedAt ? formatDate(a.observedAt, true) : "—"}</Field>
+        <Field label="Altitude">{a.facts.on_ground ? "On the ground" : n("altitude_ft")}</Field><Field label="Ground speed / track">{n("ground_speed")} / {n("track")}</Field>
+        <Field label="Estimated position now">{e.moving || e.capped ? <span className="tabular">{num(e.lat, 3)}, {num(e.lon, 3)}</span> : <span className="text-ink-faint">Same as seen</span>}</Field>
+        <Field label="Capture">{capture.window}</Field>
+      </dl>
+      <p className="rounded-md border border-warn/40 bg-warn-soft p-3 text-warn">A real airline flight from a signed ADS-B snapshot. The moving position is its last track and speed carried forward for at most {AIR_ESTIMATE_LIMIT_MIN} minutes; it is not a live track. Private and general-aviation aircraft are not collected.</p>
+    </div>
+  );
+}
+
+function SelectionDrawer({ selected, movers, observed, observedAir, nowMs, onClose }: { selected: Selection | null; movers: MovingPoint[]; observed: ObservedData | null; observedAir: ObservedAirData | null; nowMs: number; onClose: () => void }) {
   const [entity, setEntity] = useState<{ entity: { key: string; name: string; type: string; claim_class: string; location_quality: string | null; attributes: Record<string, unknown>; source_name: string | null }; edges: { id: string; predicate_label: string; other_name: string; other_key: string; relationship_class: string; direction: string }[] } | null>(null);
   useEffect(() => {
     if (selected?.kind !== "entity") return;
@@ -480,18 +538,20 @@ function SelectionDrawer({ selected, movers, observed, nowMs, onClose }: { selec
   }, [selected]);
   const mover = selected?.kind === "mover" ? movers.find((m) => m.id === selected.id) : undefined;
   const ship = selected?.kind === "observed" ? observed?.vessels.find((v) => v.key === selected.key) : undefined;
+  const plane = selected?.kind === "observed_air" ? observedAir?.aircraft.find((a) => a.key === selected.key) : undefined;
   return (
-    <Drawer open={!!selected} onClose={onClose} eyebrow={selected?.kind === "observed" ? "Vessel · observed (AIS)" : selected?.kind === "mover" ? (mover?.kind === "truck" ? "Truck · synthetic" : "Vessel · synthetic") : "Infrastructure"} title={ship?.name ?? mover?.name ?? entity?.entity.name ?? "Loading"}>
+    <Drawer open={!!selected} onClose={onClose} eyebrow={selected?.kind === "observed" ? "Vessel · observed (AIS)" : selected?.kind === "observed_air" ? "Aircraft · observed (ADS-B)" : selected?.kind === "mover" ? (mover?.kind === "truck" ? "Truck · synthetic" : mover?.kind === "aircraft" ? "Aircraft · synthetic" : "Vessel · synthetic") : "Infrastructure"} title={plane?.callsign ?? ship?.name ?? mover?.name ?? entity?.entity.name ?? "Loading"}>
+      {plane && observedAir?.capture && <ObservedAircraftDetails a={plane} capture={observedAir.capture} nowMs={nowMs} />}
       {ship && observed?.capture && <ObservedDetails v={ship} capture={observed.capture} nowMs={nowMs} />}
       {mover && (
         <div className="grid gap-4 text-[13px]">
           <div className="flex flex-wrap gap-1.5"><Badge tone="gold" >Synthetic</Badge><Badge tone={mover.status === "holding" ? "warn" : mover.status === "rerouted" ? "gold" : "neutral"}>{mover.status}</Badge></div>
           <dl className="grid grid-cols-2 gap-3">
-            <Field label="Simulation id">{mover.id}</Field><Field label="Type">{mover.kind === "vessel" ? VESSEL_LABEL[mover.type as keyof typeof VESSEL_LABEL] : "Truck"}</Field>
+            <Field label="Simulation id">{mover.id}</Field><Field label="Type">{moverLabel(mover)}</Field>
             <Field label="Route">{mover.laneName}</Field><Field label="Speed">{mover.speedLabel}</Field>
             <Field label="Position (approximate)">{num(mover.lngLat[1], 3)}, {num(mover.lngLat[0], 3)}</Field><Field label="Details">{mover.detail}</Field>
           </dl>
-          <p className="rounded-md border border-warn/40 bg-warn-soft p-3 text-warn">Fictional vessel from the movement simulation. It does not represent any real ship, cargo, destination or intent.</p>
+          <p className="rounded-md border border-warn/40 bg-warn-soft p-3 text-warn">{mover.kind === "aircraft" ? "Fictional flight from the movement simulation. It does not represent any real aircraft, airline or schedule." : mover.kind === "truck" ? "Fictional truck from the movement simulation." : "Fictional vessel from the movement simulation. It does not represent any real ship, cargo, destination or intent."}</p>
         </div>
       )}
       {selected?.kind === "entity" && !entity && <div className="h-40 animate-pulse rounded bg-surface-2" />}

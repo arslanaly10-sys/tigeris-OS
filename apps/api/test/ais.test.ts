@@ -4,7 +4,8 @@ import { gzipSync } from "node:zlib";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
-import { PACKAGE_FORMAT, canonicalJson, summariseAis, type AisMessage, type TransferPackage } from "@tigeris/shared";
+import { PACKAGE_FORMAT, canonicalJson, summariseAdsb, summariseAis, type AisMessage, type TransferPackage } from "@tigeris/shared";
+import { parseAdsbSnapshot } from "../src/evidence/parsers/adsb";
 import { buildApp } from "../src/server";
 import { resetDemo, DEMO_INSTITUTIONS } from "../src/scripts/seed-data";
 import { drainQueue } from "../src/evidence/jobs";
@@ -24,6 +25,25 @@ const msgs: AisMessage[] = [
   { MessageType: "PositionReport", MetaData: { MMSI: 999000002, time_utc: `${NOW.slice(0, 10)} ${NOW.slice(11, 19)}.0 +0000 UTC` }, Message: { PositionReport: { Latitude: 26.1, Longitude: 56.6, Sog: 0, Cog: 360, TrueHeading: 511, NavigationalStatus: 1 } } },
 ];
 const snap = summariseAis(msgs, { from: NOW, to: NOW });
+
+// Test fixture only: made-up aircraft with ICAO addresses and callsigns that belong to no real flight.
+const air = summariseAdsb([{ now: Date.parse(NOW), ac: [
+  { hex: "f00001", flight: "TST101", t: "B77W", lat: 25.3, lon: 55.5, alt_baro: 31000, gs: 470, track: 300, seen_pos: 3 },
+  { hex: "f00002", flight: "TST202", t: "A320", lat: 24.4, lon: 54.6, alt_baro: "ground", gs: 0 },
+  { hex: "f00003", flight: "A6PRIV", lat: 25.0, lon: 55.0 },
+] }], NOW, ["Dubai"]);
+
+function signedPackage(sourceKey: string, name: string, json: unknown): Buffer {
+  const pubPem = readFileSync(path.join(KEYS, "collector-ed25519.pub.pem"), "utf8");
+  const buf = Buffer.from(JSON.stringify(json));
+  const manifest = { packageId: randomUUID(), createdAt: NOW, sender: "test", collectorVersion: "0.1.0", intendedEnvironment: "controlled_demo", schemaVersion: 1 as const,
+    files: [{ name, sourceKey, title: `${sourceKey} (test)`, originalUrl: "https://example.test", mediaType: "application/json", eventTime: NOW, sourceVersion: "test window", licence: "test",
+      transformations: [], size: buf.length, sha256: createHash("sha256").update(buf).digest("hex"), retrievedAt: NOW }],
+    attempts: [{ sourceKey, url: "https://example.test", outcome: "collected" as const, detail: "test" }] };
+  const fp = createHash("sha256").update(createPublicKey(pubPem).export({ type: "spki", format: "der" })).digest("hex").slice(0, 32);
+  const pkg: TransferPackage = { format: PACKAGE_FORMAT, manifest, signature: { algorithm: "ed25519", keyFingerprint: fp, value: sign(null, Buffer.from(canonicalJson(manifest)), createPrivateKey(readFileSync(PRIV))).toString("base64") }, files: { [name]: buf.toString("base64") } };
+  return gzipSync(Buffer.from(JSON.stringify(pkg)));
+}
 
 function aisPackage(): Buffer {
   const pubPem = readFileSync(path.join(KEYS, "collector-ed25519.pub.pem"), "utf8");
@@ -76,5 +96,26 @@ describe("observed AIS vessels (FR-30, Q086)", () => {
     const other = (await app.inject({ method: "GET", url: "/map/observed-vessels", headers: { cookie: await signIn(ANIA.id, "analyst") } })).json();
     // The other institution may hold its own bundled snapshot, but never this institution's uploaded ships.
     expect(other.vessels.some((v: { mmsi: string }) => v.mmsi.startsWith("999"))).toBe(false);
+  });
+
+  it("keeps airline flights only and parses one observed fact per reported field", () => {
+    expect(air.aircraft.map((a) => a.callsign)).toEqual(["TST101", "TST202"]);
+    const { facts } = parseAdsbSnapshot(Buffer.from(JSON.stringify(air)));
+    expect(facts.every((f) => f.claimClass === "observed")).toBe(true);
+    expect(facts.find((f) => f.predicate === "aircraft_observed")!.valueNum).toBe(2);
+    expect(facts.filter((f) => f.subject === "aircraft:f00002").map((f) => f.predicate)).toContain("on_ground");
+  });
+
+  it.skipIf(!existsSync(PRIV))("imports a signed ADS-B package and serves aircraft with lineage", async () => {
+    const admin = await signIn(GSF.id, "administrator");
+    const res = await app.inject({ method: "POST", url: "/sources/packages", headers: { cookie: admin, "content-type": "application/octet-stream", "x-file-name": "adsb-gulf-test.tigpkg" }, payload: signedPackage("adsb.gulf", "adsb-gulf-snapshot.json", air) });
+    expect(res.statusCode).toBeLessThan(300);
+    await drainQueue();
+    const analyst = await signIn(GSF.id, "analyst");
+    const d = (await app.inject({ method: "GET", url: "/map/observed-aircraft", headers: { cookie: analyst } })).json();
+    const t = d.aircraft.find((a: { callsign: string }) => a.callsign === "TST101");
+    expect([t.kind, t.lat, t.lon]).toEqual(["airliner_wide", 25.3, 55.5]);
+    const lineage = (await app.inject({ method: "GET", url: `/facts/${t.facts.altitude_ft.id}/lineage`, headers: { cookie: analyst } })).json();
+    expect(lineage.source.key).toBe("adsb.gulf");
   });
 });

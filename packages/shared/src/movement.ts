@@ -8,11 +8,11 @@ export type LngLat = [number, number];
 export type VesselType = "crude_tanker" | "lng_carrier" | "product_tanker" | "container" | "bulk_grain";
 export type Scenario = "baseline" | "hormuz_disruption" | "red_sea_reroute";
 
-export interface Lane { key: string; name: string; points: LngLat[]; viaHormuz: boolean; viaRedSea: boolean; kind: "sea" | "road" | "scenario" }
+export interface Lane { key: string; name: string; points: LngLat[]; viaHormuz: boolean; viaRedSea: boolean; kind: "sea" | "road" | "scenario" | "air" }
 export interface Vessel { id: string; name: string; type: VesselType; lane: string; speedKn: number; phase: number; direction: 1 | -1; flag: string }
 export interface Truck { id: string; name: string; lane: string; speedKmh: number; phase: number; direction: 1 | -1; cargo: string }
 export interface MovingPoint {
-  id: string; name: string; kind: "vessel" | "truck"; type: string; lngLat: LngLat; bearing: number; status: "underway" | "holding" | "rerouted";
+  id: string; name: string; kind: "vessel" | "truck" | "aircraft"; type: string; lngLat: LngLat; bearing: number; status: "underway" | "holding" | "rerouted";
   lane: string; laneName: string; speedLabel: string; detail: string;
 }
 
@@ -212,4 +212,60 @@ export function hormuzTransits(fleet: Vessel[], fromMin: number, toMin: number, 
     }
   }
   return n;
+}
+
+
+// ── Simulated flights (slice 2, 9 Nov 2026) ─────────────────────────────────────────────────────────────
+// Fictional flights on approximate Gulf air corridors. SYNTHETIC: no real flight, airline or schedule.
+
+export type AircraftType = "airliner_wide" | "airliner_narrow" | "freighter";
+export interface Flight { id: string; name: string; type: AircraftType; route: string; speedKn: number; altitudeFt: number; phase: number; direction: 1 | -1 }
+export const AIRCRAFT_LABEL: Record<AircraftType, string> = { airliner_wide: "Wide-body airliner", airliner_narrow: "Narrow-body airliner", freighter: "Cargo freighter" };
+
+const HUB: Record<string, LngLat> = {
+  DXB: [55.36, 25.25], DOH: [51.61, 25.27], AUH: [54.65, 24.43], RUH: [46.7, 24.96], JED: [39.16, 21.68], KWI: [47.97, 29.24], MCT: [58.28, 23.59], DMM: [49.8, 26.47],
+};
+const air = (key: string, name: string, points: LngLat[]): Lane => ({ key, name, points, viaHormuz: false, viaRedSea: false, kind: "air" });
+
+/** Approximate air corridors (illustrative geometry). */
+export const AIR_ROUTES: Lane[] = [
+  air("air:dxb-europe", "Dubai to Europe (north-west corridor)", [HUB.DXB!, [52.0, 28.5], [47.5, 32.0], [42.0, 36.0], [35.0, 40.0]]),
+  air("air:doh-europe", "Doha to Europe", [HUB.DOH!, [48.5, 29.8], [44.0, 33.5], [38.5, 37.0]]),
+  air("air:dxb-india", "Dubai to India", [HUB.DXB!, [60.0, 23.0], [68.0, 20.0], [73.0, 19.0]]),
+  air("air:doh-asia", "Doha to South-East Asia", [HUB.DOH!, [56.0, 25.6], [62.0, 24.0], [70.0, 22.0], [80.0, 18.0]]),
+  air("air:ruh-jed", "Riyadh to Jeddah", [HUB.RUH!, [43.0, 23.3], HUB.JED!]),
+  air("air:dxb-ruh", "Dubai to Riyadh", [HUB.DXB!, [51.0, 25.1], HUB.RUH!]),
+  air("air:kwi-dxb", "Kuwait to Dubai", [HUB.KWI!, [50.5, 27.5], HUB.DXB!]),
+  air("air:mct-dxb", "Muscat to Dubai", [HUB.MCT!, HUB.DXB!]),
+  air("air:auh-jed", "Abu Dhabi to Jeddah", [HUB.AUH!, [47.0, 23.5], HUB.JED!]),
+  air("air:dxb-africa", "Dubai to East Africa", [HUB.DXB!, [54.0, 20.0], [49.0, 13.0], [43.0, 9.0]]),
+  air("air:doh-dmm", "Doha to Dammam", [HUB.DOH!, HUB.DMM!]),
+];
+const airByKey = new Map(AIR_ROUTES.map((l) => [l.key, l]));
+
+/** About 60 fictional flights, weighted to the busy hub corridors. */
+export function makeFlights(count = 60, seed = 11): Flight[] {
+  const r = rng(seed);
+  return Array.from({ length: count }, (_, i) => {
+    const route = AIR_ROUTES[Math.floor(r() * AIR_ROUTES.length)]!;
+    const x = r();
+    const type: AircraftType = x < 0.45 ? "airliner_narrow" : x < 0.85 ? "airliner_wide" : "freighter";
+    const long = measure(route).total > 1200;
+    return {
+      id: `SIM-A${String(i + 1).padStart(3, "0")}`, name: `${type === "freighter" ? "Cargo" : "Flight"} SX${100 + Math.floor(r() * 899)}`, type, route: route.key,
+      speedKn: Math.round(long ? 440 + r() * 50 : 330 + r() * 60), altitudeFt: long ? 33000 + Math.round(r() * 6) * 1000 : 22000 + Math.round(r() * 8) * 1000,
+      phase: r(), direction: r() < 0.5 ? 1 : -1,
+    };
+  });
+}
+
+/** Flight positions at `minutes` after the replay origin. */
+export function flightsAt(flights: Flight[], minutes: number): MovingPoint[] {
+  return flights.map((f) => {
+    const lane = airByKey.get(f.route)!;
+    const m = measure(lane);
+    const p = pointAlong(lane, f.phase * m.total + (f.speedKn * 1.852 * minutes) / 60, f.direction);
+    return { id: f.id, name: f.name, kind: "aircraft" as const, type: f.type, lngLat: p.lngLat, bearing: p.bearing, status: "underway" as const, lane: lane.key, laneName: lane.name,
+      speedLabel: `${f.speedKn} kn · FL${Math.round(f.altitudeFt / 100)}`, detail: `${AIRCRAFT_LABEL[f.type]} · fictional flight` };
+  });
 }

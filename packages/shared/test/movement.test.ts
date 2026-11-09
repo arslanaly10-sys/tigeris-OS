@@ -43,3 +43,16 @@ describe("movement simulation (FR-30, Q082–Q087)", () => {
     expect(rerouted.every((p) => p.lane === "cape-route")).toBe(true);
   });
 });
+
+import { AIR_ROUTES, flightsAt, makeFlights } from "../src/movement";
+describe("simulated flights (slice 2)", () => {
+  it("creates fictional flights on air corridors that move between frames", () => {
+    const f = makeFlights();
+    expect(f).toHaveLength(60);
+    expect(f.every((x) => x.id.startsWith("SIM-A") && AIR_ROUTES.some((r) => r.key === x.route))).toBe(true);
+    const a = flightsAt(f, 0), b = flightsAt(f, 5);
+    expect(a.every((p) => p.kind === "aircraft")).toBe(true);
+    expect(a.filter((p, i) => p.lngLat[0] !== b[i]!.lngLat[0] || p.lngLat[1] !== b[i]!.lngLat[1]).length).toBe(60);
+    expect(flightsAt(makeFlights(), 120)).toEqual(flightsAt(f, 120));
+  });
+});

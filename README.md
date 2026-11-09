@@ -164,6 +164,8 @@ AISSTREAM_API_KEY=your-key pnpm --filter @tigeris/collector ais -- --minutes 10
 
 Then import the `ais-hormuz-*.tigpkg` package from **Data & Sources**, or run `pnpm db:seed`. Observed ships have a solid ring on the map, each value links to its capture, and **Hormuz** zooms to the strait. AIS packages are not committed to this repository, because the data stays under aisstream.io's terms. Pleasure craft and sailing yachts are dropped at capture.
 
+Real airline flights over the Gulf come from [adsb.lol](https://adsb.lol) (open data, ODbL) the same way, with no key: `pnpm --filter @tigeris/collector adsb`, then import the `adsb-gulf-*.tigpkg` package. Private and general-aviation aircraft are dropped at capture. Contains information from adsb.lol, made available under the ODbL.
+
 ## Tests
 
 ```bash

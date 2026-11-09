@@ -10,7 +10,8 @@
     "reference": "tsx src/reference.ts",
     "typecheck": "tsc --noEmit",
     "backtest": "tsx src/backtest.ts",
-    "ais": "tsx src/ais.ts"
+    "ais": "tsx src/ais.ts",
+    "adsb": "tsx src/adsb.ts"
   },
   "dependencies": {
     "@tigeris/shared": "workspace:*",

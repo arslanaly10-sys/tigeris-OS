@@ -64,7 +64,7 @@ export const INDUSTRIES: Industry[] = [
   {
     key: "supply_chain", name: "Supply chain and logistics", nameAr: "سلاسل الإمداد والخدمات اللوجستية",
     focus: "Ports, corridors, routes, cargo and alternatives", focusAr: "الموانئ والممرات والمسارات والشحنات والبدائل",
-    icon: "Container", entityTypes: ["port", "route", "airport", "commodity", "vessel"], mapLayers: ["vessels", "observed", "trucks", "lanes", "roads", "ports", "chokepoints"],
+    icon: "Container", entityTypes: ["port", "route", "airport", "commodity", "vessel"], mapLayers: ["vessels", "observed", "trucks", "lanes", "roads", "ports", "chokepoints", "observed_air"],
     titles: {
       executive: ["Chief Supply Chain Officer", "رئيس سلاسل الإمداد"], analyst: ["Logistics Intelligence Analyst", "محلل استخبارات الخدمات اللوجستية"],
       domain_expert: ["Maritime and Freight Adviser", "مستشار الشحن البحري"], approver: ["Head of Procurement Risk", "رئيس مخاطر المشتريات"],
@@ -119,7 +119,7 @@ export const INDUSTRIES: Industry[] = [
   {
     key: "defence_security", name: "Defence and security", nameAr: "الدفاع والأمن",
     focus: "Maritime security, critical sites and navigation safety", focusAr: "الأمن البحري والمواقع الحيوية وسلامة الملاحة",
-    icon: "Shield", entityTypes: ["chokepoint", "port", "airport", "facility"], mapLayers: ["vessels", "observed", "chokepoints", "ports", "airports", "signals"],
+    icon: "Shield", entityTypes: ["chokepoint", "port", "airport", "facility"], mapLayers: ["vessels", "observed", "chokepoints", "ports", "airports", "signals", "aircraft", "observed_air"],
     titles: {
       executive: ["Director General, Security", "المدير العام للأمن"], analyst: ["Maritime Security Analyst", "محلل الأمن البحري"],
       domain_expert: ["Navigation Safety Adviser", "مستشار سلامة الملاحة"], approver: ["Head of Security Risk", "رئيس المخاطر الأمنية"],
@@ -130,7 +130,7 @@ export const INDUSTRIES: Industry[] = [
   {
     key: "healthcare", name: "Healthcare", nameAr: "الرعاية الصحية",
     focus: "Medicine supply, hospital capacity and public health", focusAr: "إمداد الأدوية والطاقة الاستيعابية للمستشفيات والصحة العامة",
-    icon: "HeartPulse", entityTypes: ["city", "port", "airport", "commodity"], mapLayers: ["airports", "ports", "signals"],
+    icon: "HeartPulse", entityTypes: ["city", "port", "airport", "commodity"], mapLayers: ["airports", "ports", "signals", "aircraft", "observed_air"],
     titles: {
       executive: ["Chief Executive, Health", "الرئيس التنفيذي للصحة"], analyst: ["Health Supply Analyst", "محلل الإمداد الصحي"],
       domain_expert: ["Pharmaceutical Supply Adviser", "مستشار الإمداد الدوائي"], approver: ["Chief Medical Officer", "كبير المسؤولين الطبيين"],
@@ -152,7 +152,7 @@ export const INDUSTRIES: Industry[] = [
   {
     key: "transport_aviation", name: "Transport and aviation", nameAr: "النقل والطيران",
     focus: "Airports, air corridors, ports and road freight", focusAr: "المطارات والممرات الجوية والموانئ والشحن البري",
-    icon: "Plane", entityTypes: ["airport", "port", "route", "city"], mapLayers: ["airports", "ports", "trucks", "roads", "vessels", "lanes"],
+    icon: "Plane", entityTypes: ["airport", "port", "route", "city"], mapLayers: ["airports", "ports", "trucks", "roads", "vessels", "lanes", "aircraft", "observed_air", "air_routes"],
     titles: {
       executive: ["Chief Executive, Transport", "الرئيس التنفيذي للنقل"], analyst: ["Network Planning Analyst", "محلل تخطيط الشبكات"],
       domain_expert: ["Air Traffic and Routes Adviser", "مستشار الحركة الجوية والمسارات"], approver: ["Head of Safety and Risk", "رئيس السلامة والمخاطر"],
