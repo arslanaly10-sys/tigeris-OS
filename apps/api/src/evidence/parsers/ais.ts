@@ -31,6 +31,7 @@ export function parseAisSnapshot(bytes: Buffer): ParseResult {
     add("call_sign", "Call sign", "callSign", { valueText: v.callSign });
     add("length_m", "Length", "lengthM", { valueNum: v.lengthM, unit: "m" });
     add("draught_m", "Draught", "draughtM", { valueNum: v.draughtM, unit: "m", qualifier: "Reported maximum static draught" });
+    if (v.track && v.track.length > 1) add("ais_track", "Track in the capture window", "track", { valueText: JSON.stringify(v.track), valueNum: v.track.length, unit: "reports", qualifier: `${v.track[0]!.at} to ${v.track.at(-1)!.at}` });
   });
   return { facts };
 }

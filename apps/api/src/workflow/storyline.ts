@@ -1,7 +1,7 @@
 import type { Tx } from "../db";
 import { raiseSignal, SIMULATED_EVENTS } from "./signals";
 import { nextCaseKey } from "./cases";
-import { anomalySignals } from "../intel/correlation";
+import { anomalySignals, realAnomalySignals } from "../intel/correlation";
 
 /**
  * Demonstration storyline (SCOPE §7): real geography and history, hypothetical events.
@@ -125,6 +125,8 @@ export async function seedStoryline(tx: Tx, institutionId: string, shortName: st
     }
   }
   await tx.query("UPDATE signals SET status = 'new' WHERE id = ANY($1) AND id NOT IN (SELECT signal_id FROM case_signals)", [[hormuz, gps, redSea, desal, banking, food, pandemic, sanctions]]);
+  // Voyage anomalies on real AIS tracks (observed), linked to the AIS evidence they come from.
+  for (const r of await realAnomalySignals(tx)) await raiseSignal(tx, institutionId, r);
   // Voyage anomalies from the scripted ships (slice 4): one SIMULATED signal each; spoofing and the AIS gap also
   // corroborate the navigation-safety case.
   const navCase = (await tx.query("SELECT id FROM cases WHERE title = 'Navigation safety and AIS spoofing near Hormuz'")).rows[0]?.id as string | undefined;

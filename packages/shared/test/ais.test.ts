@@ -64,3 +64,18 @@ describe("estimated positions from the last AIS report", () => {
     expect([b.capped, b.moving]).toEqual([true, false]);
   });
 });
+
+
+import { thinTrack, toTrackReports } from "../src/ais";
+describe("AIS tracks (real-ship detection)", () => {
+  it("keeps every report in the window, oldest first, one per minute", () => {
+    const s = summariseAis([pos(7, 26.5, 56.3, "17:05:10"), pos(7, 26.51, 56.31, "17:01:00"), pos(7, 26.52, 56.32, "17:05:40"), pos(7, 26.6, 56.4, "17:09:00")], W);
+    const tr = s.vessels[0]!.track!;
+    expect(tr.map((p) => p.at)).toEqual(["2026-11-08T17:01:00Z", "2026-11-08T17:05:40Z", "2026-11-08T17:09:00Z"]);
+    expect(toTrackReports(tr).map((r) => r.t)).toEqual([0, 4 + 40 / 60, 8]);
+  });
+  it("thins long tracks to at most 720 points", () => {
+    const pts = Array.from({ length: 1500 }, (_, i) => ({ at: new Date(Date.UTC(2026, 10, 8) + i * 60_000).toISOString(), lat: 26, lon: 56, sogKn: 1, cogDeg: 0 }));
+    expect(thinTrack(pts)).toHaveLength(720);
+  });
+});

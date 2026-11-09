@@ -137,7 +137,7 @@ export async function mapRoutes(app: FastifyInstance) {
     return withTenant(p.institutionId, async (tx) => {
       const ev = (await tx.query<{ id: string; retrieved_at: string; source_version: string; validation_state: string }>(
         `SELECT e.id, e.retrieved_at, e.source_version, e.validation_state FROM evidence_objects e JOIN sources s ON s.id = e.source_id
-          WHERE s.key = 'aisstream.hormuz' AND e.duplicate_of IS NULL AND e.validation_state IN ('accepted','warning') ORDER BY e.retrieved_at DESC LIMIT 1`)).rows[0];
+          WHERE s.key = 'aisstream.hormuz' AND e.duplicate_of IS NULL AND e.validation_state IN ('accepted','warning') ORDER BY e.retrieved_at DESC, e.created_at DESC LIMIT 1`)).rows[0];
       if (!ev) return { capture: null, vessels: [] };
       const rows = (await tx.query<{ id: string; subject: string; subject_label: string; predicate: string; value_num: number | null; value_text: string | null; unit: string | null; period: string | null; excerpt: string | null }>(
         "SELECT id, subject, subject_label, predicate, value_num, value_text, unit, period, excerpt FROM evidence_facts WHERE evidence_id = $1 AND review_state <> 'rejected'", [ev.id])).rows;
@@ -151,8 +151,11 @@ export async function mapRoutes(app: FastifyInstance) {
       }
       const vessels = [...by.entries()].filter(([, v]) => v.facts.position_lat && v.facts.position_lon).map(([key, v]) => {
         const t = shipType(v.facts.ship_type?.num ?? null);
+        const { ais_track: trackFact, ...facts } = v.facts;
+        let track: Array<{ at: string; lat: number; lon: number }> = [];
+        try { track = trackFact?.text ? (JSON.parse(trackFact.text) as Array<{ at: string; lat: number; lon: number }>).map((p) => ({ at: p.at, lat: p.lat, lon: p.lon })) : []; } catch { track = []; }
         return { key, mmsi: key.slice("vessel:mmsi:".length), name: v.name, observedAt: v.observedAt, category: t.category, typeLabel: v.facts.ship_type?.text ?? t.label,
-          lat: v.facts.position_lat!.num!, lon: v.facts.position_lon!.num!, facts: v.facts };
+          lat: v.facts.position_lat!.num!, lon: v.facts.position_lon!.num!, facts: { ...facts, ...(trackFact ? { ais_track: { ...trackFact, text: null } } : {}) }, track };
       });
       return { capture: { evidenceId: ev.id, validation: ev.validation_state, retrievedAt: ev.retrieved_at, window: ev.source_version, summary: capture?.excerpt ?? null, countFactId: capture?.id ?? null }, vessels };
     });

@@ -30,7 +30,12 @@ export interface ObservedVessel {
   navStatus: string | null;
   observedAt: string;
   reports: number;
+  /** Every position report in the capture window, oldest first (thinned to one a minute, at most 720). */
+  track?: AisTrackPoint[];
 }
+
+export interface AisTrackPoint { at: string; lat: number; lon: number; sogKn: number | null; cogDeg: number | null }
+export const AIS_TRACK_MAX = 720;
 
 export interface AisSnapshot {
   source: "aisstream.io";
@@ -104,6 +109,7 @@ const inBox = (lat: number, lon: number, [[s, w], [n, e]]: AisSnapshot["bbox"]) 
 export function summariseAis(messages: AisMessage[], window: { from: string; to: string }, bbox = HORMUZ_BBOX): AisSnapshot {
   type Pos = { lat: number; lon: number; sog: number | null; cog: number | null; heading: number | null; nav: number | null; at: string; reports: number };
   const pos = new Map<string, Pos>();
+  const tracks = new Map<string, AisTrackPoint[]>();
   const stat = new Map<string, { name?: string | null; imo?: string | null; callSign?: string | null; type?: number | null; destination?: string | null; length?: number | null; draught?: number | null }>();
   const excluded = { pleasureOrSailing: 0, outsideBox: 0, invalidPosition: 0 };
   let positionReports = 0;
@@ -122,6 +128,11 @@ export function summariseAis(messages: AisMessage[], window: { from: string; to:
       const lon = num(body.Longitude) ?? num(m.MetaData?.longitude);
       if (lat == null || lon == null || Math.abs(lat) > 90 || Math.abs(lon) > 180) { excluded.invalidPosition++; continue; }
       if (!inBox(lat, lon, bbox)) { excluded.outsideBox++; continue; }
+      const sogNow = num(body.Sog, (v) => v >= 102.3);
+      const cogNow = num(body.Cog, (v) => v >= 360);
+      const tr = tracks.get(mmsi) ?? [];
+      tr.push({ at, lat: Math.round(lat * 1e5) / 1e5, lon: Math.round(lon * 1e5) / 1e5, sogKn: sogNow, cogDeg: cogNow });
+      tracks.set(mmsi, tr);
       const prev = pos.get(mmsi);
       if (!prev || at >= prev.at) {
         pos.set(mmsi, {
@@ -163,7 +174,7 @@ export function summariseAis(messages: AisMessage[], window: { from: string; to:
       mmsi, name: s.name ?? null, imo: s.imo ?? null, callSign: s.callSign ?? null, shipTypeCode: s.type ?? null,
       category: t.category, typeLabel: t.label, destination: s.destination ?? null, lengthM: s.length ?? null, draughtM: s.draught ?? null,
       lat: Math.round(p.lat * 1e5) / 1e5, lon: Math.round(p.lon * 1e5) / 1e5, sogKn: p.sog, cogDeg: p.cog, headingDeg: p.heading,
-      navStatus: p.nav != null ? NAV_STATUS[p.nav] ?? null : null, observedAt: p.at, reports: p.reports,
+      navStatus: p.nav != null ? NAV_STATUS[p.nav] ?? null : null, observedAt: p.at, reports: p.reports, track: thinTrack(tracks.get(mmsi) ?? []),
     });
   }
   vessels.sort((a, b) => a.mmsi.localeCompare(b.mmsi));
@@ -191,4 +202,22 @@ export function estimatePosition(
   const dLat = (nm * Math.cos(rad)) / 60;
   const dLon = (nm * Math.sin(rad)) / (60 * Math.cos((v.lat * Math.PI) / 180));
   return { lat: v.lat + dLat, lon: v.lon + dLon, minutes: ageMin, moving: ageMin < limitMin, capped: ageMin >= limitMin };
+}
+
+
+/** Oldest first, one report per minute (the last in each minute), at most AIS_TRACK_MAX points. */
+export function thinTrack(points: AisTrackPoint[]): AisTrackPoint[] {
+  const byMinute = new Map<string, AisTrackPoint>();
+  for (const p of [...points].sort((a, b) => a.at.localeCompare(b.at))) byMinute.set(p.at.slice(0, 16), p);
+  const out = [...byMinute.values()];
+  if (out.length <= AIS_TRACK_MAX) return out;
+  const step = out.length / AIS_TRACK_MAX;
+  return Array.from({ length: AIS_TRACK_MAX }, (_, i) => out[Math.floor(i * step)]!);
+}
+
+/** A real AIS track in the detectors' form: minutes since the first report. */
+export function toTrackReports(track: AisTrackPoint[]): Array<{ t: number; lon: number; lat: number; sogKn: number | null; cogDeg: number | null }> {
+  if (!track.length) return [];
+  const t0 = Date.parse(track[0]!.at);
+  return track.map((p) => ({ t: (Date.parse(p.at) - t0) / 60_000, lon: p.lon, lat: p.lat, sogKn: p.sogKn, cogDeg: p.cogDeg }));
 }

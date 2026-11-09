@@ -118,4 +118,34 @@ describe("observed AIS vessels (FR-30, Q086)", () => {
     const lineage = (await app.inject({ method: "GET", url: `/facts/${t.facts.altitude_ft.id}/lineage`, headers: { cookie: analyst } })).json();
     expect(lineage.source.key).toBe("adsb.gulf");
   });
+
+  it.skipIf(!existsSync(PRIV))("runs the voyage detectors on real AIS tracks and feeds correlation as observed evidence", async () => {
+    // Test fixture only: a made-up MMSI whose track has a 2-hour AIS gap and two position jumps near Hormuz.
+    const base = Date.now() - 5 * 3_600_000;
+    const at = (min: number) => { const d = new Date(base + min * 60_000).toISOString(); return `${d.slice(0, 10)} ${d.slice(11, 19)}.0 +0000 UTC`; };
+    const track: AisMessage[] = [];
+    for (let m = 0; m <= 300; m += 6) {
+      if (m > 60 && m < 186) continue;
+      let lon = 56.2 + m * 0.002, lat = 26.3;
+      if (m === 240) { lon += 0.5; }
+      track.push({ MessageType: "PositionReport", MetaData: { MMSI: 999000077, time_utc: at(m) }, Message: { PositionReport: { Latitude: lat, Longitude: lon, Sog: 11, Cog: 90, TrueHeading: 90, NavigationalStatus: 0 } } });
+    }
+    track.push({ MessageType: "ShipStaticData", MetaData: { MMSI: 999000077 }, Message: { ShipStaticData: { Name: "TEST TRACKER", Type: 80 } } });
+    const snap2 = summariseAis(track, { from: new Date(base).toISOString(), to: new Date(base + 300 * 60_000).toISOString() });
+    expect(snap2.vessels[0]!.track!.length).toBeGreaterThan(20);
+    const admin = await signIn(GSF.id, "administrator");
+    const up = await app.inject({ method: "POST", url: "/sources/packages", headers: { cookie: admin, "content-type": "application/octet-stream", "x-file-name": "ais-hormuz-track-test.tigpkg" }, payload: signedPackage("aisstream.hormuz", "ais-hormuz-snapshot.json", { ...snap2, capturedTo: new Date().toISOString() }) });
+    expect(up.statusCode).toBeLessThan(300);
+    await drainQueue();
+    const analyst = await signIn(GSF.id, "analyst");
+    const d = (await app.inject({ method: "GET", url: "/anomalies", headers: { cookie: analyst } })).json();
+    const kinds = d.real.anomalies.map((a: { kind: string }) => a.kind).sort();
+    expect(kinds).toEqual(["ais_spoofing", "going_dark"]);
+    expect(d.real.assessed).toBeGreaterThanOrEqual(1);
+    expect(d.real.anomalies.every((a: { dataMode: string; names: string[] }) => a.dataMode === "observed" && a.names[0] === "TEST TRACKER")).toBe(true);
+    const ves = (await app.inject({ method: "GET", url: "/map/observed-vessels", headers: { cookie: analyst } })).json();
+    expect(ves.vessels.find((v: { mmsi: string }) => v.mmsi === "999000077").track.length).toBeGreaterThan(20);
+    const f = (await app.inject({ method: "GET", url: "/correlation", headers: { cookie: analyst } })).json().findings.find((x: { area: string }) => x.area === "hormuz");
+    expect(f.dataModes).toContain("observed");
+  });
 });

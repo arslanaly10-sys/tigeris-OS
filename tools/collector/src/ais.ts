@@ -6,7 +6,7 @@
  * .tigpkg. The product never connects to aisstream.io itself: the package is imported through Data &
  * Sources, so what the map shows is an observed snapshot with a capture time, not a live feed.
  *
- *   AISSTREAM_API_KEY=… pnpm --filter @tigeris/collector ais              # 10-minute window
+ *   AISSTREAM_API_KEY=… pnpm --filter @tigeris/collector ais              # 30-minute window (up to 360)
  *   AISSTREAM_API_KEY=… pnpm --filter @tigeris/collector ais -- --minutes 3
  */
 import { createHash, randomUUID, sign } from "node:crypto";
@@ -59,7 +59,7 @@ async function main() {
   const apiKey = process.env.AISSTREAM_API_KEY;
   if (!apiKey) throw new Error("Set AISSTREAM_API_KEY (free key from aisstream.io) in the environment.");
   const i = process.argv.indexOf("--minutes");
-  const minutes = i > 0 ? Math.max(1, Math.min(60, Number(process.argv[i + 1]) || 10)) : 10;
+  const minutes = i > 0 ? Math.max(1, Math.min(360, Number(process.argv[i + 1]) || 30)) : 30;
 
   const { messages, from, to } = await capture(apiKey, minutes);
   const snap = summariseAis(messages, { from, to });
@@ -71,7 +71,7 @@ async function main() {
     name, sourceKey: "aisstream.hormuz", title: "Observed vessels, Strait of Hormuz (AIS snapshot)", originalUrl: "https://aisstream.io", mediaType: "application/json",
     eventTime: to, sourceVersion: `AIS ${from.slice(0, 16)}Z to ${to.slice(11, 16)}Z`, licence: "aisstream.io terms of service; AIS broadcast data",
     transformations: [
-      { step: "filter_rows", detail: `Kept the latest position per vessel inside lat ${HORMUZ_BBOX[0][0]}–${HORMUZ_BBOX[1][0]}, lon ${HORMUZ_BBOX[0][1]}–${HORMUZ_BBOX[1][1]}; merged name, type and destination from static reports.`, rowsBefore: snap.positionReports, rowsAfter: snap.vessels.length + snap.excluded.pleasureOrSailing },
+      { step: "filter_rows", detail: `Kept each vessel's track (one report a minute, at most 720) and its latest position inside lat ${HORMUZ_BBOX[0][0]}–${HORMUZ_BBOX[1][0]}, lon ${HORMUZ_BBOX[0][1]}–${HORMUZ_BBOX[1][1]}; merged name, type and destination from static reports.`, rowsBefore: snap.positionReports, rowsAfter: snap.vessels.length + snap.excluded.pleasureOrSailing },
       { step: "filter_rows", detail: "Dropped pleasure craft and sailing yachts (AIS types 36–37): usually private individuals and not relevant to shipping risk.", rowsBefore: snap.vessels.length + snap.excluded.pleasureOrSailing, rowsAfter: snap.vessels.length },
     ],
     size: buf.length, sha256: createHash("sha256").update(buf).digest("hex"), retrievedAt: to,

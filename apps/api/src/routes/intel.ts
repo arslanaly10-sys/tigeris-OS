@@ -3,7 +3,7 @@ import { ANOMALY_LABEL, SCRIPTED_SHIPS, THRESHOLDS, detectScripted } from "@tige
 import { withTenant } from "../db";
 import { appendAudit } from "../audit";
 import { requirePermission } from "../session";
-import { anomalyTime, correlate, sourcePackage } from "../intel/correlation";
+import { anomalyTime, correlate, realAnomalies, sourcePackage } from "../intel/correlation";
 
 /** Voyage anomalies and intelligence correlation (slice 4). */
 export async function intelRoutes(app: FastifyInstance) {
@@ -11,14 +11,16 @@ export async function intelRoutes(app: FastifyInstance) {
     const p = req.principal!;
     return withTenant(p.institutionId, async (tx) => {
       const signals = (await tx.query("SELECT id, key FROM signals WHERE key LIKE 'anomaly:%'")).rows as Array<{ id: string; key: string }>;
-      const real = (await tx.query(
-        `SELECT count(DISTINCT f.subject)::int AS n FROM evidence_facts f JOIN evidence_objects e ON e.id = f.evidence_id JOIN sources s ON s.id = e.source_id
-          WHERE s.key = 'aisstream.hormuz' AND f.subject LIKE 'vessel:mmsi:%'`)).rows[0].n;
+      const real = await realAnomalies(tx);
       return {
         thresholds: THRESHOLDS,
         ships: SCRIPTED_SHIPS.map((s) => ({ id: s.id, name: s.name, type: s.type, behaviour: s.behaviour, waypoints: s.waypoints, dark: s.dark ?? null })),
         anomalies: detectScripted().map((a) => ({ ...a, label: ANOMALY_LABEL[a.kind], at: anomalyTime(a.startMin).toISOString(), until: anomalyTime(a.endMin).toISOString(), signalId: signals.find((s) => s.key === `anomaly:${a.id}`)?.id ?? null, dataMode: "simulated" })),
-        real: { vessels: real, assessed: 0, note: real ? `${real} real AIS ships imported. The snapshot keeps each ship's latest report only, so track-based detectors need a longer capture before they can assess them.` : "No real AIS snapshot imported." },
+        real: {
+          vessels: real.vessels, assessed: real.assessed,
+          anomalies: real.anomalies.map((a) => ({ ...a, label: ANOMALY_LABEL[a.kind], dataMode: "observed", signalId: signals.find((s) => s.key === `anomaly:${a.id}`)?.id ?? null })),
+          note: !real.vessels ? "No real AIS snapshot imported." : real.assessed ? `${real.assessed} of ${real.vessels} real AIS ships had a track long enough to check (three or more reports); ${real.anomalies.length} anomal${real.anomalies.length === 1 ? "y" : "ies"} found.` : `${real.vessels} real AIS ships imported, none with a track long enough to check (three or more reports). Capture a longer window with the collector.`,
+        },
       };
     });
   });

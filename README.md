@@ -156,13 +156,15 @@ Then import the new package from **Data & Sources**, or run `pnpm db:seed` to re
 
 ### Real ships in the Strait of Hormuz (AIS)
 
-The map can show real ships observed by AIS near Hormuz, next to the simulated traffic. The collector listens to [aisstream.io](https://aisstream.io) for a fixed window and writes a signed snapshot. TIGERIS never connects to the feed itself. You need a free aisstream.io key:
+The map can show real ships observed by AIS near Hormuz, next to the simulated traffic. The collector listens to [aisstream.io](https://aisstream.io) for a fixed window (30 minutes by default, up to 6 hours) and writes a signed snapshot. TIGERIS never connects to the feed itself. You need a free aisstream.io key:
 
 ```bash
-AISSTREAM_API_KEY=your-key pnpm --filter @tigeris/collector ais -- --minutes 10
+AISSTREAM_API_KEY=your-key pnpm --filter @tigeris/collector ais -- --minutes 120
 ```
 
 Then import the `ais-hormuz-*.tigpkg` package from **Data & Sources**, or run `pnpm db:seed`. Observed ships have a solid ring on the map, each value links to its capture, and **Hormuz** zooms to the strait. AIS packages are not committed to this repository, because the data stays under aisstream.io's terms. Pleasure craft and sailing yachts are dropped at capture.
+
+The snapshot keeps each ship's full track in the window (one report a minute, at most 720), stored as a fact with lineage. The map draws the tracks, and the same voyage-anomaly checks used on the simulated ships (going dark, loitering, ship-to-ship meetings, position jumps) run on the real ones. Anything they find is raised as an observed signal that links to the capture. A longer window gives the checks more to work with; coverage near Hormuz depends on which receivers feed aisstream.io and is often thin.
 
 Real airline flights over the Gulf come from [adsb.lol](https://adsb.lol) (open data, ODbL) the same way, with no key: `pnpm --filter @tigeris/collector adsb`, then import the `adsb-gulf-*.tigpkg` package. Private and general-aviation aircraft are dropped at capture. Contains information from adsb.lol, made available under the ODbL.
 

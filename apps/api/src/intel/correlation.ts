@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { ANOMALY_LABEL, SCRIPTED_SHIPS, THRESHOLDS, detectScripted, km, type Anomaly, type AnomalyKind, type LngLat } from "@tigeris/shared";
+import { ANOMALY_LABEL, SCRIPTED_SHIPS, THRESHOLDS, detectDark, detectLoiter, detectScripted, detectShipToShip, detectSpoofing, km, type Anomaly, type AnomalyKind, type AisTrackPoint, type LngLat, type TrackReport } from "@tigeris/shared";
 import type { Tx } from "../db";
 
 /**
@@ -28,6 +28,57 @@ export const ANOMALY_SIGNAL: Record<AnomalyKind, { domain: string; eventType: st
 };
 
 const shipName = (id: string) => SCRIPTED_SHIPS.find((s) => s.id === id)?.name ?? id;
+
+export interface RealAnomaly extends Anomaly { names: string[]; evidenceId: string; at: string; until: string }
+
+/**
+ * The same detectors on real AIS tracks from the latest imported snapshot. Times are absolute (minutes since the
+ * epoch), so two ships' reports line up for the ship-to-ship rule. Ships reporting "At anchor" or "Moored" are not
+ * flagged for loitering: waiting at an anchorage is normal.
+ */
+export async function realAnomalies(tx: Tx): Promise<{ assessed: number; vessels: number; evidenceId: string | null; anomalies: RealAnomaly[] }> {
+  const ev = (await tx.query(
+    `SELECT e.id FROM evidence_objects e JOIN sources s ON s.id = e.source_id
+      WHERE s.key = 'aisstream.hormuz' AND e.duplicate_of IS NULL AND e.validation_state IN ('accepted','warning') ORDER BY e.retrieved_at DESC, e.created_at DESC LIMIT 1`)).rows[0];
+  if (!ev) return { assessed: 0, vessels: 0, evidenceId: null, anomalies: [] };
+  const rows = (await tx.query("SELECT subject, subject_label, predicate, value_text FROM evidence_facts WHERE evidence_id = $1 AND predicate IN ('ais_track','nav_status','ais_mmsi')", [ev.id])).rows as Array<{ subject: string; subject_label: string; predicate: string; value_text: string | null }>;
+  const vessels = new Set(rows.map((r) => r.subject)).size;
+  const names = new Map(rows.map((r) => [r.subject, r.subject_label]));
+  const nav = new Map(rows.filter((r) => r.predicate === "nav_status").map((r) => [r.subject, r.value_text ?? ""]));
+  const tracks: Record<string, TrackReport[]> = {};
+  for (const r of rows.filter((x) => x.predicate === "ais_track" && x.value_text)) {
+    try {
+      const pts = JSON.parse(r.value_text!) as AisTrackPoint[];
+      if (pts.length >= 3) tracks[r.subject] = pts.map((p) => ({ t: Math.round(Date.parse(p.at) / 60_000), lon: p.lon, lat: p.lat, sogKn: p.sogKn, cogDeg: p.cogDeg }));
+    } catch { /* a malformed track is skipped, not guessed */ }
+  }
+  const found: Anomaly[] = [];
+  for (const [id, tr] of Object.entries(tracks)) {
+    found.push(...detectDark(id, tr), ...detectSpoofing(id, tr));
+    if (!/^(At anchor|Moored)$/.test(nav.get(id) ?? "")) found.push(...detectLoiter(id, tr));
+  }
+  found.push(...detectShipToShip(tracks));
+  const at = (min: number) => new Date(min * 60_000).toISOString();
+  return {
+    assessed: Object.keys(tracks).length, vessels, evidenceId: ev.id,
+    anomalies: found.map((a) => ({ ...a, id: `real:${a.id}`, names: a.vesselIds.map((v) => names.get(v) ?? v), evidenceId: ev.id, at: at(a.startMin), until: at(a.endMin),
+      // Detector summaries print clock times for the scripted day; real windows carry absolute times instead.
+      summary: a.summary.replace(/\s*\(\d\d:\d\d–\d\d:\d\d\)|,\s*\d\d:\d\d–\d\d:\d\d|between \d\d:\d\d and \d\d:\d\d/g, "") })),
+  };
+}
+
+/** Observed signals for real anomalies, linked to the AIS evidence they come from. */
+export async function realAnomalySignals(tx: Tx) {
+  const r = await realAnomalies(tx);
+  return r.anomalies.map((a) => {
+    const m = ANOMALY_SIGNAL[a.kind];
+    return {
+      key: `anomaly:${a.id}`, title: `${ANOMALY_LABEL[a.kind]}: ${a.names.join(" and ")}`, summary: `Real AIS (aisstream.io): ${a.summary}`, domain: m.domain, eventType: m.eventType,
+      urgency: a.confidence === "high" ? m.urgency : ("medium" as const), impact: "medium" as const, dataMode: "observed" as const, eventTime: new Date(a.at),
+      whySurfaced: m.why, detectedBy: "rule.voyage_anomaly", entityKeys: m.entities, evidence: [{ evidenceId: a.evidenceId, role: "origin" as const, note: "AIS snapshot the track comes from" }],
+    };
+  });
+}
 
 /** Signals for each scripted anomaly, labelled SIMULATED, with the detector's numbers in the summary. */
 export function anomalySignals(now = Date.now()) {
@@ -87,8 +138,12 @@ export async function correlate(tx: Tx, now = Date.now()): Promise<Finding[]> {
   const members: Member[] = [];
   for (const s of sig) {
     if (!FIT[s.event_type]) continue;
-    const a = s.key.startsWith("anomaly:") ? detectScripted().find((x) => x.id === s.key.slice(8)) : undefined;
+    const a = s.key.startsWith("anomaly:real:") ? undefined : s.key.startsWith("anomaly:") ? detectScripted().find((x) => x.id === s.key.slice(8)) : undefined;
     members.push({ ref: `signal:${s.id}`, kind: a ? "anomaly" : "signal", eventType: s.event_type, title: s.title, dataMode: s.data_mode, at: new Date(s.event_time).toISOString(), lngLat: a?.lngLat ?? s.ll, detail: s.summary, signalId: s.id, anomaly: a });
+  }
+  // Real anomalies with no signal yet still count, as observed detector output.
+  for (const a of (await realAnomalies(tx)).anomalies) if (!anomalyKeys.has(a.id)) {
+    members.push({ ref: `anomaly:${a.id}`, kind: "anomaly", eventType: ANOMALY_SIGNAL[a.kind].eventType, title: `${ANOMALY_LABEL[a.kind]}: ${a.names.join(" and ")}`, dataMode: "observed", at: a.at, lngLat: a.lngLat, detail: a.summary, anomaly: a });
   }
   // Anomalies the detectors found that have no signal yet still count, marked as detector output.
   for (const a of detectScripted()) if (!anomalyKeys.has(a.id)) {
