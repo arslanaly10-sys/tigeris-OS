@@ -12,7 +12,7 @@ export function PageHeader({ nav, description, actions }: { nav: I18nKey; descri
           <h1 key={nav} className="enter-mask text-[34px] leading-[1.1]"><span className="enter-line">{t(nav)}</span></h1>
           {lang === "ar" && <Badge tone="info">{t("arabicDraft")}</Badge>}
         </div>
-        <p key={`${nav}-d`} className="enter-follow mt-3 max-w-[62ch] text-[16px] leading-relaxed text-ink-muted">{lang === "ar" ? AR_DESCRIPTIONS[nav] ?? description : description}</p>
+        <p key={`${nav}-d`} className="enter-follow mt-3 max-w-[46ch] text-[16px] leading-relaxed text-ink-muted">{lang === "ar" ? AR_DESCRIPTIONS[nav] ?? description : description}</p>
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

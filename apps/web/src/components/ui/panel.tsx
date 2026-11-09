@@ -2,7 +2,8 @@ import { cn } from "@/lib/cn";
 
 /** Panel: surface-1 with a hairline and a faint top highlight (DESIGN.md · Elevation level 1). */
 export function Panel({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
-  return <section className={cn("rounded-[8px] border border-line bg-surface shadow-[var(--panel-highlight)]", className)} {...props} />;
+  // min-w-0: inside a grid a panel may shrink to the screen, so a wide table scrolls within it instead of widening the page.
+  return <section className={cn("min-w-0 rounded-[8px] border border-line bg-surface shadow-[var(--panel-highlight)]", className)} {...props} />;
 }
 
 export function PanelHeader({ title, eyebrow, actions, className }: { title: React.ReactNode; eyebrow?: React.ReactNode; actions?: React.ReactNode; className?: string }) {

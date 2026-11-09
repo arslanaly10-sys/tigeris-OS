@@ -436,7 +436,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
           {compact && <Button size="sm" variant="secondary" asChild><Link href="/map">Open full map</Link></Button>}
         </div>
       </div>
-      <p className="text-[13px] text-ink-faint">Sources: {credits}</p>
+      <p className="max-w-[58ch] text-[13px] text-ink-faint">Sources: {credits}</p>
 
       {view === "table" && <MoversTable movers={movers} observed={observed?.vessels ?? []} observedAir={observedAir?.aircraft ?? []} entities={data?.entities ?? []} onSelect={setSelected} />}
 
@@ -464,7 +464,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         </div>
       )}
       {!compact && (
-        <p className="text-[13px] text-ink-faint">
+        <p className="max-w-[58ch] text-[13px] text-ink-faint">
           {observed?.capture
             ? <>Ringed ships are real ships observed by AIS in the Strait of Hormuz and its approaches (including Dubai and Fujairah anchorages), captured {formatDate(observed.capture.retrievedAt, true)} by the collector and imported as a signed snapshot. Between reports each one moves on an estimate from its last course and speed (for at most 6 hours), shown as "estimated" in its details; it is not a live track. Coverage depends on shore stations, and AIS is self-reported, so ships can be missing or misreported. </>
             : <>No AIS snapshot has been imported, so only simulated ships are shown. Run the AIS collector and import its package from Data &amp; Sources to add observed ships near Hormuz. </>}

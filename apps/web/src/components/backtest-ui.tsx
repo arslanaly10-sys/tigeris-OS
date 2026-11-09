@@ -94,7 +94,7 @@ export function BacktestPanel() {
     <Panel className="mt-5">
       <PanelHeader eyebrow="Calibration" title="Back-test of the price response" actions={<div className="flex items-center gap-2">{adopted ? <Badge tone="ok">Calibrated · adopted by {adopted.adopted_by_label}</Badge> : <Badge tone="warn">Analyst assumption in use</Badge>}{can("scenario.run") && <Button size="sm" variant="secondary" onClick={run} disabled={busy}><Play />{busy ? "Running…" : "Run back-test"}</Button>}</div>} />
       <div className="grid gap-4 p-4 text-[13px]">
-        <p className="max-w-[80ch] text-ink-muted">How much did Brent move in the first three trading days of past supply disruptions, and how well does the engine's price response explain it? Prices are EIA daily Brent (public domain); the size of each disruption is an analyst estimate, labelled as an assumption. A domain expert other than the person who ran it adopts a result before scenarios use it.</p>
+        <p className="max-w-[48ch] text-ink-muted">How much did Brent move in the first three trading days of past supply disruptions, and how well does the engine's price response explain it? Prices are EIA daily Brent (public domain); the size of each disruption is an analyst estimate, labelled as an assumption. A domain expert other than the person who ran it adopts a result before scenarios use it.</p>
         {!latest && d && <p className="text-ink-muted">{d.available.length ? `${d.available.length} episodes with ${d.available.reduce((s, a) => s + a.prices, 0)} daily prices are ready.` : "Import the back-test package first."} No back-test has been run yet.</p>}
         {latest && (
           <>

@@ -59,7 +59,8 @@ export function AiGovernance() {
       <Panel className={cn("p-5", s.foreign_models_enabled ? "border-warn/50" : "border-ok/40")}>
         <div className="flex flex-wrap items-center gap-5">
           <div className={cn("grid size-14 place-items-center rounded-full border-2", s.foreign_models_enabled ? "border-warn text-warn" : "border-ok text-ok")}>{s.foreign_models_enabled ? <Globe2 className="size-7" /> : <Lock className="size-7" />}</div>
-          <div className="min-w-0 flex-1">
+          {/* At least 16rem (or the full row) so on a phone the text wraps below the icon instead of shrinking to nothing. */}
+          <div className="min-w-[min(100%,16rem)] flex-1">
             <div className="eyebrow text-ink-faint">Sovereignty switch</div>
             <div className="text-[22px] font-medium">{s.foreign_models_enabled ? "Foreign models allowed" : "Foreign models cut"}</div>
             <p className="text-[13px] text-ink-muted">{s.foreign_models_enabled ? `Foreign models may be called for content up to ${s.foreign_max_classification}, if outbound access, the allowlist and a key also allow it.` : "Every agent runs on the local model or the deterministic writer. No prompt leaves this institution."}</p>
@@ -95,7 +96,7 @@ export function AiGovernance() {
               <span className="font-medium">{p.label}</span>
               <Badge tone={p.usable ? "ok" : "warn"} className="ms-auto">{p.usable ? <ShieldCheck /> : <ShieldAlert />}{p.usable ? "Usable" : CHECK_LABEL[p.blockedBy ?? ""] ?? "Blocked"}</Badge>
             </div>
-            <p className="text-[13px] text-ink-muted">{p.vendor} · {p.model}</p>
+            <p className="text-[13px] text-ink-muted wrap-anywhere">{p.vendor} · {p.model}</p>
             <p className="text-[13px] text-ink-faint">{p.residency}{p.hosts.length ? ` · host ${p.hosts.join(", ")}` : ""}</p>
             {p.reason && <p className="text-[13px] text-warn">{p.reason}</p>}
             {p.local && <p className="break-all text-[13px] text-ink-faint">File {p.local.file} · {p.local.size_bytes ? `${num((p.local.size_bytes / 1e9), 2)} GB` : "missing"} · {p.local.threads} CPU threads{p.local.sha256 ? ` · sha256 ${p.local.sha256.slice(0, 16)}…` : ""} · {p.local.network}</p>}

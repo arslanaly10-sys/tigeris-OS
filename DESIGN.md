@@ -1,7 +1,7 @@
 ---
-version: 2.0
+version: 2.1
 name: TIGERIS · Sovereign Intelligence OS
-description: "A sovereign command-room interface built to the taste skill's system: a deep navy canvas with a four-step surface ladder and hairline borders, warm ivory text, and gold as the one accent — for the primary action, the active place and focus. One family with fixed jobs: Host Grotesk for headings and text at weights 400 and 500, JetBrains Mono for identifiers, IBM Plex Sans Arabic in Arabic. Sentence case, nothing under 13px, quiet hover and press motion, one entrance per page, and one moving centrepiece on sign-in: the Gulf with ships on their lanes."
+description: "A sovereign command-room interface built to the taste skill's system: a deep navy canvas with a four-step surface ladder and hairline borders, warm ivory text, and gold as the one accent — for the primary action, the active place and focus. One family with fixed jobs: Host Grotesk for headings and text at weights 400 and 500, JetBrains Mono for identifiers, IBM Plex Sans Arabic in Arabic. Sentence case, text at 13px and up (12px only for chart axes and diagram labels), quiet hover and press motion, one entrance per page, and one moving centrepiece on sign-in: the Gulf with ships on their lanes."
 references: "System, type, motion and copy rules from the taste skill (Leonxlnx/taste-skill, MIT, installed in .agents/skills/design-taste-frontend). Earlier structure adapted from the Linear and IBM analyses in VoltAgent/awesome-design-md (MIT). Motion via the motion library and its AI kit. Brand, palette and voice are TIGERIS's own (questionnaire Q009–Q015)."
 
 colors:
@@ -14,7 +14,7 @@ colors:
   hairline-strong: "#2a3b57"
   ink: "#ece8de"
   ink-muted: "#a4aebd"
-  ink-subtle: "#76839a"
+  ink-subtle: "#828ea3"
   primary: "#c8a35a"
   primary-hover: "#d6b673"
   on-primary: "#16110a"
@@ -22,7 +22,8 @@ colors:
   accent: "#dcc088"
   success: "#3fae86"
   warning: "#d4974a"
-  critical: "#d8645a"
+  critical: "#da6c62"
+  on-critical: "#160a09"   # count badge text on critical
   info: "#7ba7dc"
   # Light ("Foundation")
   light-canvas: "#f6f5f0"
@@ -33,9 +34,20 @@ colors:
   light-hairline-strong: "#cdcbc0"
   light-ink: "#1d2925"
   light-ink-muted: "#55625c"
-  light-ink-subtle: "#7b8681"
+  light-ink-subtle: "#606965"
   light-primary: "#14603f"
-  light-accent: "#a2843f"
+  light-accent: "#7e632b"
+  light-success: "#2a7351"
+  light-warning: "#955819"
+  light-critical: "#a9443c"
+  light-info: "#2f5f8c"
+  # Map chrome: the map stays dark in both themes (Q080), so these are fixed, not themed
+  map-label: "#9aa6b8"
+  map-ripple-critical: "#d8645a"
+  map-ripple-high: "#dc9a45"
+  map-ripple-medium: "#79a8de"
+  map-control-border: "#2f4566"
+  map-credit-text: "#8593a8"
 
 typography:
   hero-line:    { fontFamily: Host Grotesk, fontSize: 48px, fontWeight: 500, lineHeight: 1.05, letterSpacing: -3.5% }   # sign-in only
@@ -48,7 +60,7 @@ typography:
   eyebrow:      { fontFamily: Host Grotesk, fontSize: 13px, fontWeight: 500, color: ink-subtle, note: "sentence case; groups a panel" }
   mono:         { fontFamily: JetBrains Mono, fontSize: 13px, fontWeight: 400 }   # identifiers and hashes only
   arabic:       { fontFamily: IBM Plex Sans Arabic, note: "replaces Host Grotesk in Arabic; no letter-spacing" }
-  floor:        "nothing under 13px; weights 400 and 500 only"
+  floor:        "13px for text and labels; 12px only for chart axes, diagram labels and the wordmark line; weights 400 and 500 only"
 
 rounded:
   xs: 4px     # badges, chips
@@ -104,7 +116,7 @@ What stays TIGERIS: the navy canvas, warm ivory text, restrained gold (dark) and
 - **Semantic colours are for status only** (verified, warning, critical, info), always paired with an
   icon or a word. Chart series use the validated categorical slots (`--series-1..3`) and are never
   reused for status.
-- Text contrast: ink ≥ 12:1, ink-muted ≥ 6:1, ink-subtle ≥ 4.5:1 on surface-1 in both themes.
+- Text contrast: every text and status colour is at least 4.5:1 on every surface in both themes, and placeholders use ink-subtle; `apps/web/test/contrast.test.ts` enforces it.
 
 ## Typography
 
@@ -159,6 +171,13 @@ Patterns adopted across the app:
   `content-visibility`.
 - A skip link leads to the main content; sticky bars never cover a focused field.
 
+### Impeccable audit (version 2.1)
+
+`/impeccable audit` (`.claude/skills/impeccable`) scored the app 14/20 and its fixes are in: panels may shrink inside
+grids so wide tables scroll within them on phones, placeholders use ink-subtle, long names wrap, and page
+descriptions are capped at about 70 characters a line (`max-w-[46ch]`; Host Grotesk's narrow "0" makes 46ch about
+70 characters). The policy editor's bordered frame is a text field, not a nested card, and stays.
+
 ### UI/UX Pro Max checks (version 2.1)
 
 The app is also checked against UI/UX Pro Max (`.claude/skills/ui-ux-pro-max`), used as a quality
@@ -203,7 +222,7 @@ screen, a full-screen hero) and would block unrelated app work; its scripts are 
 What the app takes from it:
 
 - **Type:** one family with fixed jobs (Host Grotesk; JetBrains Mono for identifiers), weights 400 and 500 only,
-  headings carried by size and tight tracking, sentence case everywhere, nothing under 13px.
+  headings carried by size and tight tracking, sentence case everywhere, 13px text (12px only on chart axes and diagrams).
 - **Motion in three places:** each page title enters once (it rises out of its mask, then its description fades
   up); every button, link and linked card answers the pointer (button step and press, a drawn underline, a 2px card
   lift); tabs move one indicator by transform. Nothing reveals on scroll. Focus shows at once and never animates.
