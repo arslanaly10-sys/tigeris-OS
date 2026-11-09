@@ -17,3 +17,15 @@ describe("sovereign playbooks", () => {
     for (const g of GAP_KEYS) expect(playbooksForGap(g).length, g).toBeGreaterThan(0);
   });
 });
+
+describe("specialists", () => {
+  it("puts each of the ten bounded agents under one of Tiger's six specialists, and every specialist speaks for one", async () => {
+    const { AGENT_SPECIALIST, SPECIALISTS, SPECIALIST_ROLE } = await import("../src/playbooks");
+    const agents = ["signal_triage", "noise_moderation", "entity_resolution", "document_extraction", "causal_impact", "financial_impact", "scenario_analyst", "sector", "governance_checker", "brief_writer"];
+    expect(Object.keys(AGENT_SPECIALIST).sort()).toEqual([...agents].sort());
+    for (const sp of SPECIALISTS) {
+      expect(Object.values(AGENT_SPECIALIST)).toContain(sp);
+      expect(SPECIALIST_ROLE[sp].length).toBeGreaterThan(20);
+    }
+  });
+});

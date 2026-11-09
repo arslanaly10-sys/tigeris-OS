@@ -26,6 +26,7 @@ const en = {
   "nav.sovereignty": "Sovereignty",
   "nav.diagnostic": "Gap Diagnostic",
   "nav.playbooks": "Playbooks",
+  "nav.fund": "Fund Apps",
   "nav.administration": "Administration",
   "nav.architecture": "Architecture",
   "nav.about": "About TIGERIS",
@@ -125,6 +126,7 @@ const ar: Partial<Record<Key, string>> = {
   "nav.sovereignty": "السيادة",
   "nav.diagnostic": "تشخيص الفجوات",
   "nav.playbooks": "أدلة التشغيل",
+  "nav.fund": "تطبيقات الصندوق",
   "nav.administration": "الإدارة",
   "nav.architecture": "البنية",
   "nav.about": "عن تايغرس",
@@ -203,6 +205,7 @@ const ar: Partial<Record<Key, string>> = {
 
 /** Arabic page descriptions for the key screens; English descriptions stay with each component. */
 export const AR_DESCRIPTIONS: Partial<Record<string, string>> = {
+  "nav.fund": "أربعة تطبيقات للصندوق على بيانات تركيبية: فرز الصفقات مقابل التفويض، ومسودات مذكرات لجنة الاستثمار، ومراقبة المحفظة، وتقارير المجلس والمستثمرين. أرقام حتمية؛ وحوّل الصفقة إلى حالة للجنة.",
   "nav.command-centre": "هنا تظهر البنود التي تحتاج انتباهك، مع سبب ظهور كل منها.",
   "nav.signals": "إشارات من المصادر المعتمدة والبث التجريبي، مع درجة الثقة ومكوناتها وسبب ظهور كل إشارة.",
   "nav.cases": "ملف الاستخبارات هو وحدة العمل: الوضع والأدلة ومسار الأثر والسيناريوهات والخيارات والقرار والذاكرة.",

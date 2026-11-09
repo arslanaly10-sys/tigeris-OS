@@ -34,6 +34,12 @@ export const MODULES: ModuleDef[] = [
     requirements: ["tigerisos.ai sovereign scenarios"],
   },
   {
+    slug: "fund", nav: "nav.fund", group: "operate", icon: "BriefcaseBusiness",
+    purpose: "Four fund applications on synthetic data: deal screening against the mandate, IC memo drafts, portfolio monitoring, and board and LP reports. Deterministic figures; take a deal to committee as a case.",
+    arrives: [{ week: 9, items: ["Deal screening with mandate limits", "IC memo draft", "Portfolio monitoring", "Board and LP report"] }],
+    requirements: ["Brain Co FinanceOS lesson: start with a first application"],
+  },
+  {
     slug: "signals", nav: "nav.signals", group: "operate", icon: "RadioTower",
     purpose: "Validated, unvalidated, conflicting and dismissed signals, with source, freshness, corroboration and disposition.",
     arrives: [

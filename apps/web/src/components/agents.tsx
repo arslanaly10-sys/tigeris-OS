@@ -12,6 +12,7 @@ import { Button } from "./ui/button";
 import { useCan } from "./session-context";
 import { useLineage } from "./lineage";
 import { ResultLineage, fmtUnit } from "./scenarios";
+import { AGENT_SPECIALIST, SPECIALISTS, SPECIALIST_ROLE } from "@tigeris/shared";
 
 /* ---------- shared types ---------- */
 export interface Src { tag: string; kind: string; ref: string | null; label: string; text: string }
@@ -146,7 +147,7 @@ export function AgentAnalysis({ caseKey, onDone }: { caseKey: string; onDone?: (
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-2xl">
             <h3 className="text-[17px] font-medium">Bounded agent analysis</h3>
-            <p className="mt-1 text-[13px] text-ink-muted">Ten agents gather, analyse, challenge each other, score options with the scenario engine and draft the brief. Numbers come only from tools; models only phrase them, and every sentence is checked for citations.</p>
+            <p className="mt-1 text-[13px] text-ink-muted">Ten bounded agents, grouped under six specialists, gather, analyse, challenge each other, score options with the scenario engine and draft the brief. Numbers come only from tools; models only phrase them, and every sentence is checked for citations.</p>
           </div>
           {can("recommendation.draft") ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -170,6 +171,7 @@ export function AgentAnalysis({ caseKey, onDone }: { caseKey: string; onDone?: (
         )}
       </Panel>
 
+      {d && d.steps.length > 0 && <SpecialistCouncil steps={d.steps} />}
       {d && d.steps.length > 0 && (
         <ol className="grid gap-4" aria-label="Agent phases">
           {PHASES.map((ph) => {
@@ -222,6 +224,27 @@ function Debate({ challenges }: { challenges: Challenge[] }) {
   );
 }
 
+/** Tiger's six specialists over the bounded agents: which agents each one speaks for, and how many steps they ran. */
+function SpecialistCouncil({ steps }: { steps: Step[] }) {
+  return (
+    <Panel className="p-4">
+      <PanelHeader eyebrow="Specialist council" title="Six specialists, ten bounded agents" className="p-0 pb-3" />
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {SPECIALISTS.map((sp) => {
+          const keys = Object.entries(AGENT_SPECIALIST).filter(([, v]) => v === sp).map(([k]) => k);
+          const ran = steps.filter((x) => keys.includes(x.agent_key));
+          return (
+            <li key={sp} className="grid content-start gap-1 rounded-md border border-line p-3 text-[13px]">
+              <div className="flex items-center gap-2"><span className="text-[15px] font-medium">{sp}</span><Badge tone={ran.length ? "ok" : "neutral"} className="ms-auto tabular">{ran.length ? `${ran.length} step${ran.length === 1 ? "" : "s"}` : "no steps"}</Badge></div>
+              <p className="text-ink-muted">{SPECIALIST_ROLE[sp]}</p>
+              <p className="text-ink-faint">{keys.map((k) => AGENT_LABEL[k] ?? k).join(" · ")}</p>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  );
+}
 function StepCard({ s, calls }: { s: Step; calls: Call[] }) {
   const [trace, setTrace] = useState(false);
   return (
@@ -230,6 +253,7 @@ function StepCard({ s, calls }: { s: Step; calls: Call[] }) {
         <span translate="no" className="font-mono text-[13px] text-ink-faint">#{s.seq}</span>
         <span className="font-medium">{s.agent_key === "sector" ? s.title.split(":")[0] : AGENT_LABEL[s.agent_key] ?? s.agent_key}</span>
         <WriterBadge writer={s.writer} />
+        {AGENT_SPECIALIST[s.agent_key] && <Badge>{AGENT_SPECIALIST[s.agent_key]}</Badge>}
         <span className="ms-auto tabular text-[13px] text-ink-faint">{num((s.ms / 1000), 1)} s</span>
       </div>
       <p className="text-[13px] text-ink-muted">{s.agent_key === "sector" ? s.title.split(": ").slice(1).join(": ") : s.title}</p>

@@ -19,6 +19,29 @@ export const LOOP_STAGES = [
 
 /** The specialist chain every playbook passes through, in order. */
 export const SPECIALISTS = ["Sentinel", "Macro", "Resilience", "Capital", "Mandate", "Governance"] as const;
+export type Specialist = (typeof SPECIALISTS)[number];
+
+/**
+ * The prototype's ten bounded agents, grouped under Tiger's six specialists. The agents keep their narrow jobs and
+ * their tool-only numbers; the specialist is the name a decision-maker sees. Mandate is the thinnest today: the brief
+ * writer frames the options against the mandate, and a dedicated mandate-fit check is still to come.
+ */
+export const SPECIALIST_ROLE: Record<Specialist, string> = {
+  Sentinel: "Detects and validates: ranks signals, flags noise, resolves entities and extracts facts.",
+  Macro: "Propagates the event through the graph and applies each sector's lens.",
+  Resilience: "Tests absorption and recovery: baseline against alternatives at 72 hours, 90 days, 1 year and 5 years.",
+  Capital: "Reads value at risk, revenue and exposures from the deterministic engine.",
+  Mandate: "Frames the options against the institution's mandate for the named decision-maker.",
+  Governance: "Checks every option against the active policy: authority, separation of duties, evidence, no external action.",
+};
+export const AGENT_SPECIALIST: Record<string, Specialist> = {
+  signal_triage: "Sentinel", noise_moderation: "Sentinel", entity_resolution: "Sentinel", document_extraction: "Sentinel",
+  causal_impact: "Macro", sector: "Macro",
+  scenario_analyst: "Resilience",
+  financial_impact: "Capital",
+  brief_writer: "Mandate",
+  governance_checker: "Governance",
+};
 
 /**
  * Tiger's decision-envelope doctrine: "Speed with authority. Never speed instead of authority." Envelopes are
@@ -287,7 +310,7 @@ export const PLAYBOOKS: Playbook[] = [
     outcome: "Illustrative path keeps strategic optionality within governed authority.",
     validate: "Measure decision time, envelope compliance and outcomes against the committee baseline.",
     memory: "Retain envelope rules and missed windows to refine future authority design.",
-    inOs: { label: "Policy as code and approvals", href: "/governance" },
+    inOs: { label: "Decision envelopes in Decision Authority", href: "/decisions" },
   },
   {
     key: "sovereign-intelligence", title: "Sovereign intelligence, not borrowed", gaps: ["sovereign_control"],
