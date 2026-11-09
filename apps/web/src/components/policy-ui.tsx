@@ -131,7 +131,7 @@ export function PolicyEditor() {
               {versions.map((x) => (
                 <li key={x.id} className={cn("grid gap-1 rounded-md border p-2.5", x.id === viewing?.id ? "border-primary" : "border-line")}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <button type="button" onClick={() => open(x)} className="font-medium hover:underline">v{x.version}</button>
+                    <button type="button" onClick={() => open(x)} className="tap font-medium hover:underline">v{x.version}</button>
                     <Badge tone={x.status === "active" ? "ok" : x.status === "draft" ? "warn" : "neutral"}>{x.status}</Badge>
                     <Badge tone={x.tests_passed ? "ok" : "crit"}>{x.tests_passed ? "tests pass" : "tests fail"}</Badge>
                     <span className="ms-auto tabular text-ink-faint">{x.rules} rules</span>

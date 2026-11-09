@@ -115,13 +115,13 @@ export function Header({ onMenu }: { onMenu: () => void }) {
         <Popover.Root>
           <Popover.Trigger asChild>
             <Button variant="ghost" size="icon" className="relative" aria-label={`${t("header.notifications")}${notes?.unread ? ` (${notes.unread} unread)` : ""}`}>
-              <Bell />{notes?.unread ? <span className="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-crit px-1 text-[13px] font-medium text-white tabular">{notes.unread}</span> : null}
+              <Bell />{notes?.unread ? <span className="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-crit px-1 text-[13px] font-medium text-on-crit tabular">{notes.unread}</span> : null}
             </Button>
           </Popover.Trigger>
           <Popover.Portal>
             <Popover.Content align="end" sideOffset={6} className="z-50 w-80 rounded-lg border border-line bg-surface p-2 shadow-[var(--overlay-shadow)]">
               <div className="flex items-center justify-between px-2 py-1.5"><span className="font-medium">{t("header.notifications")}</span>
-                {notes?.unread ? <button type="button" className="text-[13px] text-accent hover:underline" onClick={async () => { await api("/notifications/read", { json: {} }); setNotes((n) => n && { ...n, unread: 0, notifications: n.notifications.map((x) => ({ ...x, read_at: x.read_at ?? new Date().toISOString() })) }); }}>Mark all read</button> : null}
+                {notes?.unread ? <button type="button" className="tap text-[13px] text-accent hover:underline" onClick={async () => { await api("/notifications/read", { json: {} }); setNotes((n) => n && { ...n, unread: 0, notifications: n.notifications.map((x) => ({ ...x, read_at: x.read_at ?? new Date().toISOString() })) }); }}>Mark all read</button> : null}
               </div>
               {!notes?.notifications.length && <p className="px-2 pb-2 text-[13px] text-ink-muted">{t("header.noNotifications")}</p>}
               <ul className="max-h-96 overflow-y-auto">
@@ -192,7 +192,7 @@ function ModelBadge() {
   if (!s) return null;
   const local = s.default_provider === "local" ? "local model" : s.default_provider === "deterministic" ? "no model" : s.default_provider;
   return (
-    <Link href="/governance#ai" className="hidden md:inline-flex" title="Model sovereignty controls">
+    <Link href="/governance#ai" className="tap hidden items-center md:inline-flex" title="Model sovereignty controls">
       <Badge tone={s.foreign_models_enabled ? "warn" : "ok"}>{s.foreign_models_enabled ? <Globe2 /> : <Lock />}<span className="hidden xl:inline">{s.foreign_models_enabled ? "Foreign models on" : "Foreign models off"} · </span>{s.foreign_models_enabled ? <span className="xl:hidden">Foreign on</span> : null}<span className={s.foreign_models_enabled ? "hidden xl:inline" : ""}>{local}</span></Badge>
     </Link>
   );

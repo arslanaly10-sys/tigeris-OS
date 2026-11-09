@@ -169,7 +169,7 @@ function SignalDrawer({ id, onClose }: { id: string | null; onClose: () => void 
             <ul className="grid gap-2">{d.evidence.map((e, i) => <li key={i} className="rounded-md border border-line p-2.5"><div className="flex flex-wrap items-center gap-1.5"><Badge tone={e.role === "corroborating" ? "ok" : "neutral"}>{e.role}</Badge><span className="font-medium">{e.title}</span><ValidationBadge state={e.validation_state} /></div><p className="mt-1 text-[13px] text-ink-muted">{e.source_name}{e.note ? ` · ${e.note}` : ""}</p>{e.value_text && <p className="mt-1 text-[13px]">&ldquo;{e.value_text}&rdquo;</p>}</li>)}</ul>
           </div>
           {d.entities.length > 0 && <div><div className="mb-1.5 font-medium">Linked in the graph</div><div className="flex flex-wrap gap-1.5">{d.entities.map((e) => <Link key={e.key} href={`/graph?focus=${encodeURIComponent(e.key)}`}><Badge tone="info">{e.name}</Badge></Link>)}</div></div>}
-          {d.cases.length > 0 && <div><div className="mb-1.5 font-medium">Cases</div>{d.cases.map((c) => <Link key={c.case_key} href={`/cases/${c.case_key}`} className="block text-accent hover:underline">{c.case_key} · {c.title} ({c.state})</Link>)}</div>}
+          {d.cases.length > 0 && <div><div className="mb-1.5 font-medium">Cases</div>{d.cases.map((c) => <Link key={c.case_key} href={`/cases/${c.case_key}`} className="tap block text-accent hover:underline">{c.case_key} · {c.title} ({c.state})</Link>)}</div>}
           {d.signal.disposition_note && <p className="text-[13px] text-ink-faint">Disposition by {d.signal.disposition_by}: {d.signal.disposition_note}</p>}
           {can("evidence.dispose") && d.signal.status !== "in_case" && (
             <div className="grid gap-2 border-t border-line pt-4">

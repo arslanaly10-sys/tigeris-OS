@@ -13,7 +13,7 @@ export const buttonVariants = cva(
         ghost: "text-ink-muted hover:bg-surface-2 hover:text-ink",
         danger: "border border-crit/45 bg-crit-soft text-crit hover:border-crit",
       },
-      size: { sm: "h-9 px-3 text-[13px]", md: "h-10 px-4", lg: "h-11 px-6 text-[15px]", icon: "size-10" },
+      size: { sm: "h-9 px-3 text-[13px] pointer-coarse:h-11", md: "h-10 px-4 pointer-coarse:h-11", lg: "h-11 px-6 text-[15px]", icon: "size-10 pointer-coarse:size-11" },
     },
     defaultVariants: { variant: "secondary", size: "md" },
   },

@@ -67,7 +67,7 @@ export function CasesList() {
               {rows && !split.mine.length && <tr><td colSpan={6} className="px-4 py-4 text-ink-muted">No cases in this industry yet.</td></tr>}
               {shown.map((c, n) => (
                 <tr key={c.id} className={cn("border-b border-line/60 last:border-0 hover:bg-surface-2", n === split.mine.length && "border-t-2 border-t-line-strong")}>
-                  <td className="px-4 py-3"><Link href={`/cases/${c.case_key}`} className="font-medium hover:underline">{c.title}</Link><div className="flex flex-wrap items-center gap-1.5 text-[13px] text-ink-faint"><span translate="no" className="font-mono">{c.case_key}</span> · {DEPTH_LABEL[c.depth]} · {industryName(c.domain)}</div></td>
+                  <td className="px-4 py-3"><Link href={`/cases/${c.case_key}`} className="tap font-medium hover:underline">{c.title}</Link><div className="flex flex-wrap items-center gap-1.5 text-[13px] text-ink-faint"><span translate="no" className="font-mono">{c.case_key}</span> · {DEPTH_LABEL[c.depth]} · {industryName(c.domain)}</div></td>
                   <td className="px-4 py-3"><Badge tone={c.state === "closed" ? "neutral" : c.state === "decision" ? "warn" : "info"}>{STATE_LABEL[c.state]}{c.closure ? ` · ${c.closure.replace("_", " ")}` : ""}</Badge></td>
                   <td className="px-4 py-3 text-ink-muted">{(next[c.state] ?? []).map((r) => ROLE_LABELS[r]).join(" or ") || "—"}</td>
                   <td className="px-4 py-3 text-ink-muted">{c.owner_label}</td>
@@ -119,7 +119,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
     <>
       <div className="mb-5 grid gap-3">
         <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink-faint">
-          <Link href="/cases" className="hover:underline">Intelligence Cases</Link><ChevronRight className="size-3 rtl:rotate-180" /><span translate="no" className="font-mono">{c.case_key}</span>
+          <Link href="/cases" className="tap hover:underline">Intelligence Cases</Link><ChevronRight className="size-3 rtl:rotate-180" /><span translate="no" className="font-mono">{c.case_key}</span>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-3xl">
@@ -133,7 +133,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
           <span>Owner: <span className="text-ink">{c.owner_label}</span></span>
           <span>Opened by {c.created_by_label} · {formatDate(c.created_at, true)}</span>
           <span>Last activity {formatDate(c.last_activity_at, true)}</span>
-          {d.linked && <Link href={`/cases/${d.linked.case_key}`} className="text-accent hover:underline">Linked: {d.linked.case_key} · {d.linked.title}</Link>}
+          {d.linked && <Link href={`/cases/${d.linked.case_key}`} className="tap text-accent hover:underline">Linked: {d.linked.case_key} · {d.linked.title}</Link>}
         </div>
       </div>
 
@@ -152,11 +152,11 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
             <Panel>
               <PanelHeader eyebrow="Signals" title="What raised this case" />
               {d.signals.length === 0 && <p className="p-4 text-[13px] text-ink-muted">Opened without a signal (requested directly).</p>}
-              <ul className="divide-y divide-line">{d.signals.map((sg) => <li key={sg.id} className="grid gap-1.5 px-4 py-3"><div className="flex flex-wrap gap-1.5"><Badge tone={URGENCY_TONE[sg.urgency]}>{sg.urgency}</Badge><ModeBadge mode={sg.data_mode} /></div><Link href={`/signals?focus=${sg.id}`} className="font-medium hover:underline">{sg.title}</Link><ConfidenceBand c={sg.confidence} compact /></li>)}</ul>
+              <ul className="divide-y divide-line">{d.signals.map((sg) => <li key={sg.id} className="grid gap-1.5 px-4 py-3"><div className="flex flex-wrap gap-1.5"><Badge tone={URGENCY_TONE[sg.urgency]}>{sg.urgency}</Badge><ModeBadge mode={sg.data_mode} /></div><Link href={`/signals?focus=${sg.id}`} className="tap font-medium hover:underline">{sg.title}</Link><ConfidenceBand c={sg.confidence} compact /></li>)}</ul>
             </Panel>
             <Panel>
               <PanelHeader eyebrow="Graph" title="Entities in scope" />
-              <ul className="flex flex-wrap gap-1.5 p-4">{d.entities.map((e) => <li key={e.key}><Link href={`/graph?focus=${encodeURIComponent(e.key)}`}><Badge tone={e.role === "origin" ? "crit" : e.role === "alternative" ? "ok" : "info"}>{e.role}: {e.name}</Badge></Link></li>)}{d.entities.length === 0 && <li className="text-[13px] text-ink-muted">None linked.</li>}</ul>
+              <ul className="flex flex-wrap gap-1.5 p-4">{d.entities.map((e) => <li key={e.key}><Link href={`/graph?focus=${encodeURIComponent(e.key)}`} className="tap inline-flex"><Badge tone={e.role === "origin" ? "crit" : e.role === "alternative" ? "ok" : "info"}>{e.role}: {e.name}</Badge></Link></li>)}{d.entities.length === 0 && <li className="text-[13px] text-ink-muted">None linked.</li>}</ul>
             </Panel>
           </div>
         </div>
@@ -164,7 +164,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
 
       {tab === "Evidence" && (
         <Panel>
-          <PanelHeader eyebrow="Evidence" title="Attached evidence" actions={<Link href="/sources" className="text-[13px] text-accent hover:underline">Browse Data & Sources</Link>} />
+          <PanelHeader eyebrow="Evidence" title="Attached evidence" actions={<Link href="/sources" className="tap text-[13px] text-accent hover:underline">Browse Data & Sources</Link>} />
           {d.evidence.length === 0 && <p className="p-4 text-[13px] text-ink-muted">No evidence attached yet. A case needs at least one signal or evidence record before review.</p>}
           <ul className="divide-y divide-line">
             {d.evidence.map((e, i) => (

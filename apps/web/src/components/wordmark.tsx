@@ -10,7 +10,7 @@ export function Wordmark({ size = "md", className }: { size?: "md" | "lg"; class
       </svg>
       <span className="flex flex-col">
         <span className={cn("font-serif font-medium text-ink", size === "lg" ? "text-[28px]" : "text-[16px]")}>TIGERIS</span>
-        <span className={cn("mt-1 font-sans font-medium text-ink-faint", size === "lg" ? "text-[13px]" : "text-[8.5px]")}>Sovereign Intelligence OS</span>
+        <span className={cn("mt-1 font-sans font-medium text-ink-faint", size === "lg" ? "text-[13px]" : "text-[12px]", "whitespace-nowrap")}>Sovereign Intelligence OS</span>
       </span>
     </div>
   );

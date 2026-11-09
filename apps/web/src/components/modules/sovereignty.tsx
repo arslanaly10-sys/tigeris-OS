@@ -149,7 +149,7 @@ export function SovereigntyPanel() {
   useEffect(() => { api<Sovereignty>("/sovereignty").then((r) => r.ok && setD(r.data)); }, []);
   return (
     <Panel>
-      <PanelHeader eyebrow="Sovereignty" title={d ? `${d.summary.sovereign} of ${d.layers.length} layers fully sovereign` : "Sovereignty stack"} actions={<Link href="/sovereignty" className="text-[13px] text-accent">Open</Link>} />
+      <PanelHeader eyebrow="Sovereignty" title={d ? `${d.summary.sovereign} of ${d.layers.length} layers fully sovereign` : "Sovereignty stack"} actions={<Link href="/sovereignty" className="tap text-[13px] text-accent">Open</Link>} />
       {!d && <div className="m-4 h-32 animate-pulse rounded bg-surface-2" />}
       {d && (
         <ul className="divide-y divide-line">
@@ -158,7 +158,7 @@ export function SovereigntyPanel() {
             const st = LAYER_STATUS[l.status];
             return (
               <li key={l.key}>
-                <Link href={`/sovereignty#layer-${l.key}`} className="flex items-center gap-3 px-4 py-2.5 text-[13px] hover:bg-surface-2">
+                <Link href={`/sovereignty#layer-${l.key}`} className="flex items-center gap-3 px-4 py-2.5 text-[13px] hover:bg-surface-2 pointer-coarse:min-h-11">
                   <Icon className="size-4 shrink-0 text-accent" />
                   <span className="flex-1">{lang === "ar" ? LAYER_AR[l.key] ?? l.name : l.name}</span>
                   <Badge tone={st.tone}><st.Icon />{lang === "ar" ? st.ar : st.label}</Badge>

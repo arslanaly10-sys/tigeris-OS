@@ -16,7 +16,7 @@
   --line-strong: #2a3b57;
   --ink: #ece8de;
   --ink-muted: #a4aebd;
-  --ink-faint: #76839a;
+  --ink-faint: #828ea3;
   /* Gold is scarce: primary action, active place, focus, links. */
   --primary: #c8a35a;
   --primary-hover: #d6b673;
@@ -27,7 +27,8 @@
   --ok-soft: #0f2a24;
   --warn: #d4974a;
   --warn-soft: #2c2111;
-  --crit: #d8645a;
+  --crit: #da6c62;
+  --on-crit: #160a09;
   --crit-soft: #321716;
   --info: #7ba7dc;
   --info-soft: #12253d;
@@ -49,17 +50,18 @@
   --line-strong: #cdcbc0;
   --ink: #1d2925;
   --ink-muted: #55625c;
-  --ink-faint: #737e79;
+  --ink-faint: #606965;
   --primary: #14603f;
   --primary-hover: #0f5235;
   --primary-ink: #ffffff;
   --primary-soft: #e3eee6;
-  --accent: #8a6d2f;
-  --ok: #2b7653;
+  --accent: #7e632b;
+  --ok: #2a7351;
   --ok-soft: #e1eee5;
-  --warn: #a8641c;
+  --warn: #955819;
   --warn-soft: #f7ebda;
   --crit: #a9443c;
+  --on-crit: #ffffff;
   --crit-soft: #f6e1de;
   --info: #2f5f8c;
   --info-soft: #e3ebf4;
@@ -92,6 +94,7 @@
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
   --color-crit: var(--crit);
+  --color-on-crit: var(--on-crit);
   --color-crit-soft: var(--crit-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
@@ -204,6 +207,35 @@ html[lang="ar"] :is(h1, h2, h3, h4, .panel-title, .eyebrow) {
   letter-spacing: 0;
 }
 
+/*
+  Target size (WCAG 2.2 2.5.8; UI/UX Pro Max priority 2). Desktop keeps the dense analyst layout with a
+  24px minimum; touch screens (coarse pointer) get 44px. :where() keeps specificity at zero, so a component
+  can still set its own min-height. `.tap` enlarges the hit area of a small control without moving layout.
+*/
+:where(button, [role="tab"], [role="button"], select, summary) { min-height: 24px; }
+:where(input[type="checkbox"], input[type="radio"]) { width: 16px; height: 16px; accent-color: var(--primary); }
+.tap { position: relative; }
+.tap::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 24px);
+  height: max(100%, 24px);
+  transform: translate(-50%, -50%);
+}
+@media (pointer: coarse) {
+  :where(button, [role="tab"], [role="button"], select, summary, textarea, input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"])) { min-height: 44px; }
+  :where(button, [role="button"]):has(> svg:only-child) { min-width: 44px; }
+  :where(input[type="checkbox"], input[type="radio"]) { width: 22px; height: 22px; }
+  .tap::before { width: max(100%, 44px); height: max(100%, 44px); }
+  .map-ripple { width: 32px; height: 32px; }
+  .maplibregl-ctrl-group button { width: 44px; height: 44px; }
+  .maplibregl-ctrl-attrib-button { min-height: 0; }
+}
+/* Map chrome sizes itself; markers get their hit area from .tap. */
+.map-ripple, .maplibregl-ctrl button, .maplibregl-ctrl-attrib-button { min-height: 0; min-width: 0; }
+
 /* Map overlays (MAP §4). Map chrome stays dark in both themes (Q080). */
 .map-label {
   font-family: var(--font-sans);
@@ -218,8 +250,8 @@ html[lang="ar"] :is(h1, h2, h3, h4, .panel-title, .eyebrow) {
   color: #d9bd84;
 }
 .map-ripple {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
   border: 2px solid currentColor;
   background: transparent;

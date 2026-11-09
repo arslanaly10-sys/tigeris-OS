@@ -42,7 +42,7 @@ export function ReportsModule() {
                   <thead><tr className="border-b border-line text-ink-faint">{["Case", "Version", "Classification", "Written", "Export"].map((h) => <th key={h} className="px-4 py-2 text-start font-medium">{h}</th>)}</tr></thead>
                   <tbody>{d.briefs.map((b) => (
                     <tr key={b.id} className="border-b border-line/60">
-                      <td className="px-4 py-2"><Link href={`/cases/${b.case_key}?tab=Options`} className="font-mono text-[13px] text-accent hover:underline">{b.case_key}</Link><div className="text-ink-muted">{b.title}</div></td>
+                      <td className="px-4 py-2"><Link href={`/cases/${b.case_key}?tab=Options`} className="tap font-mono text-[13px] text-accent hover:underline">{b.case_key}</Link><div className="text-ink-muted">{b.title}</div></td>
                       <td className="px-4 py-2 tabular">v{b.version} of {b.versions}<div translate="no" className="font-mono text-[13px] text-ink-faint">{b.content_hash.slice(0, 12)}</div></td>
                       <td className="px-4 py-2"><Badge tone="warn">{b.classification}</Badge></td>
                       <td className="px-4 py-2 text-ink-muted">{formatDate(b.created_at, true)}</td>
@@ -65,7 +65,7 @@ export function ReportsModule() {
                     <div className="text-[13px] text-ink-faint">Run by {b.run_by_label}{b.adopted_by_label ? ` · adopted by ${b.adopted_by_label}` : ""} · {formatDate(b.created_at, true)}</div>
                   </li>
                 ))}
-                <li><Link href="/scenarios" className="text-[13px] text-accent hover:underline">Open the back-test with its chart and lineage</Link></li>
+                <li><Link href="/scenarios" className="tap text-[13px] text-accent hover:underline">Open the back-test with its chart and lineage</Link></li>
               </ul>
             </Panel>
             <Panel className="print:border-0">
@@ -112,19 +112,19 @@ export function ArchitecturePage() {
       <Panel className="p-4">
         <svg viewBox="0 0 1000 300" className="w-full" role="img" aria-label="Data flows from collection through validation, knowledge, reasoning and bounded agents to governed decisions and memory. An append-only audit chain and the sovereignty boundary span every stage.">
           <rect x="6" y="6" width="988" height="288" rx="10" fill="none" stroke="var(--accent)" strokeDasharray="6 5" />
-          <text x="18" y="24" fontSize="11" fill="var(--accent)" letterSpacing="0.1em">INSTITUTION BOUNDARY · DATA, MODELS AND AUDIT STAY INSIDE</text>
+          <text x="18" y="24" fontSize="12" fill="var(--accent)" letterSpacing="0.1em">INSTITUTION BOUNDARY · DATA, MODELS AND AUDIT STAY INSIDE</text>
           {layers.map((l, i) => (
             <g key={l.title}>
               <rect x={l.x} y={44} width={124} height={160} rx={8} fill="var(--surface-2)" stroke="var(--line-strong)" />
               <text x={l.x + 12} y={68} fontSize="14" fontWeight="600" fill="var(--ink)">{l.title}</text>
-              {l.lines.map((t, j) => <text key={j} x={l.x + 12} y={92 + j * 20} fontSize="11.5" fill={j === l.lines.length - 1 ? "var(--accent)" : "var(--ink-muted)"} className="tabular">{t}</text>)}
+              {l.lines.map((t, j) => <text key={j} x={l.x + 12} y={92 + j * 20} fontSize="12" fill={j === l.lines.length - 1 ? "var(--accent)" : "var(--ink-muted)"} className="tabular">{t}</text>)}
               {i < layers.length - 1 && <path d={`M${l.x + 126},124 L${l.x + 138},124`} stroke="var(--ink-faint)" strokeWidth="1.5" markerEnd="url(#arrow)" />}
             </g>
           ))}
           <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="var(--ink-faint)" /></marker></defs>
           <rect x="20" y="220" width="964" height="30" rx="6" fill="var(--primary-soft)" stroke="var(--primary)" />
           <text x="32" y="240" fontSize="12" fill="var(--ink)">Append-only, hash-chained audit trail across every stage · {n(st?.auditEvents)} events · row-level isolation per institution</text>
-          <text x="20" y="276" fontSize="11.5" fill="var(--ink-muted)">Foreign models: {st ? (st.foreignModels ? "allowed by policy" : "cut") : "…"} · Outbound access: {st ? (st.outbound ? "allowed" : "off") : "…"} · Local model and embeddings run on this host</text>
+          <text x="20" y="276" fontSize="12" fill="var(--ink-muted)">Foreign models: {st ? (st.foreignModels ? "allowed by policy" : "cut") : "…"} · Outbound access: {st ? (st.outbound ? "allowed" : "off") : "…"} · Local model and embeddings run on this host</text>
         </svg>
       </Panel>
       <div className="mt-5 grid gap-5 lg:grid-cols-3">

@@ -145,6 +145,8 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const [globe, setGlobe] = useState(false);
   const [view, setView] = useState<"map" | "table">("map");
   const [layersOpen, setLayersOpen] = useState(!compact);
+  // On a phone the open layer list would cover the map: start it collapsed there.
+  useEffect(() => { if (window.matchMedia("(max-width: 639px)").matches) setLayersOpen(false); }, []);
   const [selected, setSelected] = useState<Selection | null>(null);
   const [observed, setObserved] = useState<ObservedData | null>(null);
   const [observedAir, setObservedAir] = useState<ObservedAirData | null>(null);
@@ -287,7 +289,10 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       const el = document.createElement("div");
       el.className = gcc ? "map-label map-label-gcc" : "map-label";
       el.textContent = t;
-      return new maplibregl.Marker({ element: el }).setLngLat([lon, lat]).addTo(m);
+      const mk = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]).addTo(m);
+      // Place names are decoration on the canvas (the table view lists places); keep them out of the tab order.
+      el.removeAttribute("role"); el.removeAttribute("tabindex"); el.removeAttribute("aria-label"); el.setAttribute("aria-hidden", "true");
+      return mk;
     }) : [];
   }, [ready, on]);
 
@@ -301,7 +306,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     ripples.current = data.signals.filter((s) => !seen.has(s.entity_key) && seen.add(s.entity_key)).slice(0, 12).map((s) => {
       const el = document.createElement("button");
       el.type = "button";
-      el.className = `map-ripple map-ripple-${s.urgency}`;
+      el.className = `map-ripple map-ripple-${s.urgency} tap`;
       el.title = `${s.title} (${s.data_mode})`;
       el.setAttribute("aria-label", `Signal: ${s.title}`);
       el.onclick = () => (window.location.href = `/signals?focus=${s.id}`);

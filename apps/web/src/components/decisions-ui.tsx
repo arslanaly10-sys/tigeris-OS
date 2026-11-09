@@ -151,7 +151,7 @@ function DecisionCard({ d, onDone }: { d: Decision; onDone: () => void }) {
       <div className="flex flex-wrap gap-2 border-t border-line pt-3">
         <Button size="sm" variant="secondary" onClick={async () => { const r = await api<typeof drift>(`/decisions/${d.id}/drift`); if (r.ok) setDrift(r.data); }}><Activity />Check for drift</Button>
         <Button size="sm" variant="secondary" onClick={async () => { const r = await api<typeof replay>(`/decisions/${d.id}/replay`, { json: {} }); if (r.ok) setReplay(r.data); }}><History />Replay decision</Button>
-        <button type="button" onClick={() => setOpen((x) => !x)} aria-expanded={open} className="ms-auto flex items-center gap-1 text-[13px] text-accent hover:underline">{open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Policy trace and snapshot</button>
+        <button type="button" onClick={() => setOpen((x) => !x)} aria-expanded={open} className="tap ms-auto flex items-center gap-1 text-[13px] text-accent hover:underline">{open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Policy trace and snapshot</button>
       </div>
       {drift && (
         <div className="grid gap-1.5 rounded-md border border-line bg-surface-2 p-3 text-[13px]">
@@ -266,7 +266,7 @@ export function DecisionsModule() {
               <thead><tr className="border-b border-line text-ink-faint">{["Case", "Decision", "Status", "Approvals", "Handoff", "Policy", "Drift"].map((h) => <th key={h} className="px-4 py-2 text-start font-medium">{h}</th>)}</tr></thead>
               <tbody>{rows.map((r) => (
                 <tr key={r.id} className="border-b border-line/60">
-                  <td className="px-4 py-2"><Link href={`/cases/${r.case_key}?tab=Decision and memory`} className="font-mono text-[13px] text-accent hover:underline">{r.case_key}</Link><div className="text-[13px] text-ink-muted">{r.case_title}</div></td>
+                  <td className="px-4 py-2"><Link href={`/cases/${r.case_key}?tab=Decision and memory`} className="tap font-mono text-[13px] text-accent hover:underline">{r.case_key}</Link><div className="text-[13px] text-ink-muted">{r.case_title}</div></td>
                   <td className="px-4 py-2">{r.outcome}: {r.option_title}<div className="text-[13px] text-ink-faint">{r.proposed_by_label} · {formatDate(r.created_at, true)}</div></td>
                   <td className="px-4 py-2"><Badge tone={STATUS_TONE[r.status]}>{r.status}</Badge></td>
                   <td className="px-4 py-2 tabular">{r.approvals}/{r.required_approvals}</td>

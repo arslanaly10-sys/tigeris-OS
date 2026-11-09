@@ -61,7 +61,7 @@ export function LineChart({ series, xLabel, yLabel, format, height = 260, marker
             </li>
           ))}
         </ul>
-        <button type="button" className="text-[13px] text-accent hover:underline" onClick={() => setTable((t) => !t)} aria-pressed={table}>{table ? "Show chart" : "Show table"}</button>
+        <button type="button" className="tap text-[13px] text-accent hover:underline" onClick={() => setTable((t) => !t)} aria-pressed={table}>{table ? "Show chart" : "Show table"}</button>
       </div>
       {!table ? (
         <div className="relative">
@@ -69,15 +69,15 @@ export function LineChart({ series, xLabel, yLabel, format, height = 260, marker
             {yt.map((v) => (
               <g key={v}>
                 <line x1={m.l} x2={W - m.r} y1={sy(v)} y2={sy(v)} stroke="var(--line)" strokeWidth="1" />
-                <text x={m.l - 8} y={sy(v)} dy="0.32em" textAnchor="end" fontSize="11" fill="var(--ink-faint)" className="tabular">{format(v)}</text>
+                <text x={m.l - 8} y={sy(v)} dy="0.32em" textAnchor="end" fontSize="12" fill="var(--ink-faint)" className="tabular">{format(v)}</text>
               </g>
             ))}
-            {xt.map((v) => <text key={v} x={sx(v)} y={H - m.b + 16} textAnchor="middle" fontSize="11" fill="var(--ink-faint)" className="tabular">{v}</text>)}
-            <text x={(m.l + W - m.r) / 2} y={H - 4} textAnchor="middle" fontSize="11" fill="var(--ink-muted)">{xLabel}</text>
+            {xt.map((v) => <text key={v} x={sx(v)} y={H - m.b + 16} textAnchor="middle" fontSize="12" fill="var(--ink-faint)" className="tabular">{v}</text>)}
+            <text x={(m.l + W - m.r) / 2} y={H - 4} textAnchor="middle" fontSize="12" fill="var(--ink-muted)">{xLabel}</text>
             {markers?.map((mk) => mk.x >= xMin && mk.x <= xMax && (
               <g key={mk.label}>
                 <line x1={sx(mk.x)} x2={sx(mk.x)} y1={m.t} y2={H - m.b} stroke="var(--line-strong)" strokeDasharray="3 3" />
-                <text x={sx(mk.x) + 4} y={m.t + 10} fontSize="10.5" fill="var(--ink-muted)">{mk.label}</text>
+                <text x={sx(mk.x) + 4} y={m.t + 10} fontSize="12" fill="var(--ink-muted)">{mk.label}</text>
               </g>
             ))}
             {series.map((s, i) => {
@@ -86,7 +86,7 @@ export function LineChart({ series, xLabel, yLabel, format, height = 260, marker
               return (
                 <g key={s.key}>
                   <path d={d} fill="none" stroke={COLOR[i]} strokeWidth="2" strokeDasharray={DASH[i]} strokeLinejoin="round" strokeLinecap="round" />
-                  <text x={sx(last.x) + 6} y={sy(last.y) + (i - 1) * 11} dy="0.32em" fontSize="11" fill="var(--ink-muted)">{s.label}</text>
+                  <text x={sx(last.x) + 6} y={sy(last.y) + (i - 1) * 11} dy="0.32em" fontSize="12" fill="var(--ink-muted)">{s.label}</text>
                 </g>
               );
             })}

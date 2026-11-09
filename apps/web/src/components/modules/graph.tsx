@@ -142,7 +142,7 @@ function EntityPanel({ d, onSelect }: { d: EntityDetail; onSelect: (k: string) =
             <li key={e.id} className="rounded-md border border-line p-2.5">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-ink-muted">{e.direction === "out" ? e.predicate_label : `${e.predicate_label} (from)`}</span>
-                <button type="button" className="font-medium text-ink hover:underline" onClick={() => onSelect(e.other_key)}>{e.other_name}</button>
+                <button type="button" className="tap font-medium text-ink hover:underline" onClick={() => onSelect(e.other_key)}>{e.other_name}</button>
                 <ClaimBadge claim={e.relationship_class} />
                 {e.impact_weight !== null && <span className="text-[13px] tabular text-ink-faint" title="Impact weight: analyst assumption used by propagation">w {e.impact_weight}</span>}
               </div>

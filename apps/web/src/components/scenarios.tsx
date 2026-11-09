@@ -179,7 +179,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                             <div className="grid gap-2">
                               {cells.map((c, i) => c && (
                                 <div key={c.id} className="grid gap-1">
-                                  <button type="button" onClick={() => setLineage(c.id)} className="flex items-baseline justify-between gap-2 text-start hover:underline" title="Show how this number was calculated">
+                                  <button type="button" onClick={() => setLineage(c.id)} className="tap flex items-baseline justify-between gap-2 text-start hover:underline" title="Show how this number was calculated">
                                     <span className="text-[13px] text-ink-faint">{runs[i]!.name}</span>
                                     <span className="tabular font-medium">{fmtUnit(c.value, c.unit)}</span>
                                   </button>

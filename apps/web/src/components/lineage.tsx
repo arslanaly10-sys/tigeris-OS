@@ -105,7 +105,7 @@ function LineageBody({ d }: { d: Lineage }) {
           </dl>
           <p className="mt-2 break-all font-mono text-[13px] text-ink-faint" title="SHA-256 of the stored original"><Fingerprint className="me-1 inline size-3" />{e.sha256}</p>
           {e.original_url && (
-            <a href={e.original_url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-[13px] text-accent hover:underline">
+            <a href={e.original_url} target="_blank" rel="noreferrer" className="tap mt-1 inline-flex items-center gap-1 text-[13px] text-accent hover:underline">
               Original location <ExternalLink className="size-3" />
             </a>
           )}

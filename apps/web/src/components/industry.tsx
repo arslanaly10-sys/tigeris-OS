@@ -36,7 +36,7 @@ export function OthersToggle({ count, open, onToggle, className }: { count: numb
 /** A small "In your industry" heading row. */
 export function LensHeading({ industry, count, lang }: { industry: string; count: number; lang: "en" | "ar" }) {
   return (
-    <div className="flex items-center gap-2 border-b border-line bg-surface-2/60 px-4 py-2 text-[13px] text-ink-muted">
+    <div className="flex items-center gap-2 border-b border-line bg-surface-2 px-4 py-2 text-[13px] text-ink-muted">
       <IndustryIcon industry={industry} className="size-4 text-accent" />
       <span>{lang === "ar" ? "في قطاعك" : "In your industry"}: <span className="text-ink">{industryName(industry, lang)}</span></span>
       <span className="ms-auto tabular text-ink-faint">{count}</span>

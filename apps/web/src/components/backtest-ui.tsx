@@ -35,17 +35,17 @@ function DotPlot({ eps }: { eps: Ep[] }) {
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-muted" aria-label="Legend">
           {series.map((s, i) => <li key={s.key} className="flex items-center gap-1.5"><svg width="14" height="14" aria-hidden="true">{mark(s.shape, 7, 7, SERIES_COLOR[i]!)}</svg>{s.label}</li>)}
         </ul>
-        <button type="button" className="text-[13px] text-accent hover:underline" onClick={() => setTable((t) => !t)} aria-pressed={table}>{table ? "Show chart" : "Show table"}</button>
+        <button type="button" className="tap text-[13px] text-accent hover:underline" onClick={() => setTable((t) => !t)} aria-pressed={table}>{table ? "Show chart" : "Show table"}</button>
       </div>
       {!table ? (
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[900px]" role="img" aria-label="Brent price move in the first three trading days for each episode: observed, the prior assumption and the fitted response. A table view is available.">
-          {ticks.map((t) => <g key={t}><line x1={sx(t)} x2={sx(t)} y1={T} y2={H - 26} stroke="var(--line)" /><text x={sx(t)} y={H - 10} textAnchor="middle" fontSize="11" fill="var(--ink-faint)" className="tabular">{t > 0 ? `+${t}` : t}%</text></g>)}
+          {ticks.map((t) => <g key={t}><line x1={sx(t)} x2={sx(t)} y1={T} y2={H - 26} stroke="var(--line)" /><text x={sx(t)} y={H - 10} textAnchor="middle" fontSize="12" fill="var(--ink-faint)" className="tabular">{t > 0 ? `+${t}` : t}%</text></g>)}
           {eps.map((e, r) => {
             const y = T + r * rowH + rowH / 2;
             return (
               <g key={e.key}>
                 <text x={0} y={y - 6} dy="0.32em" fontSize="12" fill="var(--ink)">{e.name.length > 30 ? `${e.name.slice(0, 29)}…` : e.name}</text>
-                <text x={0} y={y + 14} fontSize="10.5" fill="var(--ink-faint)" className="tabular">{e.date.slice(0, 4)} · {num(e.share_pct, 1)}% of supply</text>
+                <text x={0} y={y + 14} fontSize="12" fill="var(--ink-faint)" className="tabular">{e.date.slice(0, 4)} · {num(e.share_pct, 1)}% of supply</text>
                 <line x1={sx(Math.min(...series.map((s) => e[s.key])))} x2={sx(Math.max(...series.map((s) => e[s.key])))} y1={y} y2={y} stroke="var(--line-strong)" />
                 {series.map((s, i) => <g key={s.key}><title>{`${s.label}: ${e[s.key] > 0 ? "+" : ""}${num(e[s.key], 1)}%`}</title>{mark(s.shape, sx(e[s.key]), y, SERIES_COLOR[i]!)}</g>)}
               </g>
@@ -106,7 +106,7 @@ export function BacktestPanel() {
             </dl>
             <DotPlot eps={latest.episodes} />
             <p className="text-[13px] text-ink-faint">{latest.method} {latest.metrics.episodes} episodes; few and varied, so calibration is rated medium, not high. Run by {latest.run_by_label} · {formatDate(latest.created_at, true)} · <span className={cn(latest.status === "adopted" ? "text-ok" : "text-warn")}>{latest.status}</span>.
-              {" "}Lineage: <button type="button" className="text-accent hover:underline" onClick={() => show(latest.episodes[0]!.fact_ids[0]!)}>a Brent price fact</button> · <button type="button" className="text-accent hover:underline" onClick={() => show(latest.episodes[0]!.assumption_fact_ids[0]!)}>an episode assumption</button></p>
+              {" "}Lineage: <button type="button" className="tap text-accent hover:underline" onClick={() => show(latest.episodes[0]!.fact_ids[0]!)}>a Brent price fact</button> · <button type="button" className="tap text-accent hover:underline" onClick={() => show(latest.episodes[0]!.assumption_fact_ids[0]!)}>an episode assumption</button></p>
             {latest.status === "proposed" && s.principal.role === "domain_expert" && (
               <div className="flex flex-wrap items-end gap-2"><label className="grid flex-1 gap-1 text-[13px] text-ink-muted">Reason to adopt<input autoComplete="off" id="adopt-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label><Button size="sm" variant="primary" onClick={() => adopt(latest.id)}><FlaskConical />Adopt calibration</Button></div>
             )}

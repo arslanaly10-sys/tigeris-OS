@@ -86,7 +86,7 @@ export function CheckedText({ text, sources, className }: { text: Sentence[]; so
               {t.status === "unverified" && <span className="me-1 align-[1px] text-[13px] font-medium tracking-wide" title={t.reason}>Unverified</span>}
               {clean}
               {t.tags.map((tag) => (
-                <button key={tag} type="button" onClick={() => setOpen(open === `${i}:${tag}` ? null : `${i}:${tag}`)} aria-expanded={open === `${i}:${tag}`} className="mx-0.5 rounded bg-surface-3 px-1 align-[1px] font-mono text-[13px] text-accent hover:underline">{tag}</button>
+                <button key={tag} type="button" onClick={() => setOpen(open === `${i}:${tag}` ? null : `${i}:${tag}`)} aria-expanded={open === `${i}:${tag}`} className="tap mx-0.5 rounded bg-surface-3 px-1 align-[1px] font-mono text-[13px] text-accent hover:underline">{tag}</button>
               ))}
               {" "}
             </span>
@@ -101,8 +101,8 @@ export function CheckedText({ text, sources, className }: { text: Sentence[]; so
           <div className="rounded-md border border-line bg-surface-2 p-2.5 text-[13px]">
             <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-ink">{s.tag} · {s.label}</span><Badge>{s.kind.replace("_", " ")}</Badge></div>
             <p className="mt-1 text-ink-muted">{s.text}</p>
-            {s.kind === "fact" && s.ref && <button type="button" className="mt-1 text-accent hover:underline" onClick={() => showFact(s.ref!)}>Open source lineage</button>}
-            {s.kind === "scenario_result" && s.ref && <button type="button" className="mt-1 text-accent hover:underline" onClick={() => setResultId(s.ref)}>Open calculation lineage</button>}
+            {s.kind === "fact" && s.ref && <button type="button" className="tap mt-1 text-accent hover:underline" onClick={() => showFact(s.ref!)}>Open source lineage</button>}
+            {s.kind === "scenario_result" && s.ref && <button type="button" className="tap mt-1 text-accent hover:underline" onClick={() => setResultId(s.ref)}>Open calculation lineage</button>}
             {t?.status === "unverified" && <p className="mt-1 text-warn">Not verified: {t.reason}</p>}
           </div>
         ) : null;
@@ -235,7 +235,7 @@ function StepCard({ s, calls }: { s: Step; calls: Call[] }) {
       <p className="text-[13px] text-ink-muted">{s.agent_key === "sector" ? s.title.split(": ").slice(1).join(": ") : s.title}</p>
       <CheckedText text={s.text} sources={s.sources} className="text-[13.5px]" />
       {s.fallback_reason && <p className="flex gap-1.5 text-[13px] text-ink-faint"><AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warn" />{s.fallback_reason}</p>}
-      <button type="button" onClick={() => setTrace((t) => !t)} aria-expanded={trace} className="flex items-center gap-1 justify-self-start text-[13px] text-accent hover:underline">{trace ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Run trace</button>
+      <button type="button" onClick={() => setTrace((t) => !t)} aria-expanded={trace} className="tap flex items-center gap-1 justify-self-start text-[13px] text-accent hover:underline">{trace ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Run trace</button>
       {trace && (
         <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-2.5 text-[13px]">
           <div><div className="mb-1 font-medium">Tool calls</div>
@@ -346,7 +346,7 @@ function OptionCard({ r, onChange }: { r: Rec; onChange: () => void }) {
             <ul className="list-disc ps-4 text-ink-muted">{r.constraints.map((c) => <li key={c}>{c}</li>)}</ul>
           </div>
         </div>
-        <button type="button" onClick={() => setDetails((x) => !x)} aria-expanded={details} className="flex items-center gap-1 justify-self-start text-[13px] text-accent hover:underline">{details ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Policy checks, score and feedback</button>
+        <button type="button" onClick={() => setDetails((x) => !x)} aria-expanded={details} className="tap flex items-center gap-1 justify-self-start text-[13px] text-accent hover:underline">{details ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Policy checks, score and feedback</button>
         {details && (
           <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-3 text-[13px]">
             <ul className="grid gap-1">{r.governance.checks.map((c) => <li key={c.rule} className="grid grid-cols-[150px_56px_1fr] gap-2"><span className="text-ink-muted">{RULE_LABEL[c.rule] ?? c.rule}</span><span className={c.result === "PASS" ? "text-ok" : "text-warn"}>{c.result}</span><span className="text-ink-faint">{c.detail}</span></li>)}</ul>

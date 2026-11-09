@@ -159,6 +159,21 @@ Patterns adopted across the app:
   `content-visibility`.
 - A skip link leads to the main content; sticky bars never cover a focused field.
 
+### UI/UX Pro Max checks (version 2.1)
+
+The app is also checked against UI/UX Pro Max (`.claude/skills/ui-ux-pro-max`), used as a quality
+checklist only: the navy and gold look, fonts and layout are unchanged.
+
+- **Contrast.** Every text token is at least 4.5:1 on every surface in both themes, and status text on its own
+  soft fill. `apps/web/test/contrast.test.ts` reads the tokens from `globals.css` and fails the build if one drops.
+  Light-mode faint text, accent, success and warning were darkened; the notification count uses `--on-crit`.
+- **Target size.** Desktop keeps the dense layout with a 24px minimum (WCAG 2.2 2.5.8). On touch screens
+  (`pointer: coarse`) buttons, tabs, fields and map controls are 44px. Small text links and map markers use
+  `.tap`, which enlarges the hit area without moving the layout.
+- **Text size.** Nothing is smaller than 12px, including chart axes, the architecture diagram and the wordmark.
+- **Phones.** Sign-in fits at 375px; Command Centre, Signals, Cases, case detail and the Movement Map are tuned
+  for phones (the map's layer list starts collapsed). Other modules stay readable with no sideways scroll.
+
 Deliberate deviations: headings and buttons use **sentence case**, not Title Case (house style, and
 consistent with the Arabic screens). Fonts are bundled with the app and use `font-display: swap`;
 there is no CDN to preconnect to.
@@ -205,7 +220,7 @@ What the app takes from it:
 Where the app departs from the skill, and why:
 
 - **Density.** Tables and lists use 13–14px text and 40px buttons (36px small), not the skill's 16px body and 44px
-  buttons: analysts work through dense tables. Tap targets stay 40px or more on touch layouts.
+  buttons: analysts work through dense tables. Touch screens get 44px targets (see UI/UX Pro Max below).
 - **Layout.** No one-section-per-screen rhythm, full-screen hero or footer close: those are for marketing pages.
 - **Panel labels.** Small sentence-case labels group panels on dashboards (copy-lint warns about eyebrows).
 - **Sticky case tabs** stay, opaque, under the header: long cases need them in reach.

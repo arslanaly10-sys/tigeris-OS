@@ -24,7 +24,7 @@ export function PrecedentList({ hits, semantic, empty, onOpen }: { hits: Hit[]; 
       {hits.map((h) => (
         <li key={h.id} className="grid gap-1 rounded-md border border-line p-3 text-[13px]">
           <div className="flex flex-wrap items-center gap-2">
-            {onOpen ? <button type="button" onClick={() => onOpen(h.id)} className="text-start font-medium hover:underline">{h.title}</button> : <span className="font-medium">{h.title}</span>}
+            {onOpen ? <button type="button" onClick={() => onOpen(h.id)} className="tap text-start font-medium hover:underline">{h.title}</button> : <span className="font-medium">{h.title}</span>}
             <Badge tone={CLAIM_TONE[h.claim_class] ?? "neutral"} title={h.source_label}>{h.claim_class}</Badge>
             <span className="ms-auto flex gap-1">{h.matchedBy.map((m) => <Badge key={m} tone={m === "meaning" ? "gold" : "neutral"} title={m === "meaning" ? `Similarity ${h.similarity}` : `Keyword rank ${h.keywordRank}`}>{m === "meaning" ? `meaning ${num(h.similarity ?? 0, 2)}` : "keyword"}</Badge>)}</span>
           </div>
@@ -101,7 +101,7 @@ export function MemoryModule() {
               {overview?.proposed.map((x) => (
                 <div key={x.id} className="grid gap-1 rounded-md border border-line p-3">
                   <div className="font-medium">{x.title}</div>
-                  <div className="text-ink-faint">{x.case_key && <Link href={`/cases/${x.case_key}`} className="text-accent hover:underline">{x.case_key}</Link>} · proposed by {x.proposed_by_label} · {formatDate(x.created_at, true)}</div>
+                  <div className="text-ink-faint">{x.case_key && <Link href={`/cases/${x.case_key}`} className="tap text-accent hover:underline">{x.case_key}</Link>} · proposed by {x.proposed_by_label} · {formatDate(x.created_at, true)}</div>
                   <p className="text-ink-muted">{x.summary}</p>
                   {can("decision.approve") && <div className="mt-1 flex flex-wrap gap-2"><input autoComplete="off" id={`review-${x.id}`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Accurate record of the case…" aria-label="Reason" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2" /><Button size="sm" variant="primary" aria-label="Approve memory entry" onClick={() => review(x.id, true)}>Approve</Button><Button size="sm" variant="ghost" onClick={() => review(x.id, false)}>Reject</Button></div>}
                 </div>

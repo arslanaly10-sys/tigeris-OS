@@ -32,7 +32,7 @@ export function DomainsModule() {
               <Badge tone={TONE[d.status]}>{d.status}</Badge>
             </div>
             <p className="text-[13.5px] text-ink-muted">{d.description}</p>
-            <div className="flex flex-wrap gap-1.5">{d.entity_types.map((t) => <Link key={t} href={`/graph?focus=`} className="pointer-events-none"><Badge>{typeLabel(t)}</Badge></Link>)}</div>
+            <div className="flex flex-wrap gap-1.5">{d.entity_types.map((t) => <Badge key={t}>{typeLabel(t)}</Badge>)}</div>
             <div className="flex gap-4 text-[13px] text-ink-muted tabular"><span>{d.entities.toLocaleString("en-GB")} entities</span><span>{d.cases} cases</span></div>
           </Panel>
         ))}

@@ -283,7 +283,7 @@ function ImportsView({ onChanged, onOpenEvidence }: { onChanged: () => void; onO
                   {j.result.files.filter((f) => f.outcome !== "accepted").map((f) => (
                     <li key={f.name} className="flex flex-wrap items-center gap-2 text-[13px]">
                       <ValidationBadge state={f.outcome} />
-                      <button type="button" className="text-ink underline-offset-2 hover:underline" onClick={() => f.evidenceId && onOpenEvidence(f.evidenceId)}>{f.title}</button>
+                      <button type="button" className="tap text-ink underline-offset-2 hover:underline" onClick={() => f.evidenceId && onOpenEvidence(f.evidenceId)}>{f.title}</button>
                     </li>
                   ))}
                 </ul>
@@ -316,7 +316,7 @@ function EvidenceView({ onOpen }: { onOpen: (id: string) => void }) {
             <tbody>
               {data.evidence.map((e) => (
                 <tr key={e.id} className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-surface-2" onClick={() => onOpen(e.id)}>
-                  <td className="px-4 py-2.5"><button type="button" className="text-start font-medium hover:underline">{e.title}</button><div className="text-[13px] text-ink-faint">{e.media_type} · {formatBytes(e.size_bytes)}{e.duplicate_of ? " · duplicate" : ""}</div></td>
+                  <td className="px-4 py-2.5"><button type="button" className="tap text-start font-medium hover:underline">{e.title}</button><div className="text-[13px] text-ink-faint">{e.media_type} · {formatBytes(e.size_bytes)}{e.duplicate_of ? " · duplicate" : ""}</div></td>
                   <td className="px-4 py-2.5 text-ink-muted">{e.source_name}</td>
                   <td className="px-4 py-2.5"><ValidationBadge state={e.validation_state} /></td>
                   <td className="px-4 py-2.5"><ClaimBadge claim={e.data_class === "public" ? "observed" : e.data_class} /></td>

@@ -77,7 +77,7 @@ export default function SignInPage() {
       <aside className="relative hidden flex-col justify-between overflow-hidden border-e border-line bg-surface px-12 py-10 lg:flex">
         <ShipBackdrop />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--surface)_92%,transparent)_0%,color-mix(in_oklab,var(--surface)_55%,transparent)_42%,transparent_70%)]" />
-        <span className="absolute bottom-[84px] end-12 z-[1] rounded border border-line-strong bg-surface/80 px-2 py-1 text-[13px] text-ink-muted">Simulated ships and flights, Riyadh time</span>
+        <span className="absolute bottom-[84px] end-12 z-[1] rounded border border-line-strong bg-surface px-2 py-1 text-[13px] text-ink-muted">Simulated ships and flights, Riyadh time</span>
         <div className="relative"><Wordmark size="lg" /></div>
         <div className="relative max-w-lg space-y-5">
           <p className="eyebrow text-accent">{t("product.descriptor")}</p>
@@ -94,10 +94,10 @@ export default function SignInPage() {
       </aside>
 
       {/* Access side */}
-      <main className="flex flex-col px-[max(16px,env(safe-area-inset-left,0px))] py-8 sm:px-10">
-        <div className="flex items-center justify-between gap-3">
+      <main className="flex min-w-0 flex-col px-[max(16px,env(safe-area-inset-left,0px))] py-8 sm:px-10">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="lg:hidden"><Wordmark /></div>
-          <div className="ms-auto flex items-center gap-2">
+          <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
             <Badge tone="gold">{t("header.demo")}</Badge>
             <PrefToggles />
           </div>
@@ -238,7 +238,7 @@ export default function SignInPage() {
               </label>
               <div id="mfa-demo" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed border-line px-3 py-2 text-[13px] text-ink-muted">
                 <span>{t("signin.demoCode")} ({t("signin.simulated")}): <span translate="no" className="font-mono text-ink tabular">{demoCode}</span></span>
-                <button type="button" className="text-accent underline-offset-2 hover:underline" onClick={() => setCode(demoCode)}>{t("signin.useCode")}</button>
+                <button type="button" className="tap text-accent underline-offset-2 hover:underline" onClick={() => setCode(demoCode)}>{t("signin.useCode")}</button>
               </div>
               <Button type="submit" size="lg" variant="primary" disabled={busy || code.length !== 6}>{t("signin.verify")}</Button>
             </form>
