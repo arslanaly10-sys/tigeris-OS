@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { canonicalJson } from "@tigeris/shared";
 import type { Tx } from "./db";
 
 export const GENESIS_HASH = "0".repeat(64);
@@ -30,16 +31,8 @@ interface ChainFields {
   details: unknown;
 }
 
-/** Stable JSON: object keys sorted recursively, so the hash does not depend on key order. */
-export function canonical(value: unknown): string {
-  if (value === null || typeof value !== "object") return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
-  const obj = value as Record<string, unknown>;
-  return `{${Object.keys(obj).sort().map((k) => `${JSON.stringify(k)}:${canonical(obj[k])}`).join(",")}}`;
-}
-
 export function chainHash(prevHash: string, fields: ChainFields): string {
-  return createHash("sha256").update(prevHash).update(canonical(fields)).digest("hex");
+  return createHash("sha256").update(prevHash).update(canonicalJson(fields)).digest("hex");
 }
 
 /**

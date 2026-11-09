@@ -10,7 +10,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createHash, createPublicKey } from "node:crypto";
 import { SOURCE_CATALOG } from "../evidence/catalog";
-import { enqueue, drainQueue } from "../evidence/jobs";
+import { enqueue, processNext } from "../evidence/jobs";
 import { allBundledPackages } from "../routes/evidence";
 import { withTenant } from "../db";
 import { seedStoryline } from "../workflow/storyline";
@@ -152,7 +152,9 @@ export async function resetDemo() {
     }
     await c.query("ALTER SEQUENCE case_number_seq RESTART WITH 1");
     await c.query("COMMIT");
-    await drainQueue();
+    // Refresh table statistics after each import: straight after the truncate the planner thinks the tables are
+    // empty and picks plans that take minutes once they fill (this made resets, and test setup, slow and flaky).
+    while (await processNext()) await c.query("ANALYZE evidence_facts, evidence_objects, entities, entity_relationships");
     // Storyline after the graph exists: signals and cases link to entities and evidence.
     for (const inst of DEMO_INSTITUTIONS) {
       await withTenant(inst.id, async (tx) => {

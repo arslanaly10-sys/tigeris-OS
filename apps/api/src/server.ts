@@ -25,6 +25,9 @@ export async function buildApp() {
     if (err instanceof ZodError) {
       return reply.code(400).send({ error: "invalid_request", message: "Some fields are missing or invalid.", issues: err.issues.map((i) => i.path.join(".")) });
     }
+    if ((err as { code?: string }).code === "FST_ERR_CTP_BODY_TOO_LARGE") {
+      return reply.code(413).send({ error: "too_large", message: "The file is larger than the upload limit for this kind of file." });
+    }
     app.log.error(err);
     // Never expose stack traces or internals to the client (TRD §11.2).
     return reply.code(500).send({ error: "internal", message: "Something went wrong on the server. The error was logged." });

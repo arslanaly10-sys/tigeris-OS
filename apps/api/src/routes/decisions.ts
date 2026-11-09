@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { withTenant } from "../db";
-import { appendAudit, canonical, verifyChain } from "../audit";
+import { canonicalJson } from "@tigeris/shared";
+import { appendAudit, verifyChain } from "../audit";
 import { requirePermission, type Principal } from "../session";
 import { approveDecision, decisionDrift, recordDecision, replayDecision, updateHandoff } from "../workflow/decisions";
 import { activePolicy, brief, decide } from "../policy/store";
@@ -166,8 +167,8 @@ export async function decisionRoutes(app: FastifyInstance) {
       const prev = (await tx.query("SELECT id, version, compiled FROM policy_versions WHERE status = 'active'")).rows[0];
       await tx.query("UPDATE policy_versions SET status = 'retired' WHERE status = 'active'");
       await tx.query("UPDATE policy_versions SET status = 'active', activated_by_label = $2, activated_at = now(), test_results = $3, tests_passed = true WHERE id = $1", [id, p.displayName, JSON.stringify(tests)]);
-      const before = new Map<string, string>((prev?.compiled.rules ?? []).map((r: { id: string }) => [r.id, canonical(r)]));
-      const after = new Map<string, string>(c.policy!.rules.map((r) => [r.id, canonical(r)]));
+      const before = new Map<string, string>((prev?.compiled.rules ?? []).map((r: { id: string }) => [r.id, canonicalJson(r)]));
+      const after = new Map<string, string>(c.policy!.rules.map((r) => [r.id, canonicalJson(r)]));
       const diff = { added: [...after.keys()].filter((k) => !before.has(k)), removed: [...before.keys()].filter((k) => !after.has(k)), changed: [...after.keys()].filter((k) => before.has(k) && before.get(k) !== after.get(k)) };
       await appendAudit(tx, p.institutionId, { actorType: "human", actorId: p.principalId, actorLabel: p.displayName, actorRole: p.role, action: "policy.activated", resourceType: "policy_version", resourceId: id, details: { version: v.version, previous: prev?.version ?? null, hash: v.content_hash, reason, ...diff } });
       return { version: v.version, previous: prev?.version ?? null, ...diff };

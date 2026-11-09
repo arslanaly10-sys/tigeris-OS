@@ -123,12 +123,18 @@ async function ingestOne(tx: Tx, job: Job, c: Candidate): Promise<FileOutcome> {
  * different sources that disagree beyond a tolerance. Both values are kept; the newer evidence is flagged.
  */
 async function flagConflicts(tx: Tx, job: Job): Promise<number> {
+  // The facts this import just inserted are not in the table statistics yet, so the planner can guess "few rows"
+  // and choose a nested loop that compares every fact with every other (minutes). A hash or merge join is fast at
+  // any size, so nested loops are off for this one query and back on right after.
+  await tx.query("SET LOCAL enable_nestloop = off");
   const rows = (await tx.query(
     `SELECT a.evidence_id, a.subject_label, a.predicate_label, a.period, a.value_num AS a_val, b.value_num AS b_val, a.unit,
             sa.name AS a_source, sb.name AS b_source, b.id AS other_fact
        FROM evidence_facts a
        JOIN evidence_objects ea ON ea.id = a.evidence_id AND ea.ingestion_job_id = $1
-       JOIN evidence_facts b ON b.predicate = a.predicate AND b.subject = a.subject AND b.period = a.period AND b.id <> a.id
+       -- institution_id is implied by row-level security; stating it lets the (institution, predicate, subject, period)
+       -- index serve this join.
+       JOIN evidence_facts b ON b.institution_id = a.institution_id AND b.predicate = a.predicate AND b.subject = a.subject AND b.period = a.period AND b.id <> a.id
        JOIN evidence_objects eb ON eb.id = b.evidence_id AND eb.source_id <> ea.source_id
        JOIN sources sa ON sa.id = ea.source_id JOIN sources sb ON sb.id = eb.source_id
       WHERE a.value_num IS NOT NULL AND b.value_num IS NOT NULL AND a.qualifier IS NULL AND b.qualifier IS NULL
@@ -136,6 +142,7 @@ async function flagConflicts(tx: Tx, job: Job): Promise<number> {
         AND sa.name < sb.name`,
     [job.id],
   )).rows;
+  await tx.query("SET LOCAL enable_nestloop = on");
   const byEvidence = new Map<string, typeof rows>();
   for (const r of rows) byEvidence.set(r.evidence_id, [...(byEvidence.get(r.evidence_id) ?? []), r]);
   for (const [evidenceId, list] of byEvidence) {

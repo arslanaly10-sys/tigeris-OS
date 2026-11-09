@@ -97,6 +97,14 @@ describe("air-gap package verification (TR-017, Q092)", () => {
     expect(job.error).toMatch(/does not trust/);
   });
 
+  it("refuses a document over the 15 MB limit at upload, before storing it", async () => {
+    const cookie = await signIn(GSF.id, "analyst");
+    const big = Buffer.concat([Buffer.from("%PDF-1.7\n"), Buffer.alloc(16 * 1024 * 1024)]);
+    const { res } = await upload(cookie, "/evidence/documents", big, "too-big.pdf", "application/pdf");
+    expect(res.statusCode).toBe(413);
+    expect(res.json().message).toMatch(/larger than the upload limit/);
+  });
+
   it("rejects a small package that would expand past the size limit, without taking the API down", async () => {
     const cookie = await signIn(GSF.id, "administrator");
     // Fourteen gzip members of 16 MB of zeros: about 0.2 MB on the wire, 224 MB once decompressed.

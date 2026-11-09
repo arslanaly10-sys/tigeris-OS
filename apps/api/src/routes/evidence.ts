@@ -6,6 +6,7 @@ import { withTenant } from "../db";
 import { appendAudit } from "../audit";
 import { requirePermission } from "../session";
 import { enqueue } from "../evidence/jobs";
+import { MAX_DOCUMENT_BYTES } from "../evidence/validate";
 
 const DATA_DIR = path.resolve(import.meta.dirname, "../../../../data");
 const PACKAGES = path.join(DATA_DIR, "packages");
@@ -29,7 +30,8 @@ export async function allBundledPackages(): Promise<string[]> {
 
 export async function evidenceRoutes(app: FastifyInstance) {
   for (const type of ["application/octet-stream", "application/pdf", "application/gzip"]) {
-    app.addContentTypeParser(type, { parseAs: "buffer", bodyLimit: 60 * 1024 * 1024 }, (_req, body, done) => done(null, body));
+    // No limit here: each upload route sets its own, so a document cannot use the larger package limit.
+    app.addContentTypeParser(type, { parseAs: "buffer" }, (_req, body, done) => done(null, body));
   }
 
   app.get("/sources", { preHandler: requirePermission("evidence.read") }, async (req) => {
@@ -65,7 +67,7 @@ export async function evidenceRoutes(app: FastifyInstance) {
   });
 
   /** Air-gap import: a signed transfer package carried in from outside the boundary (TR-017, Q092). */
-  app.post("/sources/packages", { preHandler: requirePermission("source.manage") }, async (req, reply) => {
+  app.post("/sources/packages", { preHandler: requirePermission("source.manage"), bodyLimit: 60 * 1024 * 1024 }, async (req, reply) => {
     const p = req.principal!;
     if (!Buffer.isBuffer(req.body) || req.body.length === 0) return reply.code(400).send({ error: "empty", message: "Choose a .tigpkg file to import." });
     const body = req.body;
@@ -82,7 +84,7 @@ export async function evidenceRoutes(app: FastifyInstance) {
   });
 
   /** Live document upload by an analyst or presenter (Q051, Q052). */
-  app.post("/evidence/documents", { preHandler: requirePermission("evidence.upload") }, async (req, reply) => {
+  app.post("/evidence/documents", { preHandler: requirePermission("evidence.upload"), bodyLimit: MAX_DOCUMENT_BYTES }, async (req, reply) => {
     const p = req.principal!;
     if (!Buffer.isBuffer(req.body) || req.body.length === 0) return reply.code(400).send({ error: "empty", message: "Choose a PDF to upload." });
     const body = req.body;

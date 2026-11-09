@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Tx } from "../db";
-import { appendAudit, canonical } from "../audit";
+import { canonicalJson } from "@tigeris/shared";
+import { appendAudit } from "../audit";
 import { evaluate, compile, approvalFor } from "../policy/engine";
 import { activePolicy, brief, decide } from "../policy/store";
 import { buildPayload, engine, type EngineResult } from "../routes/scenarios";
@@ -13,7 +14,7 @@ import { notifyRole } from "./notify";
  * can be replayed and checked for drift. Approval creates operations handoff tasks; nothing executes.
  */
 export interface Actor { id: string; label: string; role: string }
-const sha = (v: unknown) => createHash("sha256").update(canonical(v)).digest("hex");
+const sha = (v: unknown) => createHash("sha256").update(canonicalJson(v)).digest("hex");
 
 async function recommendationFor(tx: Tx, caseId: string, recId: string) {
   return (await tx.query(
