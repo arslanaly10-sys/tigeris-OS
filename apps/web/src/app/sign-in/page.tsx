@@ -74,7 +74,8 @@ export default function SignInPage() {
   return (
     <div className="grid min-h-full lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,1fr)]">
       {/* Brand side */}
-      <aside className="relative hidden flex-col justify-between overflow-hidden border-e border-line bg-surface px-12 py-10 lg:flex">
+      {/* The ship map is dark in both themes, so the hero over it always uses the dark tokens (text stays legible). */}
+      <aside data-theme="dark" className="relative hidden flex-col justify-between overflow-hidden border-e border-line bg-surface px-12 py-10 text-ink lg:flex">
         <ShipBackdrop />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--surface)_92%,transparent)_0%,color-mix(in_oklab,var(--surface)_55%,transparent)_42%,transparent_70%)]" />
         <span className="absolute bottom-[84px] end-12 z-[1] rounded border border-line-strong bg-surface px-2 py-1 text-[13px] text-ink-muted">Simulated ships and flights, Riyadh time</span>

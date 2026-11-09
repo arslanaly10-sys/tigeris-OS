@@ -177,6 +177,10 @@ Patterns adopted across the app:
 grids so wide tables scroll within them on phones, placeholders use ink-subtle, long names wrap, and page
 descriptions are capped at about 70 characters a line (`max-w-[46ch]`; Host Grotesk's narrow "0" makes 46ch about
 70 characters). The policy editor's bordered frame is a text field, not a nested card, and stays.
+A second audit (both themes) scored 16/20. Its fixes: the sign-in hero keeps the dark tokens in both themes, because
+the ship map behind it is always dark (light-theme text had dropped to 2.5:1 over it), and the last long case paragraph
+is capped. The light canvas (`#f6f5f0`, the Foundation palette) is flagged by Impeccable's `cream-palette` rule; it is
+a deliberate brand choice, documented here. The rule stays on: turning it off project-wide is the owner's decision.
 
 ### UI/UX Pro Max checks (version 2.1)
 

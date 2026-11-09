@@ -145,7 +145,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
           <Panel className="grid gap-4 p-5 text-[14px]">
             <div><div className="eyebrow mb-1 text-ink-faint">What changed</div><p className="max-w-[48ch]">{c.situation}</p></div>
-            <div><div className="eyebrow mb-1 text-ink-faint">Why it matters</div><p>{c.why_it_matters}</p></div>
+            <div><div className="eyebrow mb-1 text-ink-faint">Why it matters</div><p className="max-w-[48ch]">{c.why_it_matters}</p></div>
             {c.open_questions.length > 0 && <div><div className="eyebrow mb-1 text-ink-faint">Unresolved questions</div><ul className="grid list-disc gap-1 ps-5">{c.open_questions.map((q) => <li key={q}>{q}</li>)}</ul></div>}
           </Panel>
           <div className="grid h-fit gap-5">
