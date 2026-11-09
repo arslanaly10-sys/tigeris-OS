@@ -16,6 +16,7 @@ import { CasesList } from "@/components/modules/cases";
 import { DomainsModule } from "@/components/modules/domains";
 import { MapModule } from "@/components/modules/map";
 import { ScenariosModule } from "@/components/modules/scenarios-module";
+import { SovereigntyModule } from "@/components/modules/sovereignty";
 
 const CUSTOM: Record<string, () => React.ReactNode> = {
   "command-centre": () => <CommandCentre />,
@@ -33,6 +34,7 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
   memory: () => <MemoryModule />,
   reports: () => <ReportsModule />,
   architecture: () => <ArchitecturePage />,
+  sovereignty: () => <Suspense><SovereigntyModule /></Suspense>,
 };
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {

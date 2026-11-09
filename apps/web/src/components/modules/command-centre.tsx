@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, FolderKanban, Inbox, Map as MapIcon, MinusCircle, RadioTower, ShieldAlert, FileSearch } from "lucide-react";
 import { api } from "@/lib/api";
+import { SovereigntyPanel } from "./sovereignty";
 import { LensHeading, OthersToggle, splitByIndustry } from "../industry";
 import { formatDate } from "@/lib/format";
 import { ModeBadge, URGENCY_TONE } from "./signals";
@@ -79,10 +80,13 @@ export function CommandCentre() {
     <>
       <PageHeader nav="nav.command-centre" description={`Good to see you, ${s.principal.name.split(" ")[0]}. This is where items that need your attention will appear, with the reason each one is surfaced.`} />
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-        <Panel>
-          <PanelHeader eyebrow={t("cc.attentionEyebrow")} title={t("cc.attention")} />
-          <AttentionQueue />
-        </Panel>
+        <div className="grid content-start gap-5">
+          <Panel>
+            <PanelHeader eyebrow={t("cc.attentionEyebrow")} title={t("cc.attention")} />
+            <AttentionQueue />
+          </Panel>
+          <SovereigntyPanel />
+        </div>
         <Panel>
           <PanelHeader eyebrow={t("cc.mapEyebrow")} title={t("cc.map")} />
           <div className="p-3"><MovementMapLazy compact /></div>

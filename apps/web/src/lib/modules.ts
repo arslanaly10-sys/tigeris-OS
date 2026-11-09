@@ -94,6 +94,12 @@ export const MODULES: ModuleDef[] = [
     requirements: ["FR-06", "FR-08", "TR-017"],
   },
   {
+    slug: "sovereignty", nav: "nav.sovereignty", group: "control", icon: "Landmark",
+    purpose: "What stays inside the institution's control, layer by layer, checked live; keys and cryptography with the pilot plan.",
+    arrives: [{ week: 9, items: ["Sovereignty stack with live checks", "Keys and cryptography inventory", "Pilot plan for HSM, confidential computing and post-quantum cryptography"] }],
+    requirements: ["Q063", "TR-046"],
+  },
+  {
     slug: "governance", nav: "nav.governance", group: "control", icon: "ShieldCheck",
     purpose: "Audit trail, isolation checks, policy rules and sovereignty controls.",
     arrives: [{ week: 6, items: ["Offline switch, outbound blocking and model allowlist"] }, { week: 7, items: ["Policy-as-code editor with tests", "Decision replay from the audit trail", "Security posture page"] }],
