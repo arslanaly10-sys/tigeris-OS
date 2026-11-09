@@ -52,11 +52,11 @@ export function GraphModule() {
     <>
       <PageHeader nav="nav.graph" description="One shared map of the institution's world: places, infrastructure, routes, sanctioned vessels and the institution's own holdings. Every link says whether it is observed, sourced, inferred, assumed or synthetic, and opens its evidence." />
       {stats?.snapshot && (
-        <div className="mb-4 flex flex-wrap items-center gap-2 text-[12.5px] text-ink-muted">
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-ink-muted">
           <Badge tone="info" className="tabular">{stats.snapshot.entity_count.toLocaleString("en-GB")} entities</Badge>
           <Badge className="tabular">{stats.snapshot.relationship_count.toLocaleString("en-GB")} relationships</Badge>
           <span>{totals}</span>
-          <span translate="no" className="font-mono text-[11px] text-ink-faint">snapshot {stats.snapshot.content_hash.slice(0, 12)}</span>
+          <span translate="no" className="font-mono text-[13px] text-ink-faint">snapshot {stats.snapshot.content_hash.slice(0, 12)}</span>
         </div>
       )}
       <div className="mb-5"><GraphAsk /></div>
@@ -72,8 +72,8 @@ export function GraphModule() {
             {list.map((e) => (
               <li key={e.key}>
                 <button type="button" onClick={() => select(e.key)} className={cn("flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-start text-[13px] hover:bg-surface-2", e.key === focus && "bg-primary-soft")}>
-                  <span className="min-w-0"><span className="block truncate">{e.name}</span><span className="text-[11px] text-ink-faint">{typeLabel(e.type)}</span></span>
-                  <span className="text-[11px] tabular text-ink-faint">{e.degree}</span>
+                  <span className="min-w-0"><span className="block truncate">{e.name}</span><span className="text-[13px] text-ink-faint">{typeLabel(e.type)}</span></span>
+                  <span className="text-[13px] tabular text-ink-faint">{e.degree}</span>
                 </button>
               </li>
             ))}
@@ -89,7 +89,7 @@ export function GraphModule() {
             {hood ? <GraphCanvas nodes={hood.nodes} edges={hood.edges} origin={hood.origin} onSelect={select} /> : <div className="h-[520px] animate-pulse rounded bg-surface-2" />}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <EdgeLegend />
-              <span className="text-[12px] text-ink-faint">{hood ? `${hood.nodes.length} entities shown · sanctioned vessels hidden here` : ""}</span>
+              <span className="text-[13px] text-ink-faint">{hood ? `${hood.nodes.length} entities shown · sanctioned vessels hidden here` : ""}</span>
             </div>
           </div>
         </Panel>
@@ -136,7 +136,7 @@ function EntityPanel({ d, onSelect }: { d: EntityDetail; onSelect: (k: string) =
         </dl>
       )}
       <div>
-        <div className="mb-1.5 font-semibold">Links ({d.edges.length})</div>
+        <div className="mb-1.5 font-medium">Links ({d.edges.length})</div>
         <ul className="grid gap-2">
           {d.edges.slice(0, 60).map((e) => (
             <li key={e.id} className="rounded-md border border-line p-2.5">
@@ -144,9 +144,9 @@ function EntityPanel({ d, onSelect }: { d: EntityDetail; onSelect: (k: string) =
                 <span className="text-ink-muted">{e.direction === "out" ? e.predicate_label : `${e.predicate_label} (from)`}</span>
                 <button type="button" className="font-medium text-ink hover:underline" onClick={() => onSelect(e.other_key)}>{e.other_name}</button>
                 <ClaimBadge claim={e.relationship_class} />
-                {e.impact_weight !== null && <span className="text-[11px] tabular text-ink-faint" title="Impact weight: analyst assumption used by propagation">w {e.impact_weight}</span>}
+                {e.impact_weight !== null && <span className="text-[13px] tabular text-ink-faint" title="Impact weight: analyst assumption used by propagation">w {e.impact_weight}</span>}
               </div>
-              {e.evidence?.map((ev, i) => <p key={i} className="mt-1 text-[12px] text-ink-faint">{ev.source}{ev.note ? `: ${ev.note}` : ""}</p>)}
+              {e.evidence?.map((ev, i) => <p key={i} className="mt-1 text-[13px] text-ink-faint">{ev.source}{ev.note ? `: ${ev.note}` : ""}</p>)}
             </li>
           ))}
         </ul>
@@ -162,28 +162,28 @@ export function PathList({ paths, onSelect }: { paths: Paths; onSelect?: (k: str
       <p className="text-ink-muted">If <span className="font-medium text-ink">{paths.origin.name}</span> is disrupted, these are reached through the graph, strongest first. Path strength multiplies link weights, which are analyst assumptions until calibrated.</p>
       {byDepth.map((hops, i) => (
         <div key={i}>
-          <div className="mb-1.5 flex items-center gap-2 font-semibold"><GitBranch className="size-4 text-accent" />{i === 0 ? "Direct effects" : i === 1 ? "Second-order effects" : i === 2 ? "Third-order effects" : `Order ${i + 1}`}<Badge className="tabular">{hops.length}</Badge></div>
+          <div className="mb-1.5 flex items-center gap-2 font-medium"><GitBranch className="size-4 text-accent" />{i === 0 ? "Direct effects" : i === 1 ? "Second-order effects" : i === 2 ? "Third-order effects" : `Order ${i + 1}`}<Badge className="tabular">{hops.length}</Badge></div>
           <ul className="grid gap-1">
             {hops.slice(0, 15).map((h) => (
               <li key={h.entity.key} className="flex items-center justify-between gap-2 rounded px-1.5 py-1 hover:bg-surface-2">
                 <button type="button" onClick={() => onSelect?.(h.entity.key)} className="min-w-0 text-start">
                   <span className="block truncate">{h.entity.name}</span>
-                  <span className="text-[11px] text-ink-faint">{h.via.label} · {typeLabel(h.entity.type)}</span>
+                  <span className="text-[13px] text-ink-faint">{h.via.label} · {typeLabel(h.entity.type)}</span>
                 </button>
-                <span className="flex shrink-0 items-center gap-1.5"><ClaimBadge claim={h.via.class} /><span className="w-10 text-end text-[11px] tabular text-ink-muted">{num(h.cumulativeWeight, 2)}</span></span>
+                <span className="flex shrink-0 items-center gap-1.5"><ClaimBadge claim={h.via.class} /><span className="w-10 text-end text-[13px] tabular text-ink-muted">{num(h.cumulativeWeight, 2)}</span></span>
               </li>
             ))}
-            {hops.length > 15 && <li className="px-1.5 text-[12px] text-ink-faint">and {hops.length - 15} more</li>}
+            {hops.length > 15 && <li className="px-1.5 text-[13px] text-ink-faint">and {hops.length - 15} more</li>}
           </ul>
         </div>
       ))}
       {paths.alternatives.length > 0 && (
         <div className="rounded-md border border-ok/40 bg-ok-soft p-3">
-          <div className="mb-1 flex items-center gap-1.5 font-semibold text-ok"><Waypoints className="size-4" />Alternatives</div>
+          <div className="mb-1 flex items-center gap-1.5 font-medium text-ok"><Waypoints className="size-4" />Alternatives</div>
           {paths.alternatives.map((a) => <p key={a.entity.key} className="flex items-center gap-1.5"><ArrowRight className="size-3.5 rtl:rotate-180" />{a.entity.name} <span className="text-ink-muted">({a.label.toLowerCase()})</span> <ClaimBadge claim={a.class} /></p>)}
         </div>
       )}
-      {paths.truncated && <p className="text-[12px] text-ink-faint">Showing the strongest paths only.</p>}
+      {paths.truncated && <p className="text-[13px] text-ink-faint">Showing the strongest paths only.</p>}
     </div>
   );
 }

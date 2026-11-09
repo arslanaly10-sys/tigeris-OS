@@ -42,3 +42,25 @@ describe("AIS snapshot summary (observed vessels)", () => {
     expect(aisTime(undefined, "fallback")).toBe("fallback");
   });
 });
+
+import { estimatePosition } from "../src/ais";
+describe("estimated positions from the last AIS report", () => {
+  const seen = "2026-11-08T12:00:00Z";
+  const t = (min: number) => Date.parse(seen) + min * 60_000;
+  it("moves a ship along its course at its speed: 12 kn due east for an hour is 12 nm east", () => {
+    const e = estimatePosition({ lat: 26, lon: 56, sogKn: 12, cogDeg: 90, observedAt: seen }, t(60));
+    expect(e.lat).toBeCloseTo(26, 6);
+    expect((e.lon - 56) * 60 * Math.cos((26 * Math.PI) / 180)).toBeCloseTo(12, 6);
+    expect(e.moving).toBe(true);
+  });
+  it("keeps stopped or unreported ships where they were seen", () => {
+    expect(estimatePosition({ lat: 26, lon: 56, sogKn: 0.2, cogDeg: 90, observedAt: seen }, t(60))).toMatchObject({ lat: 26, lon: 56, moving: false });
+    expect(estimatePosition({ lat: 26, lon: 56, sogKn: null, cogDeg: null, observedAt: seen }, t(60))).toMatchObject({ lat: 26, lon: 56, moving: false });
+  });
+  it("stops extrapolating after the limit and says so", () => {
+    const a = estimatePosition({ lat: 26, lon: 56, sogKn: 10, cogDeg: 0, observedAt: seen }, t(6 * 60));
+    const b = estimatePosition({ lat: 26, lon: 56, sogKn: 10, cogDeg: 0, observedAt: seen }, t(12 * 60));
+    expect(b.lat).toBeCloseTo(a.lat, 9);
+    expect([b.capped, b.moving]).toEqual([true, false]);
+  });
+});

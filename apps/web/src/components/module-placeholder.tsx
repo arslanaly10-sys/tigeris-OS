@@ -13,7 +13,7 @@ export function ModulePlaceholder({ slug }: { slug: string }) {
       <div className="geo-pattern grid gap-6 rounded-lg border border-line bg-surface p-6 sm:p-8">
         <div className="flex items-center gap-3">
           <CalendarClock className="size-5 text-accent" />
-          <h2 className="text-[19px] font-semibold">What this module will do</h2>
+          <h2 className="text-[19px] font-medium">What this module will do</h2>
         </div>
         {m.arrives.length === 0 && <p className="text-ink-muted">Nothing scheduled.</p>}
         <ol className="grid gap-4">
@@ -26,7 +26,7 @@ export function ModulePlaceholder({ slug }: { slug: string }) {
             </li>
           ))}
         </ol>
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-line pt-4 text-[12px] text-ink-faint">
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-line pt-4 text-[13px] text-ink-faint">
           Requirements:
           {m.requirements.map((r) => <Badge key={r} className="font-mono">{r}</Badge>)}
         </div>

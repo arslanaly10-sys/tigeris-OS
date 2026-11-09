@@ -28,13 +28,13 @@ export function About() {
       </div>
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Panel className="p-5">
-          <h2 className="text-[18px] font-semibold">What it does</h2>
+          <h2 className="text-[18px] font-medium">What it does</h2>
           <ul className="mt-3 grid gap-2.5 text-[14px] text-ink">{DOES.map((d) => <li key={d}>{d}</li>)}</ul>
         </Panel>
         <Panel className="p-5">
-          <h2 className="text-[18px] font-semibold">What this demonstration does not claim</h2>
+          <h2 className="text-[18px] font-medium">What this demonstration does not claim</h2>
           <ul className="mt-3 grid gap-2.5 text-[14px] text-ink">{DOES_NOT.map((d) => <li key={d}>{d}</li>)}</ul>
-          <p className="mt-4 text-[12px] text-ink-faint">Institutions and people in this build are fictional. Target institutions are referred to by buyer category only.</p>
+          <p className="mt-4 text-[13px] text-ink-faint">Institutions and people in this build are fictional. Target institutions are referred to by buyer category only.</p>
         </Panel>
       </div>
     </>

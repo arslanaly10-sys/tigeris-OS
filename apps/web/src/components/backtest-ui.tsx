@@ -32,10 +32,10 @@ function DotPlot({ eps }: { eps: Ep[] }) {
   return (
     <div className="grid gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-ink-muted" aria-label="Legend">
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-muted" aria-label="Legend">
           {series.map((s, i) => <li key={s.key} className="flex items-center gap-1.5"><svg width="14" height="14" aria-hidden="true">{mark(s.shape, 7, 7, SERIES_COLOR[i]!)}</svg>{s.label}</li>)}
         </ul>
-        <button type="button" className="text-[12px] text-accent hover:underline" onClick={() => setTable((t) => !t)} aria-pressed={table}>{table ? "Show chart" : "Show table"}</button>
+        <button type="button" className="text-[13px] text-accent hover:underline" onClick={() => setTable((t) => !t)} aria-pressed={table}>{table ? "Show chart" : "Show table"}</button>
       </div>
       {!table ? (
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[900px]" role="img" aria-label="Brent price move in the first three trading days for each episode: observed, the prior assumption and the fitted response. A table view is available.">
@@ -53,7 +53,7 @@ function DotPlot({ eps }: { eps: Ep[] }) {
           })}
         </svg>
       ) : (
-        <table className="w-full text-[12px]">
+        <table className="w-full text-[13px]">
           <thead><tr className="border-b border-line text-ink-faint">{["Episode", "Share lost", "Before", "First 3 days", "Observed", "Assumption", "Fitted", "Fitted without it"].map((h) => <th key={h} className="px-2 py-1 text-end font-medium first:text-start">{h}</th>)}</tr></thead>
           <tbody>{eps.map((e) => <tr key={e.key} className="border-b border-line/50 tabular"><td className="px-2 py-1">{e.name}</td><td className="px-2 py-1 text-end">{num(e.share_pct, 2)}%</td><td className="px-2 py-1 text-end">USD {num(e.pre_avg, 2)}</td><td className="px-2 py-1 text-end">USD {num(e.post_avg, 2)}</td><td className="px-2 py-1 text-end">{num(e.observed_pct, 1)}%</td><td className="px-2 py-1 text-end">{num(e.prior_pct, 1)}%</td><td className="px-2 py-1 text-end">{num(e.predicted_pct, 1)}%</td><td className="px-2 py-1 text-end">{num(e.loo_predicted_pct, 1)}%</td></tr>)}</tbody>
         </table>
@@ -99,20 +99,20 @@ export function BacktestPanel() {
         {latest && (
           <>
             <dl className="grid grid-cols-2 gap-4 tabular sm:grid-cols-4">
-              <div><dt className="text-[12px] text-ink-faint">Fitted response</dt><dd className="text-[20px] font-semibold">{num(latest.fitted.response_pct_per_pct, 2)}%</dd><dd className="text-[11.5px] text-ink-faint">per 1% of world supply lost · USD {num(latest.fitted.premium_usd_per_pct_at_80, 2)} at USD 80</dd></div>
-              <div><dt className="text-[12px] text-ink-faint">Analyst assumption</dt><dd className="text-[20px] font-semibold">{num(latest.prior.response_pct_per_pct, 2)}%</dd><dd className="text-[11.5px] text-ink-faint">USD {latest.prior.premium_usd_per_pct_at_80} at USD 80</dd></div>
-              <div><dt className="text-[12px] text-ink-faint">Average error</dt><dd className="text-[20px] font-semibold">{num(latest.metrics.mae_pp, 1)} pp</dd><dd className="text-[11.5px] text-ink-faint">assumption {num(latest.metrics.prior_mae_pp, 1)} pp</dd></div>
-              <div><dt className="text-[12px] text-ink-faint">Leave-one-out error</dt><dd className="text-[20px] font-semibold">{num(latest.metrics.loo_mae_pp, 1)} pp</dd><dd className="text-[11.5px] text-ink-faint">fitted without the episode it predicts</dd></div>
+              <div><dt className="text-[13px] text-ink-faint">Fitted response</dt><dd className="text-[20px] font-medium">{num(latest.fitted.response_pct_per_pct, 2)}%</dd><dd className="text-[13px] text-ink-faint">per 1% of world supply lost · USD {num(latest.fitted.premium_usd_per_pct_at_80, 2)} at USD 80</dd></div>
+              <div><dt className="text-[13px] text-ink-faint">Analyst assumption</dt><dd className="text-[20px] font-medium">{num(latest.prior.response_pct_per_pct, 2)}%</dd><dd className="text-[13px] text-ink-faint">USD {latest.prior.premium_usd_per_pct_at_80} at USD 80</dd></div>
+              <div><dt className="text-[13px] text-ink-faint">Average error</dt><dd className="text-[20px] font-medium">{num(latest.metrics.mae_pp, 1)} pp</dd><dd className="text-[13px] text-ink-faint">assumption {num(latest.metrics.prior_mae_pp, 1)} pp</dd></div>
+              <div><dt className="text-[13px] text-ink-faint">Leave-one-out error</dt><dd className="text-[20px] font-medium">{num(latest.metrics.loo_mae_pp, 1)} pp</dd><dd className="text-[13px] text-ink-faint">fitted without the episode it predicts</dd></div>
             </dl>
             <DotPlot eps={latest.episodes} />
-            <p className="text-[12px] text-ink-faint">{latest.method} {latest.metrics.episodes} episodes; few and varied, so calibration is rated medium, not high. Run by {latest.run_by_label} · {formatDate(latest.created_at, true)} · <span className={cn(latest.status === "adopted" ? "text-ok" : "text-warn")}>{latest.status}</span>.
+            <p className="text-[13px] text-ink-faint">{latest.method} {latest.metrics.episodes} episodes; few and varied, so calibration is rated medium, not high. Run by {latest.run_by_label} · {formatDate(latest.created_at, true)} · <span className={cn(latest.status === "adopted" ? "text-ok" : "text-warn")}>{latest.status}</span>.
               {" "}Lineage: <button type="button" className="text-accent hover:underline" onClick={() => show(latest.episodes[0]!.fact_ids[0]!)}>a Brent price fact</button> · <button type="button" className="text-accent hover:underline" onClick={() => show(latest.episodes[0]!.assumption_fact_ids[0]!)}>an episode assumption</button></p>
             {latest.status === "proposed" && s.principal.role === "domain_expert" && (
-              <div className="flex flex-wrap items-end gap-2"><label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Reason to adopt<input autoComplete="off" id="adopt-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label><Button size="sm" variant="primary" onClick={() => adopt(latest.id)}><FlaskConical />Adopt calibration</Button></div>
+              <div className="flex flex-wrap items-end gap-2"><label className="grid flex-1 gap-1 text-[13px] text-ink-muted">Reason to adopt<input autoComplete="off" id="adopt-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label><Button size="sm" variant="primary" onClick={() => adopt(latest.id)}><FlaskConical />Adopt calibration</Button></div>
             )}
           </>
         )}
-        {msg && <p role="status" className="text-[12.5px] text-ink-muted">{msg}</p>}
+        {msg && <p role="status" className="text-[13px] text-ink-muted">{msg}</p>}
       </div>
     </Panel>
   );

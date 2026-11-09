@@ -99,7 +99,7 @@ function IndicatorsView() {
                         {r ? (
                           <div className="flex flex-col items-end">
                             <FactValue id={r.id} value={r.value_num} unit={r.unit} qualifier={r.qualifier} />
-                            <span className={cn("text-[11px] tabular", r.conflict ? "text-warn" : "text-ink-faint")}>{r.period}{r.conflict ? " · conflict" : ""}</span>
+                            <span className={cn("text-[13px] tabular", r.conflict ? "text-warn" : "text-ink-faint")}>{r.period}{r.conflict ? " · conflict" : ""}</span>
                           </div>
                         ) : <span className="text-ink-faint" title="No value in the snapshot">—</span>}
                       </td>
@@ -110,7 +110,7 @@ function IndicatorsView() {
             </tbody>
           </table>
         </div>
-        <p className="border-t border-line px-4 py-3 text-[12px] text-ink-muted">Sources: World Bank WDI, IMF World Economic Outlook, JODI Oil World Database. Values marked conflict disagree with another source beyond tolerance; open them to see both.</p>
+        <p className="border-t border-line px-4 py-3 text-[13px] text-ink-muted">Sources: World Bank WDI, IMF World Economic Outlook, JODI Oil World Database. Values marked conflict disagree with another source beyond tolerance; open them to see both.</p>
       </Panel>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -121,9 +121,9 @@ function IndicatorsView() {
               <li key={h.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <div className="text-[13px] font-medium">{h.predicate_label}</div>
-                  <div className="text-[12px] text-ink-muted">{h.subject_label} · {h.period}</div>
+                  <div className="text-[13px] text-ink-muted">{h.subject_label} · {h.period}</div>
                 </div>
-                <FactValue id={h.id} value={h.value_num} unit={h.unit} className="text-[15px] font-semibold" />
+                <FactValue id={h.id} value={h.value_num} unit={h.unit} className="text-[15px] font-medium" />
               </li>
             ))}
           </ul>
@@ -139,7 +139,7 @@ function IndicatorsView() {
               </li>
             ))}
           </ul>
-          <p className="border-t border-line px-4 py-3 text-[12px] text-ink-muted">Dated public references, not legal determinations. Vessel matching against ship tracks arrives with the map in week 4.</p>
+          <p className="border-t border-line px-4 py-3 text-[13px] text-ink-muted">Dated public references, not legal determinations. Vessel matching against ship tracks arrives with the map in week 4.</p>
         </Panel>
       </div>
     </div>
@@ -160,10 +160,10 @@ function RegistryView() {
             <tbody>
               {data.sources.map((s) => (
                 <tr key={s.id} className="border-b border-line/60 align-top last:border-0">
-                  <td className="px-4 py-3"><div className="font-medium">{s.name}</div><div className="text-[12px] text-ink-muted">{s.publisher}{s.country ? ` · ${s.country}` : ""}</div><div className="text-[11.5px] text-ink-faint">Owner: {s.owner_label}</div></td>
-                  <td className="px-4 py-3"><SourceStatusBadge status={s.status} />{s.status_note && <p className="mt-1 max-w-[260px] text-[11.5px] text-ink-muted">{s.status_note}</p>}</td>
+                  <td className="px-4 py-3"><div className="font-medium">{s.name}</div><div className="text-[13px] text-ink-muted">{s.publisher}{s.country ? ` · ${s.country}` : ""}</div><div className="text-[13px] text-ink-faint">Owner: {s.owner_label}</div></td>
+                  <td className="px-4 py-3"><SourceStatusBadge status={s.status} />{s.status_note && <p className="mt-1 max-w-[260px] text-[13px] text-ink-muted">{s.status_note}</p>}</td>
                   <td className="px-4 py-3"><div>{s.licence}</div><div className="mt-1 flex flex-wrap gap-1">{s.allowed_purposes.map((p) => <Badge key={p}>{p.replace(/_/g, " ")}</Badge>)}</div></td>
-                  <td className="px-4 py-3 text-ink-muted">{s.cadence}<div className="text-[11.5px] text-ink-faint">Fresh for {Math.round(s.freshness_limit_hours / 24)} days</div></td>
+                  <td className="px-4 py-3 text-ink-muted">{s.cadence}<div className="text-[13px] text-ink-faint">Fresh for {Math.round(s.freshness_limit_hours / 24)} days</div></td>
                   <td className="px-4 py-3">{s.last_retrieved_at ? <><div className="tabular">{formatDate(s.last_retrieved_at, true)}</div><Badge tone={s.freshness === "fresh" ? "ok" : "warn"}>{s.freshness === "fresh" ? "Fresh" : "Stale"}</Badge></> : <span className="text-ink-faint">Not collected</span>}</td>
                   <td className="px-4 py-3 tabular text-ink-muted">{s.evidence_count} files · {s.fact_count.toLocaleString("en-GB")} facts{s.quarantined_count ? <div className="text-crit">{s.quarantined_count} quarantined</div> : null}</td>
                 </tr>
@@ -175,9 +175,9 @@ function RegistryView() {
       <Panel>
         <PanelHeader eyebrow="Air-gap transfer" title="Trusted package signers" />
         <ul className="grid gap-2 p-4 text-[13px]">
-          {data.signers.map((s) => <li key={s.fingerprint} className="flex flex-wrap items-center gap-2"><PackageCheck className="size-4 text-ok" />{s.name}<span translate="no" className="font-mono text-[11.5px] text-ink-faint">{s.fingerprint}</span><Badge tone="ok">{s.status}</Badge></li>)}
+          {data.signers.map((s) => <li key={s.fingerprint} className="flex flex-wrap items-center gap-2"><PackageCheck className="size-4 text-ok" />{s.name}<span translate="no" className="font-mono text-[13px] text-ink-faint">{s.fingerprint}</span><Badge tone="ok">{s.status}</Badge></li>)}
         </ul>
-        <p className="border-t border-line px-4 py-3 text-[12px] text-ink-muted">Packages signed by any other key are refused before any file is opened.</p>
+        <p className="border-t border-line px-4 py-3 text-[13px] text-ink-muted">Packages signed by any other key are refused before any file is opened.</p>
       </Panel>
     </div>
   );
@@ -237,7 +237,7 @@ function ImportsView({ onChanged, onOpenEvidence }: { onChanged: () => void; onO
               <Button size="sm" disabled={!can("source.manage") || busy !== null} onClick={() => pkgInput.current?.click()}><FileUp />Choose package file</Button>
               <input ref={pkgInput} id="pkg-file" aria-label="Transfer package file" type="file" accept=".tigpkg" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) run(f.name, sendFile("/sources/packages", f)); e.target.value = ""; }} />
             </div>
-            {!can("source.manage") && <p className="text-[12px] text-ink-faint">Importing packages needs the Administrator role.</p>}
+            {!can("source.manage") && <p className="text-[13px] text-ink-faint">Importing packages needs the Administrator role.</p>}
           </div>
         </Panel>
         <Panel>
@@ -253,7 +253,7 @@ function ImportsView({ onChanged, onOpenEvidence }: { onChanged: () => void; onO
                 </Button>
               ))}
             </div>
-            {!can("evidence.upload") && <p className="text-[12px] text-ink-faint">Uploading needs the Analyst, Domain Expert or Administrator role.</p>}
+            {!can("evidence.upload") && <p className="text-[13px] text-ink-faint">Uploading needs the Analyst, Domain Expert or Administrator role.</p>}
           </div>
         </Panel>
       </div>
@@ -274,14 +274,14 @@ function ImportsView({ onChanged, onOpenEvidence }: { onChanged: () => void; onO
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={j.status === "succeeded" ? "ok" : j.status === "failed" ? "crit" : "info"}>{j.status}</Badge>
                 <span className="font-medium">{j.label}</span>
-                <span className="text-[12px] text-ink-faint">{j.kind === "package_import" ? "Package" : "Document"} · {j.created_by_label} · {formatDate(j.created_at, true)}</span>
+                <span className="text-[13px] text-ink-faint">{j.kind === "package_import" ? "Package" : "Document"} · {j.created_by_label} · {formatDate(j.created_at, true)}</span>
               </div>
-              {j.error && <p className="text-[12.5px] text-crit">{j.error}</p>}
-              {j.result && <p className="text-[12.5px] text-ink-muted">{j.result.summary}</p>}
+              {j.error && <p className="text-[13px] text-crit">{j.error}</p>}
+              {j.result && <p className="text-[13px] text-ink-muted">{j.result.summary}</p>}
               {j.result && j.result.files.some((f) => f.outcome !== "accepted") && (
                 <ul className="grid gap-1">
                   {j.result.files.filter((f) => f.outcome !== "accepted").map((f) => (
-                    <li key={f.name} className="flex flex-wrap items-center gap-2 text-[12.5px]">
+                    <li key={f.name} className="flex flex-wrap items-center gap-2 text-[13px]">
                       <ValidationBadge state={f.outcome} />
                       <button type="button" className="text-ink underline-offset-2 hover:underline" onClick={() => f.evidenceId && onOpenEvidence(f.evidenceId)}>{f.title}</button>
                     </li>
@@ -316,7 +316,7 @@ function EvidenceView({ onOpen }: { onOpen: (id: string) => void }) {
             <tbody>
               {data.evidence.map((e) => (
                 <tr key={e.id} className="cursor-pointer border-b border-line/60 last:border-0 hover:bg-surface-2" onClick={() => onOpen(e.id)}>
-                  <td className="px-4 py-2.5"><button type="button" className="text-start font-medium hover:underline">{e.title}</button><div className="text-[11.5px] text-ink-faint">{e.media_type} · {formatBytes(e.size_bytes)}{e.duplicate_of ? " · duplicate" : ""}</div></td>
+                  <td className="px-4 py-2.5"><button type="button" className="text-start font-medium hover:underline">{e.title}</button><div className="text-[13px] text-ink-faint">{e.media_type} · {formatBytes(e.size_bytes)}{e.duplicate_of ? " · duplicate" : ""}</div></td>
                   <td className="px-4 py-2.5 text-ink-muted">{e.source_name}</td>
                   <td className="px-4 py-2.5"><ValidationBadge state={e.validation_state} /></td>
                   <td className="px-4 py-2.5"><ClaimBadge claim={e.data_class === "public" ? "observed" : e.data_class} /></td>
@@ -350,9 +350,9 @@ function ReviewView() {
         {data.facts.map((f) => (
           <li key={f.id} className="grid gap-2 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-faint"><ClaimBadge claim={f.claim_class} />{f.evidence_title} · {f.locator}</div>
+              <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink-faint"><ClaimBadge claim={f.claim_class} />{f.evidence_title} · {f.locator}</div>
               <p className="mt-1 text-[13.5px]">{f.value_text}</p>
-              {f.value_num !== null && <p className="text-[12px] text-ink-muted">Figure found: <span className="tabular">{formatValue(f.value_num, f.unit)}</span></p>}
+              {f.value_num !== null && <p className="text-[13px] text-ink-muted">Figure found: <span className="tabular">{formatValue(f.value_num, f.unit)}</span></p>}
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="primary" disabled={!can("evidence.dispose")} onClick={() => decide(f.id, "accepted")}>Accept</Button>
@@ -361,7 +361,7 @@ function ReviewView() {
           </li>
         ))}
       </ul>
-      {!can("evidence.dispose") && <p className="border-t border-line px-4 py-3 text-[12px] text-ink-faint">Reviewing figures needs the Analyst or Domain Expert role.</p>}
+      {!can("evidence.dispose") && <p className="border-t border-line px-4 py-3 text-[13px] text-ink-faint">Reviewing figures needs the Analyst or Domain Expert role.</p>}
     </Panel>
   );
 }
@@ -384,21 +384,21 @@ function EvidenceDrawer({ id, onClose }: { id: string | null; onClose: () => voi
             <Field label="Collected">{formatDate(d.evidence.retrieved_at, true)}</Field>
             <Field label="Imported by">{d.evidence.created_by_label}</Field>
           </dl>
-          <p className="break-all font-mono text-[11px] text-ink-faint">SHA-256 {d.evidence.sha256}</p>
+          <p className="break-all font-mono text-[13px] text-ink-faint">SHA-256 {d.evidence.sha256}</p>
           {d.validations.map((v, i) => (
             <div key={i}>
-              <div className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold">Checks <span translate="no" className="font-mono text-[11px] font-normal text-ink-faint">{v.rule_set_version}</span></div>
-              <ul className="grid gap-1.5">{v.checks.map((c, j) => <li key={j} className="flex gap-2 text-[12.5px]"><CheckIcon result={c.result} /><span><span className="text-ink">{c.label}.</span> <span className="text-ink-muted">{c.detail}</span></span></li>)}</ul>
+              <div className="mb-1.5 flex items-center gap-2 text-[13px] font-medium">Checks <span translate="no" className="font-mono text-[13px] font-normal text-ink-faint">{v.rule_set_version}</span></div>
+              <ul className="grid gap-1.5">{v.checks.map((c, j) => <li key={j} className="flex gap-2 text-[13px]"><CheckIcon result={c.result} /><span><span className="text-ink">{c.label}.</span> <span className="text-ink-muted">{c.detail}</span></span></li>)}</ul>
             </div>
           ))}
           {(d.evidence.validation_state === "quarantined" || d.evidence.validation_state === "rejected") ? (
             <p className="rounded-md border border-crit/40 bg-crit-soft p-3 text-[13px] text-crit">No facts were taken from this record. It is kept, with its checks, for the audit trail and can be reviewed by the source owner.</p>
           ) : (
             <div>
-              <div className="mb-1.5 text-[13px] font-semibold">Facts ({d.facts.length}{d.facts.length === 100 ? "+" : ""})</div>
+              <div className="mb-1.5 text-[13px] font-medium">Facts ({d.facts.length}{d.facts.length === 100 ? "+" : ""})</div>
               <ul className="divide-y divide-line rounded-md border border-line">
                 {d.facts.slice(0, 40).map((f) => (
-                  <li key={f.id} className="flex items-center justify-between gap-3 px-3 py-2 text-[12.5px]">
+                  <li key={f.id} className="flex items-center justify-between gap-3 px-3 py-2 text-[13px]">
                     <span className="min-w-0 truncate">{f.subject_label} · {f.predicate_label}{f.period ? ` · ${f.period}` : ""}</span>
                     {f.value_num !== null ? <FactValue id={f.id} value={f.value_num} unit={f.unit} qualifier={f.qualifier} /> : <span className="max-w-[200px] truncate text-ink-muted">{f.value_text}</span>}
                   </li>

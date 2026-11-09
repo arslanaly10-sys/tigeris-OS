@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Activity, AlertTriangle, BookMarked, CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Gavel, History, ShieldAlert, ShieldCheck, XCircle } from "lucide-react";
 import { api } from "@/lib/api";
+import { verdict } from "@/lib/format";
 import { requireText, clearInvalid, useUnsavedWarning } from "@/lib/forms";
 import { formatDate, num } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -17,11 +18,11 @@ import { PrecedentList, type Hit } from "./memory-ui";
 interface RuleTrace { rule: string; description: string; applied: boolean; passed: boolean; effect: string | null; message: string | null }
 export function PolicyResultBadge({ result }: { result: string }) {
   const tone = result === "PASS" ? "ok" : result === "HOLD" ? "warn" : "crit";
-  return <Badge tone={tone}>{result === "PASS" ? <ShieldCheck /> : result === "HOLD" ? <AlertTriangle /> : <ShieldAlert />}{result}</Badge>;
+  return <Badge tone={tone}>{result === "PASS" ? <ShieldCheck /> : result === "HOLD" ? <AlertTriangle /> : <ShieldAlert />}{verdict(result)}</Badge>;
 }
 export function TraceList({ trace }: { trace: RuleTrace[] }) {
   return (
-    <ul className="grid gap-0.5 text-[12px]">
+    <ul className="grid gap-0.5 text-[13px]">
       {trace.map((t) => (
         <li key={t.rule} className="grid grid-cols-[18px_220px_1fr] items-start gap-2">
           {!t.applied ? <span className="text-ink-faint" aria-label="not applicable">–</span> : t.passed ? <CheckCircle2 className="size-3.5 text-ok" aria-label="passed" /> : <XCircle className="size-3.5 text-crit" aria-label="failed" />}
@@ -52,7 +53,7 @@ export function DecisionPanel({ caseKey, onChange }: { caseKey: string; onChange
   const live = d.decisions.find((x) => x.status === "pending" || x.status === "approved");
   return (
     <div className="grid gap-5">
-      <Panel className="flex flex-wrap items-center gap-3 p-3 text-[12.5px] text-ink-muted"><Gavel className="size-4 text-accent" />Every step below is checked by the active policy (v{d.policy.version}, hash {d.policy.hash}) on the server. Decisions create handoff tasks only; nothing executes from TIGERIS.</Panel>
+      <Panel className="flex flex-wrap items-center gap-3 p-3 text-[13px] text-ink-muted"><Gavel className="size-4 text-accent" />Every step below is checked by the active policy (v{d.policy.version}, hash {d.policy.hash}) on the server. Decisions create handoff tasks only; nothing executes from TIGERIS.</Panel>
       {!live && <RecordDecision caseKey={caseKey} data={d} onDone={refresh} />}
       {d.decisions.map((x) => <DecisionCard key={x.id} d={x} onDone={refresh} />)}
       {d.handoffs.length > 0 && <Handoffs items={d.handoffs} onDone={refresh} />}
@@ -83,26 +84,26 @@ function RecordDecision({ caseKey, data, onDone }: { caseKey: string; data: Deci
       <PanelHeader eyebrow={`Case at ${data.state}`} title="Record a named decision" />
       <div className="grid gap-4 p-4">
         <fieldset className="grid gap-2">
-          <legend className="mb-1 text-[12.5px] font-medium">Option</legend>
+          <legend className="mb-1 text-[13px] font-medium">Option</legend>
           {data.options.map((x) => (
             <label key={x.id} className={cn("grid cursor-pointer grid-cols-[18px_1fr_auto] items-start gap-2 rounded-md border p-2.5 text-[13px]", opt === x.id ? "border-primary bg-primary-soft/40" : "border-line")}>
               <input type="radio" name="option" checked={opt === x.id} onChange={() => setOpt(x.id)} className="mt-1" />
-              <span><span className="font-medium">{x.title}</span><br /><span className="text-[12px] text-ink-muted">Score {num(x.base_score, 1)} · confidence {x.band} · option policy {x.governance} · {x.approval.required === 1 ? "one approval" : `${x.approval.required} approvals by different people`} ({x.authority})</span></span>
+              <span><span className="font-medium">{x.title}</span><br /><span className="text-[13px] text-ink-muted">Score {num(x.base_score, 1)} · confidence {x.band} · option policy {x.governance} · {x.approval.required === 1 ? "one approval" : `${x.approval.required} approvals by different people`} ({x.authority})</span></span>
               <PolicyResultBadge result={x.preview.result} />
             </label>
           ))}
         </fieldset>
-        {o.preview.result !== "PASS" && <p className="rounded-md bg-warn-soft px-3 py-2 text-[12.5px] text-warn">Preview for you: {o.preview.explanation}</p>}
+        {o.preview.result !== "PASS" && <p className="rounded-md bg-warn-soft px-3 py-2 text-[13px] text-warn">Preview for you: {o.preview.explanation}</p>}
         <div className="flex flex-wrap gap-4 text-[13px]">
           {(["approve", "reject", "defer"] as const).map((x) => <label key={x} className="flex items-center gap-1.5"><input type="radio" name="outcome" checked={outcome === x} onChange={() => setOutcome(x)} />{x === "approve" ? "Approve" : x === "reject" ? "Reject" : "Defer"}</label>)}
         </div>
-        <label className="grid gap-1 text-[12.5px] text-ink-muted">Rationale (kept with the decision and on the audit trail)
+        <label className="grid gap-1 text-[13px] text-ink-muted">Rationale (kept with the decision and on the audit trail)
           <textarea autoComplete="off" aria-label="Decision rationale" value={rationale} onChange={(e) => setRationale(e.target.value)} rows={3} className="rounded-md border border-line bg-surface-2 p-2 text-[13.5px] text-ink" />
         </label>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="primary" onClick={submit} disabled={!can("decision.approve")}><Gavel />Record decision</Button>
-          {!can("decision.approve") && <span className="text-[12.5px] text-ink-muted">Your role can read decisions; approvers and executives record them.</span>}
-          {res && <span role="status" className={cn("text-[12.5px]", res.ok ? "text-ok" : "text-warn")}>{res.message}</span>}
+          {!can("decision.approve") && <span className="text-[13px] text-ink-muted">Your role can read decisions; approvers and executives record them.</span>}
+          {res && <span role="status" className={cn("text-[13px]", res.ok ? "text-ok" : "text-warn")}>{res.message}</span>}
         </div>
       </div>
     </Panel>
@@ -132,34 +133,34 @@ function DecisionCard({ d, onDone }: { d: Decision; onDone: () => void }) {
       <div className="flex flex-wrap items-start gap-3">
         <Gavel className="mt-1 size-5 text-accent" />
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2"><h3 className="text-[16px] font-semibold">{d.outcome === "approve" ? "Approve" : d.outcome === "reject" ? "Reject" : "Defer"}: {d.option_title}</h3><Badge tone={STATUS_TONE[d.status]}>{d.status}</Badge></div>
-          <p className="mt-0.5 text-[12.5px] text-ink-muted">Recorded by {d.proposed_by_label} ({d.proposed_by_role.replace("_", " ")}) · {formatDate(d.created_at, true)} · policy v{d.policy_version}</p>
+          <div className="flex flex-wrap items-center gap-2"><h3 className="text-[16px] font-medium">{d.outcome === "approve" ? "Approve" : d.outcome === "reject" ? "Reject" : "Defer"}: {d.option_title}</h3><Badge tone={STATUS_TONE[d.status]}>{d.status}</Badge></div>
+          <p className="mt-0.5 text-[13px] text-ink-muted">Recorded by {d.proposed_by_label} ({d.proposed_by_role.replace("_", " ")}) · {formatDate(d.created_at, true)} · policy v{d.policy_version}</p>
         </div>
-        {d.outcome === "approve" && <div className="text-end"><div className="tabular text-[20px] font-semibold">{approvals}/{d.required_approvals}</div><div className="text-[11px] text-ink-faint">approvals</div></div>}
+        {d.outcome === "approve" && <div className="text-end"><div className="tabular text-[20px] font-medium">{approvals}/{d.required_approvals}</div><div className="text-[13px] text-ink-faint">approvals</div></div>}
       </div>
       <p className="font-serif text-[14.5px]">“{d.rationale}”</p>
-      {d.approvals.length > 0 && <ul className="grid gap-1 text-[12.5px]">{d.approvals.map((a, i) => <li key={i} className="flex flex-wrap gap-2"><Badge tone={a.vote === "approve" ? "ok" : "crit"}>{a.vote}</Badge><span>{a.approver_label} ({a.approver_role.replace("_", " ")})</span><span className="text-ink-muted">“{a.rationale}”</span><span className="ms-auto tabular text-ink-faint">{formatDate(a.created_at, true)}</span></li>)}</ul>}
+      {d.approvals.length > 0 && <ul className="grid gap-1 text-[13px]">{d.approvals.map((a, i) => <li key={i} className="flex flex-wrap gap-2"><Badge tone={a.vote === "approve" ? "ok" : "crit"}>{a.vote}</Badge><span>{a.approver_label} ({a.approver_role.replace("_", " ")})</span><span className="text-ink-muted">“{a.rationale}”</span><span className="ms-auto tabular text-ink-faint">{formatDate(a.created_at, true)}</span></li>)}</ul>}
       {d.status === "pending" && can("decision.approve") && !voted && (
         <div className="flex flex-wrap items-end gap-2 rounded-md border border-warn/40 bg-warn-soft/40 p-3">
-          <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Your reason<input autoComplete="off" id={`vote-${d.id}`} value={vote} onChange={(e) => setVote(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label>
+          <label className="grid flex-1 gap-1 text-[13px] text-ink-muted">Your reason<input autoComplete="off" id={`vote-${d.id}`} value={vote} onChange={(e) => setVote(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" /></label>
           <Button size="sm" variant="primary" aria-label="Approve this decision" onClick={() => cast("approve")}>Approve</Button>
           <Button size="sm" variant="danger" aria-label="Reject this decision" onClick={() => cast("reject")}>Reject</Button>
         </div>
       )}
-      {msg && <p role="status" className="text-[12.5px] text-ink-muted">{msg}</p>}
+      {msg && <p role="status" className="text-[13px] text-ink-muted">{msg}</p>}
       <div className="flex flex-wrap gap-2 border-t border-line pt-3">
         <Button size="sm" variant="secondary" onClick={async () => { const r = await api<typeof drift>(`/decisions/${d.id}/drift`); if (r.ok) setDrift(r.data); }}><Activity />Check for drift</Button>
         <Button size="sm" variant="secondary" onClick={async () => { const r = await api<typeof replay>(`/decisions/${d.id}/replay`, { json: {} }); if (r.ok) setReplay(r.data); }}><History />Replay decision</Button>
-        <button type="button" onClick={() => setOpen((x) => !x)} aria-expanded={open} className="ms-auto flex items-center gap-1 text-[12px] text-accent hover:underline">{open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Policy trace and snapshot</button>
+        <button type="button" onClick={() => setOpen((x) => !x)} aria-expanded={open} className="ms-auto flex items-center gap-1 text-[13px] text-accent hover:underline">{open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Policy trace and snapshot</button>
       </div>
       {drift && (
-        <div className="grid gap-1.5 rounded-md border border-line bg-surface-2 p-3 text-[12.5px]">
+        <div className="grid gap-1.5 rounded-md border border-line bg-surface-2 p-3 text-[13px]">
           <div className="flex items-center gap-2 font-medium">Drift since the decision <Badge tone={drift.overall === "none" ? "ok" : drift.overall === "minor" ? "warn" : "crit"}>{drift.overall === "none" ? "No drift" : drift.overall === "minor" ? "Minor drift" : "Material drift"}</Badge></div>
           <ul className="grid gap-1">{drift.items.map((i) => <li key={i.check} className="grid grid-cols-[90px_1fr] gap-2"><Badge tone={i.level === "none" ? "ok" : i.level === "minor" ? "warn" : "crit"} className="justify-self-start">{i.level}</Badge><span><span className="text-ink">{i.check}.</span> <span className="text-ink-muted">{i.detail}</span></span></li>)}</ul>
         </div>
       )}
       {replay && (
-        <div className="grid gap-1.5 rounded-md border border-line bg-surface-2 p-3 text-[12.5px]">
+        <div className="grid gap-1.5 rounded-md border border-line bg-surface-2 p-3 text-[13px]">
           <div className="flex items-center gap-2 font-medium">Replay {replay.identical ? <Badge tone="ok"><CheckCircle2 />Identical</Badge> : <Badge tone="crit"><XCircle />Differences found</Badge>}</div>
           <ul className="grid gap-1">{replay.checks.map((c) => <li key={c.check} className="flex gap-2">{c.ok ? <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-ok" aria-label="ok" /> : <XCircle className="mt-0.5 size-3.5 shrink-0 text-crit" aria-label="failed" />}<span><span className="text-ink">{c.check}.</span> <span className="text-ink-muted">{c.detail}</span></span></li>)}</ul>
         </div>
@@ -167,7 +168,7 @@ function DecisionCard({ d, onDone }: { d: Decision; onDone: () => void }) {
       {open && (
         <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-3">
           <TraceList trace={d.policy_trace} />
-          <p className="text-[11.5px] text-ink-faint">Approval rule: {d.approval_rule ?? "default"} ({d.required_approvals} required from {d.approval_roles.join(", ").replace(/_/g, " ")}). Policy hash {d.policy_hash.slice(0, 16)}… Snapshot hash {d.snapshot_hash.slice(0, 16)}…</p>
+          <p className="text-[13px] text-ink-faint">Approval rule: {d.approval_rule ?? "default"} ({d.required_approvals} required from {d.approval_roles.join(", ").replace(/_/g, " ")}). Policy hash {d.policy_hash.slice(0, 16)}… Snapshot hash {d.snapshot_hash.slice(0, 16)}…</p>
         </div>
       )}
     </Panel>
@@ -191,20 +192,20 @@ function Handoffs({ items, onDone }: { items: Handoff[]; onDone: () => void }) {
       <ul className="grid gap-2 p-4">
         {items.map((h) => (
           <li key={h.id} className="grid gap-1.5 rounded-md border border-line p-3 text-[13px]">
-            <div className="flex flex-wrap items-center gap-2"><ClipboardList className="size-4 text-accent" /><span className="font-medium">{h.title}</span><Badge tone={STATUS_TONE[h.status]}>{h.status.replace("_", " ")}</Badge><span className="ms-auto text-[12px] text-ink-faint">Owner: {h.owner_role.replace("_", " ")} · due {formatDate(h.due_at)}</span></div>
-            <p className="text-[12.5px] text-ink-muted">{h.description}</p>
-            {h.updates.map((u, i) => <p key={i} className="text-[12px] text-ink-faint">{formatDate(u.created_at, true)} · {u.actor_label}: {u.status.replace("_", " ")} — {u.note}</p>)}
+            <div className="flex flex-wrap items-center gap-2"><ClipboardList className="size-4 text-accent" /><span className="font-medium">{h.title}</span><Badge tone={STATUS_TONE[h.status]}>{h.status.replace("_", " ")}</Badge><span className="ms-auto text-[13px] text-ink-faint">Owner: {h.owner_role.replace("_", " ")} · due {formatDate(h.due_at)}</span></div>
+            <p className="text-[13px] text-ink-muted">{h.description}</p>
+            {h.updates.map((u, i) => <p key={i} className="text-[13px] text-ink-faint">{formatDate(u.created_at, true)} · {u.actor_label}: {u.status.replace("_", " ")} — {u.note}</p>)}
             {can("handoff.update") && h.status !== "done" && (edit === h.id ? (
               <div className="flex flex-wrap items-end gap-2">
-                <select aria-label="New status" value={status} onChange={(e) => setStatus(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-[12.5px]">{["in_progress", "done", "blocked"].map((x) => <option key={x} value={x}>{x.replace("_", " ")}</option>)}</select>
-                <input autoComplete="off" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Terminal slots confirmed with the operator…" aria-label="Note" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2 text-[12.5px]" />
+                <select aria-label="New status" value={status} onChange={(e) => setStatus(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-[13px]">{["in_progress", "done", "blocked"].map((x) => <option key={x} value={x}>{x.replace("_", " ")}</option>)}</select>
+                <input autoComplete="off" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Terminal slots confirmed with the operator…" aria-label="Note" className="h-8 flex-1 rounded-md border border-line bg-surface-2 px-2 text-[13px]" />
                 <Button size="sm" variant="primary" onClick={() => save(h.id)}>Save update</Button>
               </div>
             ) : <Button size="sm" variant="secondary" className="justify-self-start" onClick={() => setEdit(h.id)}>Update task</Button>)}
           </li>
         ))}
       </ul>
-      {msg && <p role="status" className="px-4 pb-3 text-[12.5px] text-ink-muted">{msg}</p>}
+      {msg && <p role="status" className="px-4 pb-3 text-[13px] text-ink-muted">{msg}</p>}
     </Panel>
   );
 }
@@ -228,7 +229,7 @@ function CaseMemory({ caseKey }: { caseKey: string }) {
       <div className="grid gap-3 p-4">
         {!d ? <div className="h-24 animate-pulse rounded bg-surface-2" /> : <PrecedentList hits={d.hits} semantic={d.semantic} empty="No similar precedent found." />}
         {form && (
-          <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-3 text-[12.5px]">
+          <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-3 text-[13px]">
             <p className="text-ink-muted">Draft assembled from this case's decision, handoff and agent challenges. Edit before proposing; an approver must approve it.</p>
             <label className="grid gap-1">Title<input autoComplete="off" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="h-8 rounded-md border border-line bg-surface px-2" /></label>
             <label className="grid gap-1">Summary<textarea autoComplete="off" value={form.summary} rows={3} onChange={(e) => setForm({ ...form, summary: e.target.value })} className="rounded-md border border-line bg-surface p-2" /></label>
@@ -265,8 +266,8 @@ export function DecisionsModule() {
               <thead><tr className="border-b border-line text-ink-faint">{["Case", "Decision", "Status", "Approvals", "Handoff", "Policy", "Drift"].map((h) => <th key={h} className="px-4 py-2 text-start font-medium">{h}</th>)}</tr></thead>
               <tbody>{rows.map((r) => (
                 <tr key={r.id} className="border-b border-line/60">
-                  <td className="px-4 py-2"><Link href={`/cases/${r.case_key}?tab=Decision and memory`} className="font-mono text-[12px] text-accent hover:underline">{r.case_key}</Link><div className="text-[12px] text-ink-muted">{r.case_title}</div></td>
-                  <td className="px-4 py-2">{r.outcome}: {r.option_title}<div className="text-[12px] text-ink-faint">{r.proposed_by_label} · {formatDate(r.created_at, true)}</div></td>
+                  <td className="px-4 py-2"><Link href={`/cases/${r.case_key}?tab=Decision and memory`} className="font-mono text-[13px] text-accent hover:underline">{r.case_key}</Link><div className="text-[13px] text-ink-muted">{r.case_title}</div></td>
+                  <td className="px-4 py-2">{r.outcome}: {r.option_title}<div className="text-[13px] text-ink-faint">{r.proposed_by_label} · {formatDate(r.created_at, true)}</div></td>
                   <td className="px-4 py-2"><Badge tone={STATUS_TONE[r.status]}>{r.status}</Badge></td>
                   <td className="px-4 py-2 tabular">{r.approvals}/{r.required_approvals}</td>
                   <td className="px-4 py-2">{r.open_handoffs ? `${r.open_handoffs} open` : "complete"}</td>

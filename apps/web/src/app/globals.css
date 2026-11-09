@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
 /*
-  TIGERIS design tokens.
-  Dark (default, Q009): deep navy structure, warm ivory text, restrained gold for primary action and focus,
-  teal-green for verified states. Light: the Foundation palette — warm ivory canvas, white panels,
-  deep emerald for primary actions, muted gold accents. Amber and red are for exceptions only.
+  TIGERIS design tokens (DESIGN.md). Built to the taste skill's system (.agents/skills/design-taste-frontend)
+  with TIGERIS's own brand colours: deep navy, warm ivory text, gold as the one accent (dark, default);
+  the Foundation palette with deep emerald in light. Type: Host Grotesk + JetBrains Mono, Plex Sans Arabic.
 */
 :root,
 [data-theme="dark"] {
@@ -100,14 +99,31 @@
   --color-series-2: var(--series-2);
   --color-series-3: var(--series-3);
 
-  --font-serif: "Source Serif 4 Variable", Georgia, "Times New Roman", serif;
-  --font-sans: "IBM Plex Sans", "IBM Plex Sans Arabic", "Segoe UI", Arial, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  /* One family with fixed jobs: Host Grotesk for headings and text, JetBrains Mono for identifiers. */
+  --font-sans: "Host Grotesk Variable", "IBM Plex Sans Arabic", "Segoe UI", Arial, system-ui, sans-serif;
+  --font-serif: var(--font-sans);
+  --font-mono: "JetBrains Mono Variable", ui-monospace, Menlo, Consolas, monospace;
+  /* Weights: 400 and 500 only; nothing bolder (taste skill, layout-v4 §5). */
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
+  /* Nothing under 13px. */
+  --text-xs: 13px;
+  --text-xs--line-height: 1.45;
 }
 
 html[lang="ar"] {
-  --font-sans: "IBM Plex Sans Arabic", "IBM Plex Sans", Arial, system-ui, sans-serif;
-  --font-serif: "IBM Plex Sans Arabic", "Source Serif 4 Variable", serif;
+  --font-sans: "IBM Plex Sans Arabic", "Host Grotesk Variable", Arial, system-ui, sans-serif;
+}
+
+/* Motion tokens (taste skill, motion.md): hover in 150, out 120, press 90; one UI ease, one entrance ease. */
+:root {
+  --m-in: 150ms;
+  --m-out: 120ms;
+  --m-press: 90ms;
+  --m-card-in: 180ms;
+  --m-slide: 240ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --m-ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html,
@@ -119,42 +135,43 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Serif for titles read as documents (page and section titles); everything operational is Plex Sans. */
+/* Headings: weight 500, size and tight tracking carry them, never bold-and-big. */
 h1,
 h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
+  font-weight: 500;
   text-wrap: balance;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.025em;
 }
 h3,
 h4 {
   font-family: var(--font-sans);
-  font-weight: 600;
-  letter-spacing: -0.005em;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 .panel-title {
   font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   line-height: 1.35;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
 }
 
+/* Labels: 13px at 500 in sentence case; never tracked capitals. */
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 /* Regional geometric pattern: eight-point star lattice. Sign-in and empty states only (Q014). */
@@ -182,37 +199,22 @@ h4 {
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Arabic letters join; letter-spacing and the mono face break them apart. */
-html[lang="ar"] .eyebrow {
-  font-family: var(--font-sans);
+/* Arabic letters join: no tracking anywhere in Arabic. */
+html[lang="ar"] :is(h1, h2, h3, h4, .panel-title, .eyebrow) {
   letter-spacing: 0;
-  text-transform: none;
-  font-size: 12px;
 }
 
 /* Map overlays (MAP §4). Map chrome stays dark in both themes (Q080). */
 .map-label {
   font-family: var(--font-sans);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
+  font-size: 13px;
   color: #9aa6b8;
   text-shadow: 0 0 3px #07101c, 0 0 3px #07101c;
   pointer-events: none;
   white-space: nowrap;
 }
 .map-label-gcc {
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-weight: 500;
   color: #d9bd84;
 }
 .map-ripple {
@@ -246,13 +248,13 @@ html[lang="ar"] .eyebrow {
   border: 1px solid #2f4566;
   border-radius: 6px;
   padding: 6px 9px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.4;
 }
 .tigeris-popup .maplibregl-popup-tip { display: none; }
 .maplibregl-ctrl-group { background: #101b2d !important; }
 .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(0.85); }
-.maplibregl-ctrl-attrib { background: rgba(10, 18, 32, 0.8) !important; color: #6c7a90 !important; font-size: 10px; }
+.maplibregl-ctrl-attrib { background: rgba(10, 18, 32, 0.8) !important; color: #8593a8 !important; font-size: 12px; }
 
 /* In Arabic mode, English case content keeps its own direction so punctuation sits at the right end. */
 html[dir="rtl"] :is(p, li, h1, h2, h3, h4, td, dd, dt, label, blockquote) {
@@ -264,9 +266,8 @@ main table thead tr {
   background: var(--surface-2);
 }
 main table th {
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink-faint);
 }
 main table tbody tr {
@@ -334,4 +335,111 @@ tr[role="button"]:focus-visible {
 .cv-auto > * {
   content-visibility: auto;
   contain-intrinsic-size: auto 56px;
+}
+
+/* ── Motion layer (taste skill, motion.md). Transform, scale and opacity only; colours may change on hover. ── */
+
+/* Buttons step 1px up on hover and sink with a .985 press; fine pointers only. */
+.btn {
+  transition: transform var(--m-out) var(--ease), background-color var(--m-out) var(--ease), border-color var(--m-out) var(--ease), color var(--m-out) var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    transition-duration: var(--m-in);
+  }
+}
+.btn:not(:disabled):active {
+  transform: translateY(1px) scale(0.985);
+  transition-duration: var(--m-press);
+}
+
+/* A card that holds its link lifts 2px and its border darkens a step. Cards without a link never move. */
+.card-link {
+  display: block;
+  transition: transform var(--m-out) var(--ease), border-color var(--m-out) var(--ease), background-color var(--m-out) var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card-link:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-strong);
+    transition-duration: var(--m-card-in);
+  }
+}
+
+/* Links in running text rest on a faint hairline; an ink line draws left to right on hover. */
+.link,
+main a.text-accent {
+  text-decoration: none !important;
+  background-image: linear-gradient(currentColor, currentColor), linear-gradient(color-mix(in oklab, currentColor 30%, transparent), color-mix(in oklab, currentColor 30%, transparent));
+  background-size: 0% 1px, 100% 1px;
+  background-position: left 100%, left 100%;
+  background-repeat: no-repeat;
+  padding-bottom: 1px;
+  transition: background-size var(--m-out) var(--ease);
+}
+.link:hover,
+main a.text-accent:hover,
+.link:focus-visible,
+main a.text-accent:focus-visible {
+  background-size: 100% 1px, 100% 1px;
+  transition-duration: var(--m-in);
+}
+html[dir="rtl"] :is(.link, main a.text-accent) {
+  background-position: right 100%, right 100%;
+}
+
+/* Page title entrance, once per page: the title rises out of its mask, then the line under it fades up 12px. */
+.enter-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+.enter-line {
+  display: inline-block;
+  animation: m-rise 700ms var(--m-ease-enter) both;
+}
+.enter-follow {
+  animation: m-fade-up 520ms var(--m-ease-enter) 350ms both;
+}
+@keyframes m-rise {
+  from { transform: translateY(105%); }
+  to { transform: none; }
+}
+@keyframes m-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Sliding tab indicator: one bar travels to the clicked tab by transform alone. */
+.tab-ind {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  width: 1px;
+  background: var(--primary);
+  transform-origin: 0 0;
+  transition: transform var(--m-slide) var(--ease);
+}
+
+/* Focus shows at once: a 2px ring in the action colour, 2px off the control, never animated. */
+:focus-visible {
+  transition: none;
+}
+
+/* Reduced motion: everything rests and stays visible; colours may still change. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .btn:hover,
+  .btn:active,
+  .card-link:hover {
+    transform: none !important;
+  }
 }

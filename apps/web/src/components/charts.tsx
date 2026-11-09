@@ -54,14 +54,14 @@ export function LineChart({ series, xLabel, yLabel, format, height = 260, marker
   return (
     <div className="grid gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-ink-muted" aria-label="Legend">
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-muted" aria-label="Legend">
           {series.map((s, i) => (
             <li key={s.key} className="flex items-center gap-1.5">
               <svg width="24" height="8" aria-hidden="true"><line x1="0" y1="4" x2="24" y2="4" stroke={COLOR[i]} strokeWidth="2" strokeDasharray={DASH[i]} /></svg>{s.label}
             </li>
           ))}
         </ul>
-        <button type="button" className="text-[12px] text-accent hover:underline" onClick={() => setTable((t) => !t)} aria-pressed={table}>{table ? "Show chart" : "Show table"}</button>
+        <button type="button" className="text-[13px] text-accent hover:underline" onClick={() => setTable((t) => !t)} aria-pressed={table}>{table ? "Show chart" : "Show table"}</button>
       </div>
       {!table ? (
         <div className="relative">
@@ -98,7 +98,7 @@ export function LineChart({ series, xLabel, yLabel, format, height = 260, marker
             )}
           </svg>
           {hoverX !== null && (
-            <div className="pointer-events-none absolute top-2 rounded-md border border-line bg-surface px-3 py-2 text-[12px] shadow-lg" style={{ [sx(hoverX) > W * 0.6 ? "right" : "left"]: `${sx(hoverX) > W * 0.6 ? 100 - (sx(hoverX) / W) * 100 + 2 : (sx(hoverX) / W) * 100 + 2}%` }}>
+            <div className="pointer-events-none absolute top-2 rounded-md border border-line bg-surface px-3 py-2 text-[13px] shadow-lg" style={{ [sx(hoverX) > W * 0.6 ? "right" : "left"]: `${sx(hoverX) > W * 0.6 ? 100 - (sx(hoverX) / W) * 100 + 2 : (sx(hoverX) / W) * 100 + 2}%` }}>
               <div className="mb-1 font-medium text-ink">{xLabel} {hoverX}</div>
               {series.map((s, i) => (
                 <div key={s.key} className="flex items-center justify-between gap-4">
@@ -111,7 +111,7 @@ export function LineChart({ series, xLabel, yLabel, format, height = 260, marker
         </div>
       ) : (
         <div className="max-h-[300px] overflow-auto rounded-md border border-line">
-          <table className="w-full text-[12px]">
+          <table className="w-full text-[13px]">
             <thead className="sticky top-0 bg-surface"><tr className="border-b border-line text-ink-faint"><th className="px-3 py-1.5 text-start font-medium">{xLabel}</th>{series.map((s) => <th key={s.key} className="px-3 py-1.5 text-end font-medium">{s.label}</th>)}</tr></thead>
             <tbody>
               {series[0]!.points.filter((_, i) => i % 5 === 0).map((p) => (
@@ -121,7 +121,7 @@ export function LineChart({ series, xLabel, yLabel, format, height = 260, marker
           </table>
         </div>
       )}
-      <p className="text-[11.5px] text-ink-faint">{yLabel}</p>
+      <p className="text-[13px] text-ink-faint">{yLabel}</p>
     </div>
   );
 }
@@ -149,7 +149,7 @@ export function Tornado({ rows, base, format }: { rows: { label: string; low: nu
       {rows.map((r) => {
         const lo = Math.min(r.low, r.high), hi = Math.max(r.low, r.high);
         return (
-          <li key={r.label} className="grid grid-cols-[150px_1fr] items-center gap-3 text-[12px]" title={`${r.label}: ${format(r.low)} to ${format(r.high)}`}>
+          <li key={r.label} className="grid grid-cols-[150px_1fr] items-center gap-3 text-[13px]" title={`${r.label}: ${format(r.low)} to ${format(r.high)}`}>
             <span className="truncate text-ink-muted">{r.label}</span>
             <div className="relative h-4">
               <div className="absolute inset-y-[3px] rounded-[3px] bg-[var(--series-1)] opacity-70" style={{ left: `${pos(lo)}%`, width: `${Math.max(0.6, pos(hi) - pos(lo))}%` }} />
@@ -158,7 +158,7 @@ export function Tornado({ rows, base, format }: { rows: { label: string; low: nu
           </li>
         );
       })}
-      <li className="grid grid-cols-[150px_1fr] gap-3 text-[11px] text-ink-faint"><span /><span className="flex justify-between tabular"><span>{format(min)}</span><span>baseline {format(base)}</span><span>{format(max)}</span></span></li>
+      <li className="grid grid-cols-[150px_1fr] gap-3 text-[13px] text-ink-faint"><span /><span className="flex justify-between tabular"><span>{format(min)}</span><span>baseline {format(base)}</span><span>{format(max)}</span></span></li>
     </ul>
   );
 }

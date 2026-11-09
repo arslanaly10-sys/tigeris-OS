@@ -41,7 +41,7 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto px-3 pb-4">
         {GROUPS.map((g) => (
           <div key={g.key} className="mt-4">
-            <div className="eyebrow px-2.5 pb-1.5 text-[10.5px] text-ink-faint">{t(g.label)}</div>
+            <div className="eyebrow px-2.5 pb-1.5 text-[13px] text-ink-faint">{t(g.label)}</div>
             <ul className="grid gap-0.5">{MODULES.filter((m) => m.group === g.key).map(link)}</ul>
           </div>
         ))}

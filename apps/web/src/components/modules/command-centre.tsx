@@ -44,7 +44,7 @@ function AttentionQueue() {
   if (!a) return <div className="m-4 h-48 animate-pulse rounded bg-surface-2" />;
   if (!a.items.length) return (
     <div className="geo-pattern m-4 grid place-items-center gap-3 rounded-md border border-dashed border-line px-6 py-12 text-center">
-      <Inbox className="size-7 text-accent" /><div className="font-semibold">Nothing needs you right now</div>
+      <Inbox className="size-7 text-accent" /><div className="font-medium">Nothing needs you right now</div>
       <p className="max-w-[48ch] text-[13px] text-ink-muted">Signals, cases waiting for your role and source exceptions appear here with the reason each one is surfaced.</p>
     </div>
   );
@@ -54,8 +54,8 @@ function AttentionQueue() {
         <li key={n}>
           <Link href={i.link} className="grid grid-cols-[20px_1fr_auto] items-start gap-3 px-4 py-3 hover:bg-surface-2">
             <span className="mt-0.5">{KIND_ICON[i.kind]}</span>
-            <span className="min-w-0"><span className="block font-medium">{i.title}</span><span className="block text-[12.5px] text-ink-muted">{i.reason}</span></span>
-            <span className="flex flex-col items-end gap-1"><Badge tone={URGENCY_TONE[i.urgency] ?? "neutral"}>{i.urgency}</Badge>{i.dataMode && <ModeBadge mode={i.dataMode} />}<span className="text-[11px] tabular text-ink-faint">{formatDate(i.at, true)}</span></span>
+            <span className="min-w-0"><span className="block font-medium">{i.title}</span><span className="block text-[13px] text-ink-muted">{i.reason}</span></span>
+            <span className="flex flex-col items-end gap-1"><Badge tone={URGENCY_TONE[i.urgency] ?? "neutral"}>{i.urgency}</Badge>{i.dataMode && <ModeBadge mode={i.dataMode} />}<span className="text-[13px] tabular text-ink-faint">{formatDate(i.at, true)}</span></span>
           </Link>
         </li>
       ))}
@@ -91,7 +91,7 @@ export function CommandCentre() {
               );
             })}
           </ul>
-          <p className="border-t border-line px-4 py-3 text-[12px] text-ink-muted">Every route checks these permissions on the server. Attempts outside your role are refused and recorded in the audit trail.</p>
+          <p className="border-t border-line px-4 py-3 text-[13px] text-ink-muted">Every route checks these permissions on the server. Attempts outside your role are refused and recorded in the audit trail.</p>
         </Panel>
         <Panel>
           <PanelHeader eyebrow="Institution" title={s.institution.name} />
@@ -110,7 +110,7 @@ export function CommandCentre() {
               </div>
             ))}
           </dl>
-          <p className="border-t border-line px-4 py-3 text-[12px] text-ink-muted">This institution and its people are fictional. Run the isolation check from Governance & Audit to prove the other demo institution is invisible from here.</p>
+          <p className="border-t border-line px-4 py-3 text-[13px] text-ink-muted">This institution and its people are fictional. Run the isolation check from Governance & Audit to prove the other demo institution is invisible from here.</p>
         </Panel>
       </div>
     </>

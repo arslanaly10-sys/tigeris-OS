@@ -169,3 +169,26 @@ export function summariseAis(messages: AisMessage[], window: { from: string; to:
   vessels.sort((a, b) => a.mmsi.localeCompare(b.mmsi));
   return { source: "aisstream.io", bbox, capturedFrom: window.from, capturedTo: window.to, messages: messages.length, positionReports, excluded, vessels };
 }
+
+/** How long an estimate keeps moving a ship past its last report. After that it stays at the estimate and says so. */
+export const ESTIMATE_LIMIT_MIN = 6 * 60;
+
+/**
+ * Dead reckoning: where a ship would be now if it kept its last reported course and speed.
+ * Flat-earth step, accurate to well under a kilometre over the few hours it is used for.
+ * Ships that reported no speed or course, or under 0.5 kn, stay where they were seen.
+ */
+export function estimatePosition(
+  v: { lat: number; lon: number; sogKn: number | null; cogDeg: number | null; observedAt: string },
+  nowMs: number,
+  limitMin = ESTIMATE_LIMIT_MIN,
+): { lat: number; lon: number; minutes: number; moving: boolean; capped: boolean } {
+  const ageMin = Math.max(0, (nowMs - Date.parse(v.observedAt)) / 60_000);
+  if (v.sogKn == null || v.cogDeg == null || v.sogKn < 0.5 || !Number.isFinite(ageMin)) return { lat: v.lat, lon: v.lon, minutes: ageMin, moving: false, capped: false };
+  const minutes = Math.min(ageMin, limitMin);
+  const nm = v.sogKn * (minutes / 60);
+  const rad = (v.cogDeg * Math.PI) / 180;
+  const dLat = (nm * Math.cos(rad)) / 60;
+  const dLon = (nm * Math.sin(rad)) / (60 * Math.cos((v.lat * Math.PI) / 180));
+  return { lat: v.lat + dLat, lon: v.lon + dLon, minutes: ageMin, moving: ageMin < limitMin, capped: ageMin >= limitMin };
+}

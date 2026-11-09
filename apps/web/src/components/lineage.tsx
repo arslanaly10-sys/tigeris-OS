@@ -52,7 +52,7 @@ function Step({ icon, title, children, last }: { icon: React.ReactNode; title: s
         {!last && <span className="mt-1 w-px flex-1 bg-line" />}
       </div>
       <div className={cn("min-w-0", !last && "pb-5")}>
-        <div className="mb-2 text-[13px] font-semibold">{title}</div>
+        <div className="mb-2 text-[13px] font-medium">{title}</div>
         {children}
       </div>
     </li>
@@ -103,14 +103,14 @@ function LineageBody({ d }: { d: Lineage }) {
             <Field label="Data class">{e.data_class.replace("_", " ")}</Field>
             <Field label="Size">{formatBytes(e.size_bytes)} · {e.media_type}</Field>
           </dl>
-          <p className="mt-2 break-all font-mono text-[11px] text-ink-faint" title="SHA-256 of the stored original"><Fingerprint className="me-1 inline size-3" />{e.sha256}</p>
+          <p className="mt-2 break-all font-mono text-[13px] text-ink-faint" title="SHA-256 of the stored original"><Fingerprint className="me-1 inline size-3" />{e.sha256}</p>
           {e.original_url && (
-            <a href={e.original_url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-[12px] text-accent hover:underline">
+            <a href={e.original_url} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-[13px] text-accent hover:underline">
               Original location <ExternalLink className="size-3" />
             </a>
           )}
           {e.transformations.length > 0 && (
-            <div className="mt-3 rounded-md border border-line p-2.5 text-[12px]">
+            <div className="mt-3 rounded-md border border-line p-2.5 text-[13px]">
               <div className="mb-1 font-medium">Changes made by the collector before signing</div>
               {e.transformations.map((t, i) => (
                 <p key={i} className="text-ink-muted">{t.detail}{t.rowsBefore !== undefined ? ` (${t.rowsBefore.toLocaleString("en-GB")} → ${t.rowsAfter?.toLocaleString("en-GB")} rows)` : ""}</p>
@@ -121,10 +121,10 @@ function LineageBody({ d }: { d: Lineage }) {
         <Step icon={<ArrowDown />} title="Validation">
           {d.validations.map((v, i) => (
             <div key={i} className="mb-3">
-              <div className="mb-1.5 flex items-center gap-2"><ValidationBadge state={v.outcome} /><span translate="no" className="font-mono text-[11px] text-ink-faint">{v.rule_set_version}</span></div>
+              <div className="mb-1.5 flex items-center gap-2"><ValidationBadge state={v.outcome} /><span translate="no" className="font-mono text-[13px] text-ink-faint">{v.rule_set_version}</span></div>
               <ul className="grid gap-1">
                 {v.checks.map((c, j) => (
-                  <li key={j} className="flex gap-2 text-[12.5px]"><CheckIcon result={c.result} /><span><span className="text-ink">{c.label}.</span> <span className="text-ink-muted">{c.detail}</span></span></li>
+                  <li key={j} className="flex gap-2 text-[13px]"><CheckIcon result={c.result} /><span><span className="text-ink">{c.label}.</span> <span className="text-ink-muted">{c.detail}</span></span></li>
                 ))}
               </ul>
             </div>
@@ -146,7 +146,7 @@ function LineageBody({ d }: { d: Lineage }) {
               <li key={o.id} className="text-ink">{o.source_name}: <span className="tabular">{formatValue(o.value_num, o.unit)}</span>{o.qualifier ? ` (${o.qualifier})` : ""}</li>
             ))}
           </ul>
-          <p className="mt-1 text-[12px] text-ink-muted">Both values are kept. Neither overwrites the other.</p>
+          <p className="mt-1 text-[13px] text-ink-muted">Both values are kept. Neither overwrites the other.</p>
         </div>
       )}
     </div>
@@ -160,7 +160,7 @@ export function FactValue({ id, value, unit, qualifier, className }: { id: strin
     <button type="button" onClick={() => open(id)} title="Show where this number comes from"
       className={cn("whitespace-nowrap rounded px-1 py-0.5 text-start tabular underline decoration-line-strong decoration-dotted underline-offset-4 hover:bg-surface-2 hover:decoration-accent", className)}>
       {formatValue(value, unit)}
-      {qualifier ? <span className="ms-1 text-[10px] text-warn" title={qualifier}>{/projection/i.test(qualifier) ? "proj." : "caution"}</span> : null}
+      {qualifier ? <span className="ms-1 text-[13px] text-warn" title={qualifier}>{/projection/i.test(qualifier) ? "proj." : "caution"}</span> : null}
     </button>
   );
 }

@@ -21,12 +21,12 @@ export function DomainsModule() {
         {rows?.map((d, i) => (
           <Panel key={d.key} className="grid gap-3 p-5">
             <div className="flex items-start justify-between gap-3">
-              <div><div className="eyebrow text-ink-faint">Pack {i + 1}</div><h2 className="text-[18px] font-semibold">{d.name}</h2></div>
+              <div><div className="eyebrow text-ink-faint">Pack {i + 1}</div><h2 className="text-[18px] font-medium">{d.name}</h2></div>
               <Badge tone={TONE[d.status]}>{d.status}</Badge>
             </div>
             <p className="text-[13.5px] text-ink-muted">{d.description}</p>
             <div className="flex flex-wrap gap-1.5">{d.entity_types.map((t) => <Link key={t} href={`/graph?focus=`} className="pointer-events-none"><Badge>{typeLabel(t)}</Badge></Link>)}</div>
-            <div className="flex gap-4 text-[12.5px] text-ink-muted tabular"><span>{d.entities.toLocaleString("en-GB")} entities</span><span>{d.cases} cases</span></div>
+            <div className="flex gap-4 text-[13px] text-ink-muted tabular"><span>{d.entities.toLocaleString("en-GB")} entities</span><span>{d.cases} cases</span></div>
           </Panel>
         ))}
       </div>

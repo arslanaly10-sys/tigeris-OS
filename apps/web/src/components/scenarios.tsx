@@ -123,7 +123,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                   <th key={i} className="px-3 py-2 text-start font-medium">
                     <div className="flex items-center gap-2">
                       <SeriesKey index={i} label="" />
-                      <input autoComplete="off" aria-label={`Name of scenario ${i + 1}`} value={v.name} onChange={(e) => setVariants((vs) => vs.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} className="h-7 w-36 rounded border border-line bg-surface-2 px-2 text-[12.5px] text-ink" />
+                      <input autoComplete="off" aria-label={`Name of scenario ${i + 1}`} value={v.name} onChange={(e) => setVariants((vs) => vs.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} className="h-7 w-36 rounded border border-line bg-surface-2 px-2 text-[13px] text-ink" />
                       {i > 0 && <button type="button" aria-label="Remove alternative" onClick={() => setVariants((vs) => vs.filter((_, j) => j !== i))}><X className="size-3.5 text-ink-faint" /></button>}
                     </div>
                   </th>
@@ -133,7 +133,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
             <tbody>
               {Object.entries(tpl.drivers).map(([k, spec]) => (
                 <tr key={k} className="border-b border-line/60 last:border-0">
-                  <td className="px-4 py-2"><div>{spec.label}</div><div className="text-[11.5px] text-ink-faint">{spec.unit} · ASSUMPTION</div></td>
+                  <td className="px-4 py-2"><div>{spec.label}</div><div className="text-[13px] text-ink-faint">{spec.unit} · ASSUMPTION</div></td>
                   {variants.map((v, i) => (
                     <td key={i} className="px-3 py-2">
                       <div className="flex items-center gap-2">
@@ -148,29 +148,29 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
           </table>
         </div>
         {err && <p role="alert" className="px-4 pb-3 text-[13px] text-crit">{err}</p>}
-        <p className="border-t border-line px-4 py-2.5 text-[12px] text-ink-muted">Drivers are assumptions for this run. Facts come from the evidence base: EIA strait flow and bypass capacity, JODI exports, and the institution&apos;s holdings (synthetic). Numbers are calculated by the deterministic engine; no model writes a number.</p>
+        <p className="border-t border-line px-4 py-2.5 text-[13px] text-ink-muted">Drivers are assumptions for this run. Facts come from the evidence base: EIA strait flow and bypass capacity, JODI exports, and the institution&apos;s holdings (synthetic). Numbers are calculated by the deterministic engine; no model writes a number.</p>
       </Panel>
 
       {runs.length === 0 ? (
         <Panel className="geo-pattern p-6 text-[14px] text-ink-muted">No scenario has been run for this case yet. Set the drivers and press Run scenarios.</Panel>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-3 text-[12.5px] text-ink-muted">
+          <div className="flex flex-wrap items-center gap-3 text-[13px] text-ink-muted">
             <span>Run by {runs[0]!.created_by_label} · {formatDate(runs[0]!.created_at, true)} · {runs[0]!.monte_carlo_runs} Monte Carlo draws per scenario</span>
-            <span translate="no" className="font-mono text-[11px] text-ink-faint">input {runs[0]!.input_hash.slice(0, 12)}</span>
+            <span translate="no" className="font-mono text-[13px] text-ink-faint">input {runs[0]!.input_hash.slice(0, 12)}</span>
             <Button size="sm" variant="ghost" onClick={doReplay}><RotateCcw />Replay and compare</Button>
             {replay && (replay.identical ? <Badge tone="ok"><CheckCircle2 />Identical: {replay.checked} numbers reproduced</Badge> : <Badge tone="crit"><ShieldAlert />{replay.differences.length} differences</Badge>)}
           </div>
 
           <Panel>
-            <PanelHeader eyebrow="Four horizons" title="Scenario comparison" actions={<div className="flex flex-wrap gap-3 text-[12px] text-ink-muted">{runs.map((r, i) => <SeriesKey key={r.id} index={i} label={r.name} />)}</div>} />
+            <PanelHeader eyebrow="Four horizons" title="Scenario comparison" actions={<div className="flex flex-wrap gap-3 text-[13px] text-ink-muted">{runs.map((r, i) => <SeriesKey key={r.id} index={i} label={r.name} />)}</div>} />
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] text-[12.5px]">
+              <table className="w-full min-w-[980px] text-[13px]">
                 <thead><tr className="border-b border-line text-ink-faint"><th className="px-4 py-2 text-start font-medium">Measure</th>{HORIZONS.map(([h, l]) => <th key={h} className="px-3 py-2 text-start font-medium">{l}</th>)}</tr></thead>
                 <tbody>
                   {results.map((row) => (
                     <tr key={row.key} className="border-b border-line/60 align-top last:border-0">
-                      <td className="px-4 py-3"><div className="font-medium">{row.label}</div><div className="mt-0.5"><Badge>CALCULATED</Badge></div></td>
+                      <td className="px-4 py-3"><div className="font-medium">{row.label}</div><div className="mt-0.5"><Badge>Calculated</Badge></div></td>
                       {row.byHorizon.map((cells, hi) => {
                         const vals = cells.flatMap((c) => [c?.value, c?.p10, c?.p90].filter((x): x is number => x !== null && x !== undefined));
                         const min = Math.min(...vals), max = Math.max(...vals);
@@ -180,11 +180,11 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                               {cells.map((c, i) => c && (
                                 <div key={c.id} className="grid gap-1">
                                   <button type="button" onClick={() => setLineage(c.id)} className="flex items-baseline justify-between gap-2 text-start hover:underline" title="Show how this number was calculated">
-                                    <span className="text-[11px] text-ink-faint">{runs[i]!.name}</span>
+                                    <span className="text-[13px] text-ink-faint">{runs[i]!.name}</span>
                                     <span className="tabular font-medium">{fmtUnit(c.value, c.unit)}</span>
                                   </button>
                                   <RangeBar value={c.value} p10={c.p10} p90={c.p90} min={min} max={max} index={i} />
-                                  {c.p10 !== null && <span className="text-[10.5px] tabular text-ink-faint">P10–P90 {fmtUnit(c.p10, c.unit)} to {fmtUnit(c.p90, c.unit)}</span>}
+                                  {c.p10 !== null && <span className="text-[13px] tabular text-ink-faint">P10–P90 {fmtUnit(c.p10, c.unit)} to {fmtUnit(c.p90, c.unit)}</span>}
                                 </div>
                               ))}
                             </div>
@@ -196,7 +196,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                 </tbody>
               </table>
             </div>
-            <p className="border-t border-line px-4 py-2.5 text-[12px] text-ink-muted">Bars show the P10–P90 range from the Monte Carlo draws; the tick is the deterministic value. Horizons are comparison windows, not forecasts. Click any value to see its formula, facts and assumptions.</p>
+            <p className="border-t border-line px-4 py-2.5 text-[13px] text-ink-muted">Bars show the P10–P90 range from the Monte Carlo draws; the tick is the deterministic value. Horizons are comparison windows, not forecasts. Click any value to see its formula, facts and assumptions.</p>
           </Panel>
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
@@ -220,17 +220,17 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                 <div className="flex flex-wrap gap-4">
                   {runs.map((r, i) => (
                     <div key={r.id} className="grid gap-0.5">
-                      <SeriesKey index={i} label={r.name} className="text-[12px] text-ink-muted" />
+                      <SeriesKey index={i} label={r.name} className="text-[13px] text-ink-muted" />
                       <span className="font-serif text-[32px] leading-none tabular">{num(r.resilience.score, 0)}<span className="text-[14px] text-ink-faint"> / 100</span></span>
                     </div>
                   ))}
                 </div>
                 <ul className="grid gap-2.5">
                   {runs[0]!.resilience.components.map((c) => (
-                    <li key={c.key} className="grid gap-1 text-[12.5px]">
+                    <li key={c.key} className="grid gap-1 text-[13px]">
                       <div className="flex justify-between"><span>{c.label}</span><span className="tabular text-ink-muted">{runs.map((r) => num(r.resilience.components.find((x) => x.key === c.key)!.score, 0)).join(" · ")}</span></div>
                       <div className="h-1.5 overflow-hidden rounded bg-surface-3"><div className="h-full rounded bg-[var(--series-1)]" style={{ width: `${c.score}%` }} /></div>
-                      <span className="text-[11.5px] text-ink-faint">{c.basis}</span>
+                      <span className="text-[13px] text-ink-faint">{c.basis}</span>
                     </li>
                   ))}
                 </ul>
@@ -243,15 +243,15 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
               <PanelHeader eyebrow={`${runs[0]!.name} · 90-day value at risk`} title="What moves the result most" />
               <div className="p-4">
                 <Tornado rows={runs[0]!.sensitivity.slice(0, 6)} base={runs[0]!.results.find((r) => r.key === "portfolio_value_at_risk_usd" && r.horizon === "90d")!.value} format={(v) => fmtUnit(v, "USD")} />
-                <p className="mt-3 text-[12px] text-ink-muted">Each bar moves one driver up and down by a fixed step while the others stay at the baseline.</p>
+                <p className="mt-3 text-[13px] text-ink-muted">Each bar moves one driver up and down by a fixed step while the others stay at the baseline.</p>
               </div>
             </Panel>
             <Panel>
               <PanelHeader eyebrow="Synthetic institution context" title="Most exposed holdings" actions={<ClaimBadge claim="synthetic" />} />
               <ul className="divide-y divide-line">
                 {runs[0]!.top_exposures.map((e) => (
-                  <li key={e.holding_key} className="flex items-center justify-between gap-3 px-4 py-2 text-[12.5px]">
-                    <span className="min-w-0"><span className="block truncate">{e.name}</span><span className="text-[11.5px] text-ink-faint">{e.sector} · path strength {num(e.path_strength, 2)}</span></span>
+                  <li key={e.holding_key} className="flex items-center justify-between gap-3 px-4 py-2 text-[13px]">
+                    <span className="min-w-0"><span className="block truncate">{e.name}</span><span className="text-[13px] text-ink-faint">{e.sector} · path strength {num(e.path_strength, 2)}</span></span>
                     <span className="tabular">{fmtUnit(e.value_usd, "USD")}</span>
                   </li>
                 ))}
@@ -262,7 +262,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
           {history.length > 1 && (
             <Panel>
               <PanelHeader eyebrow="Saved runs" title="Earlier comparisons" />
-              <ul className="divide-y divide-line">{history.map((h) => <li key={h.group_id} className="flex justify-between gap-3 px-4 py-2 text-[12.5px]"><span>{h.names}</span><span className="text-ink-faint">{h.by} · {formatDate(h.created_at, true)}</span></li>)}</ul>
+              <ul className="divide-y divide-line">{history.map((h) => <li key={h.group_id} className="flex justify-between gap-3 px-4 py-2 text-[13px]"><span>{h.names}</span><span className="text-ink-faint">{h.by} · {formatDate(h.created_at, true)}</span></li>)}</ul>
             </Panel>
           )}
         </>
@@ -280,25 +280,25 @@ export function ResultLineage({ id, onClose }: { id: string | null; onClose: () 
       {!d ? <div className="h-64 animate-pulse rounded bg-surface-2" /> : (
         <div className="grid gap-5 text-[13px]">
           <div className="rounded-lg border border-line bg-surface-2 p-4">
-            <Badge>CALCULATED</Badge>
+            <Badge>Calculated</Badge>
             <div className="mt-2 font-serif text-[28px] tabular">{fmtUnit(d.result.value, d.result.unit)}</div>
             {d.result.p10 !== null && <div className="text-ink-muted tabular">P10 {fmtUnit(d.result.p10, d.result.unit)} · P50 {fmtUnit(d.result.p50, d.result.unit)} · P90 {fmtUnit(d.result.p90, d.result.unit)}</div>}
           </div>
-          <div><div className="mb-1 font-semibold">Formula</div><p className="whitespace-pre-wrap break-words rounded-md border border-line p-2.5 font-mono text-[12px]">{d.result.formula}</p></div>
+          <div><div className="mb-1 font-medium">Formula</div><p className="whitespace-pre-wrap break-words rounded-md border border-line p-2.5 font-mono text-[13px]">{d.result.formula}</p></div>
           <div>
-            <div className="mb-1.5 font-semibold">Facts used ({d.facts.length})</div>
+            <div className="mb-1.5 font-medium">Facts used ({d.facts.length})</div>
             {d.facts.length === 0 && <p className="text-ink-muted">This measure uses assumptions only.</p>}
-            <ul className="grid gap-1.5">{d.facts.map((f) => <li key={f.id} className="flex items-center justify-between gap-3"><span className="min-w-0"><span className="block truncate">{f.predicate_label} · {f.subject_label}{f.period ? ` · ${f.period}` : ""}</span><span className="text-[11.5px] text-ink-faint">{f.source_name}</span></span><span className="flex items-center gap-1.5"><FactValue id={f.id} value={f.value_num} unit={f.unit} /><ClaimBadge claim={f.claim_class} /></span></li>)}</ul>
+            <ul className="grid gap-1.5">{d.facts.map((f) => <li key={f.id} className="flex items-center justify-between gap-3"><span className="min-w-0"><span className="block truncate">{f.predicate_label} · {f.subject_label}{f.period ? ` · ${f.period}` : ""}</span><span className="text-[13px] text-ink-faint">{f.source_name}</span></span><span className="flex items-center gap-1.5"><FactValue id={f.id} value={f.value_num} unit={f.unit} /><ClaimBadge claim={f.claim_class} /></span></li>)}</ul>
           </div>
           <div>
-            <div className="mb-1.5 font-semibold">Assumptions used ({d.assumptions.length})</div>
-            <ul className="grid gap-2">{d.assumptions.map((a) => <li key={a.key} className={cn("rounded-md border border-line p-2.5")}><div className="flex items-center justify-between gap-2"><span>{a.label}</span><span className="flex items-center gap-1.5"><span className="tabular">{a.value_num ?? "table"}{a.unit && a.value_num !== null ? ` ${a.unit}` : ""}</span><ClaimBadge claim="assumed" /></span></div><p className="mt-1 text-[11.5px] text-ink-faint">{a.kind === "driver" ? "Driver set for this run" : a.basis.length > 160 ? `${a.basis.slice(0, 160)}…` : a.basis}</p></li>)}</ul>
+            <div className="mb-1.5 font-medium">Assumptions used ({d.assumptions.length})</div>
+            <ul className="grid gap-2">{d.assumptions.map((a) => <li key={a.key} className={cn("rounded-md border border-line p-2.5")}><div className="flex items-center justify-between gap-2"><span>{a.label}</span><span className="flex items-center gap-1.5"><span className="tabular">{a.value_num ?? "table"}{a.unit && a.value_num !== null ? ` ${a.unit}` : ""}</span><ClaimBadge claim="assumed" /></span></div><p className="mt-1 text-[13px] text-ink-faint">{a.kind === "driver" ? "Driver set for this run" : a.basis.length > 160 ? `${a.basis.slice(0, 160)}…` : a.basis}</p></li>)}</ul>
           </div>
           <dl className="grid grid-cols-2 gap-3 border-t border-line pt-3">
             <Field label="Scenario">{d.result.run_name}</Field><Field label="Engine">{d.result.model_version}</Field>
             <Field label="Method">{d.result.method} ({d.result.monte_carlo_runs} draws)</Field><Field label="Run">{d.result.created_by_label} · {formatDate(d.result.run_at, true)}</Field>
           </dl>
-          <p className="break-all font-mono text-[11px] text-ink-faint">Input hash {d.result.input_hash}</p>
+          <p className="break-all font-mono text-[13px] text-ink-faint">Input hash {d.result.input_hash}</p>
         </div>
       )}
     </Drawer>

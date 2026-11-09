@@ -9,10 +9,10 @@ export function PageHeader({ nav, description, actions }: { nav: I18nKey; descri
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-5">
       <div className="min-w-0 max-w-3xl">
         <div className="flex items-center gap-2">
-          <h1 className="text-[28px] font-semibold leading-tight">{t(nav)}</h1>
+          <h1 key={nav} className="enter-mask text-[34px] leading-[1.1]"><span className="enter-line">{t(nav)}</span></h1>
           {lang === "ar" && <Badge tone="info">{t("arabicDraft")}</Badge>}
         </div>
-        <p className="mt-2 max-w-[72ch] text-[14px] leading-relaxed text-ink-muted">{lang === "ar" ? AR_DESCRIPTIONS[nav] ?? description : description}</p>
+        <p key={`${nav}-d`} className="enter-follow mt-3 max-w-[62ch] text-[16px] leading-relaxed text-ink-muted">{lang === "ar" ? AR_DESCRIPTIONS[nav] ?? description : description}</p>
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

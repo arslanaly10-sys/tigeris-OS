@@ -6,6 +6,7 @@ import { ROLE_LABELS, type Role } from "@tigeris/shared";
 import { api } from "@/lib/api";
 import { usePrefs } from "@/components/prefs";
 import { Button } from "@/components/ui/button";
+import { ShipBackdrop } from "@/components/ship-backdrop";
 import { Badge } from "@/components/ui/badge";
 import { Wordmark } from "@/components/wordmark";
 import { PrefToggles } from "@/components/pref-toggles";
@@ -70,16 +71,19 @@ export default function SignInPage() {
   return (
     <div className="grid min-h-full lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,1fr)]">
       {/* Brand side */}
-      <aside className="geo-pattern relative hidden flex-col justify-between overflow-hidden border-e border-line bg-surface px-12 py-10 lg:flex">
-        <Wordmark size="lg" />
-        <div className="max-w-md space-y-5">
+      <aside className="relative hidden flex-col justify-between overflow-hidden border-e border-line bg-surface px-12 py-10 lg:flex">
+        <ShipBackdrop />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_oklab,var(--surface)_92%,transparent)_0%,color-mix(in_oklab,var(--surface)_55%,transparent)_42%,transparent_70%)]" />
+        <span className="absolute end-12 top-12 z-[1] rounded border border-line-strong bg-surface/80 px-2 py-1 text-[13px] text-ink-muted">Simulated ships, Riyadh time</span>
+        <div className="relative"><Wordmark size="lg" /></div>
+        <div className="relative max-w-lg space-y-5">
           <p className="eyebrow text-accent">{t("product.descriptor")}</p>
-          <p className="font-serif text-[34px] leading-tight text-ink">{t("product.tagline")}</p>
-          <p className="max-w-[46ch] text-[15px] text-ink-muted">
+          <p className="enter-mask text-[48px] font-medium leading-[1.05] tracking-[-0.035em] text-ink"><span className="enter-line">{t("product.tagline")}</span></p>
+          <p className="enter-follow max-w-[46ch] text-[16px] text-ink-muted">
             An institution-owned intelligence and decision layer. Evidence is validated, linked and reasoned over, then put before a named person to decide.
           </p>
         </div>
-        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink-muted">
+        <ul className="enter-follow relative flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-ink-muted">
           <li className="flex items-center gap-2"><Server className="size-4 text-accent" />{t("signin.sovereign")}</li>
           <li className="flex items-center gap-2"><Building2 className="size-4 text-accent" />{t("signin.onPrem")}</li>
           <li className="flex items-center gap-2"><ScrollText className="size-4 text-accent" />{t("signin.audited")}</li>
@@ -99,7 +103,7 @@ export default function SignInPage() {
         <div className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-center gap-6 py-10">
           <div className="space-y-1">
             {lang === "ar" && <Badge tone="info">{t("arabicDraft")}</Badge>}
-            <h1 className="text-[28px] font-semibold">{t("signin.title")}</h1>
+            <h1 className="text-[28px] font-medium">{t("signin.title")}</h1>
             <p className="text-ink-muted">
               {step === "institution" && t("signin.chooseInstitution")}
               {step === "method" && inst?.name}
@@ -123,7 +127,7 @@ export default function SignInPage() {
                   >
                     <span className="grid size-10 shrink-0 place-items-center rounded-md bg-surface-2 text-accent"><Landmark className="size-5" /></span>
                     <span className="min-w-0 flex-1">
-                      <span className="block font-semibold">{i.name}</span>
+                      <span className="block font-medium">{i.name}</span>
                       <span className="block text-[13px] text-ink-muted">{i.buyerCategory} · {i.country} · fictional</span>
                     </span>
                     <ArrowRight className="size-4 text-ink-faint rtl:rotate-180" />
@@ -167,13 +171,13 @@ export default function SignInPage() {
                       <span className="min-w-0">
                         {step === "roles" ? (
                           <>
-                            <span className="block font-semibold">{ROLE_LABELS[p.role]}</span>
-                            <span className="block text-[12px] text-ink-muted">{p.name}</span>
+                            <span className="block font-medium">{ROLE_LABELS[p.role]}</span>
+                            <span className="block text-[13px] text-ink-muted">{p.name}</span>
                           </>
                         ) : (
                           <>
-                            <span className="block font-semibold">{p.name}</span>
-                            <span className="block text-[12px] text-ink-muted">{p.title} · {p.division}</span>
+                            <span className="block font-medium">{p.name}</span>
+                            <span className="block text-[13px] text-ink-muted">{p.title} · {p.division}</span>
                           </>
                         )}
                       </span>
@@ -189,7 +193,7 @@ export default function SignInPage() {
               <div className="flex items-center gap-3 rounded-lg border border-line bg-surface p-3">
                 <ShieldCheck className="size-5 text-ok" />
                 <div className="min-w-0 text-[13px]">
-                  <div className="font-semibold text-ink">{person.name}</div>
+                  <div className="font-medium text-ink">{person.name}</div>
                   <div className="text-ink-muted">{ROLE_LABELS[person.role]} · {inst?.name}</div>
                 </div>
               </div>
@@ -202,7 +206,7 @@ export default function SignInPage() {
                   maxLength={6}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  className="h-12 rounded-md border border-line bg-surface-2 px-3 font-mono text-[22px] tracking-[0.4em] text-ink tabular"
+                  className="h-12 rounded-md border border-line bg-surface-2 px-3 font-mono text-[22px] text-ink tabular"
                   aria-describedby="mfa-demo"
                 />
               </label>
@@ -223,7 +227,7 @@ export default function SignInPage() {
           )}
         </div>
 
-        <footer className="text-center text-[12px] text-ink-faint">{t("footer.notice")} · Demonstration build · Fictional institutions and people</footer>
+        <footer className="text-center text-[13px] text-ink-faint">{t("footer.notice")} · Demonstration build · Fictional institutions and people</footer>
       </main>
     </div>
   );

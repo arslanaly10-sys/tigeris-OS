@@ -1,11 +1,12 @@
 "use client";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAnimationFrame, useReducedMotion } from "motion/react";
 import maplibregl, { type GeoJSONSource, type Map as MLMap } from "maplibre-gl";
 import Link from "next/link";
 import { Crosshair, Globe2, Layers, Map as MapIcon, Pause, Play, Radio, Rows3, SkipBack } from "lucide-react";
 import {
-  AIS_CATEGORY_LABEL, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
+  AIS_CATEGORY_LABEL, ESTIMATE_LIMIT_MIN, estimatePosition, CAPE_LANE, LANES, PIPELINE_PATHS, ROADS, VESSEL_LABEL, hormuzTransits, makeFleet, makeTrucks, positionsAt,
   type AisCategory, type MovingPoint, type Scenario,
 } from "@tigeris/shared";
 import { api } from "@/lib/api";
@@ -44,9 +45,9 @@ const LAYERS = [
 type LayerKey = (typeof LAYERS)[number]["key"];
 
 const ENTITY_LAYER: Record<string, LayerKey> = { port: "ports", terminal: "ports", refinery: "refineries", field: "refineries", facility: "refineries", desalination: "desal", power_plant: "power", airport: "airports", chokepoint: "chokepoints" };
-const ASSET_COLOR: Record<string, string> = { ports: "#79a8de", refineries: "#dc9a45", desal: "#5cc8d6", power: "#c792ea", airports: "#9aa6b8", chokepoints: "#d8645a" };
-const MOVER_COLOR: Record<string, string> = { crude_tanker: "#dc9a45", product_tanker: "#e8b86a", lng_carrier: "#79a8de", container: "#45b88c", bulk_grain: "#c9a45c", truck: "#e8e6df" };
-const OBSERVED_COLOR: Record<AisCategory, string> = { tanker: "#dc9a45", cargo: "#45b88c", passenger: "#c792ea", service: "#9aa6b8", fishing: "#5cc8d6", other: "#e8e6df" };
+const ASSET_COLOR: Record<string, string> = { ports: "#79a8de", refineries: "#dc9a45", desal: "#5cc8d6", power: "#e58fa8", airports: "#9aa6b8", chokepoints: "#d8645a" };
+export const MOVER_COLOR: Record<string, string> = { crude_tanker: "#dc9a45", product_tanker: "#e8b86a", lng_carrier: "#79a8de", container: "#45b88c", bulk_grain: "#c9a45c", truck: "#e8e6df" };
+const OBSERVED_COLOR: Record<AisCategory, string> = { tanker: "#dc9a45", cargo: "#45b88c", passenger: "#e58fa8", service: "#9aa6b8", fishing: "#5cc8d6", other: "#e8e6df" };
 const HORMUZ_VIEW = { center: [56.45, 26.35] as [number, number], zoom: 7.4 };
 const SCENARIOS: { key: Scenario; label: string; note: string }[] = [
   { key: "baseline", label: "Baseline", note: "Normal simulated traffic" },
@@ -55,14 +56,14 @@ const SCENARIOS: { key: Scenario; label: string; note: string }[] = [
 ];
 const SPEEDS = [{ label: "1×", minPerSec: 2 }, { label: "10×", minPerSec: 20 }, { label: "60×", minPerSec: 120 }];
 const LABELS: Array<[string, number, number, boolean?]> = [
-  ["SAUDI ARABIA", 45.5, 23.6, true], ["UAE", 54.3, 23.4, true], ["QATAR", 51.2, 25.1, true], ["KUWAIT", 47.6, 29.4, true], ["OMAN", 57.0, 21.0, true], ["BAHRAIN", 50.55, 26.3, true],
-  ["IRAN", 54.5, 30.5], ["IRAQ", 44.5, 32.5], ["YEMEN", 47.5, 15.6], ["Strait of Hormuz", 56.55, 26.85], ["Bab el-Mandeb", 43.4, 12.2], ["Red Sea", 38.6, 20.0], ["Arabian Gulf", 51.4, 27.3], ["Gulf of Oman", 58.3, 24.5], ["Arabian Sea", 62.5, 17.5],
+  ["Saudi Arabia", 45.5, 23.6, true], ["UAE", 54.3, 23.4, true], ["Qatar", 51.2, 25.1, true], ["Kuwait", 47.6, 29.4, true], ["Oman", 57.0, 21.0, true], ["Bahrain", 50.55, 26.3, true],
+  ["Iran", 54.5, 30.5], ["Iraq", 44.5, 32.5], ["Yemen", 47.5, 15.6], ["Strait of Hormuz", 56.55, 26.85], ["Bab el-Mandeb", 43.4, 12.2], ["Red Sea", 38.6, 20.0], ["Arabian Gulf", 51.4, 27.3], ["Gulf of Oman", 58.3, 24.5], ["Arabian Sea", 62.5, 17.5],
 ];
 
 const fc = (features: GeoJSON.Feature[]): GeoJSON.FeatureCollection => ({ type: "FeatureCollection", features });
 const line = (points: [number, number][], props: Record<string, unknown>): GeoJSON.Feature => ({ type: "Feature", properties: props, geometry: { type: "LineString", coordinates: points } });
 
-function arrowImage(color: string, holding: boolean, rerouted: boolean, truck: boolean): ImageData {
+export function arrowImage(color: string, holding: boolean, rerouted: boolean, truck: boolean): ImageData {
   const s = 22;
   const c = document.createElement("canvas");
   c.width = c.height = s;
@@ -94,6 +95,9 @@ function observedImage(color: string, moving: boolean): ImageData {
   return g.getImageData(0, 0, s, s);
 }
 
+const riyadhMinutes = (ms: number) => { const d = new Date(ms); return ((d.getUTCHours() + 3) % 24) * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60 + d.getUTCMilliseconds() / 60000; };
+const estimateOf = (v: ObservedVessel, nowMs: number) => estimatePosition({ lat: v.lat, lon: v.lon, sogKn: v.facts.speed_over_ground?.num ?? null, cogDeg: v.facts.course_over_ground?.num ?? v.facts.heading?.num ?? null, observedAt: v.observedAt ?? new Date(nowMs).toISOString() }, nowMs);
+const ago = (min: number) => (min < 1 ? "just now" : min < 90 ? `${Math.round(min)} min ago` : min < 48 * 60 ? `${Math.round(min / 60)} h ago` : `${Math.round(min / 1440)} days ago`);
 const vesselBearing = (v: ObservedVessel) => v.facts.heading?.num ?? v.facts.course_over_ground?.num ?? 0;
 const isMoving = (v: ObservedVessel) => (v.facts.speed_over_ground?.num ?? 0) >= 0.5 && (v.facts.heading?.num != null || v.facts.course_over_ground?.num != null);
 
@@ -104,9 +108,12 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const ripples = useRef<maplibregl.Marker[]>([]);
   const [ready, setReady] = useState(false);
   const [data, setData] = useState<{ entities: MapEntity[]; signals: MapSignal[] } | null>(null);
-  const [mode, setMode] = useState<"replay" | "live">(compact ? "live" : "replay");
-  const [minutes, setMinutes] = useState(8 * 60);
-  const [playing, setPlaying] = useState(!compact);
+  const [mode, setMode] = useState<"replay" | "live">("live");
+  const [minutes, setMinutes] = useState(() => riyadhMinutes(Date.now()));
+  const [playing, setPlaying] = useState(true);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const reduced = useReducedMotion();
+  const lastFrame = useRef(0);
   const [speed, setSpeed] = useState(1);
   const [scenario, setScenario] = useState<Scenario>("baseline");
   const [on, setOn] = useState<Set<LayerKey>>(new Set(LAYERS.map((l) => l.key)));
@@ -124,18 +131,19 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   useEffect(() => { api<{ entities: MapEntity[]; signals: MapSignal[] }>("/map/layers").then((r) => r.ok && setData(r.data)); }, []);
   useEffect(() => { api<ObservedData>("/map/observed-vessels").then((r) => r.ok && setObserved(r.data)); }, []);
 
-  // Clock: replay advances by the chosen speed; simulated live follows the wall clock (Riyadh time).
-  useEffect(() => {
-    if (mode === "live") {
-      const tick = () => { const d = new Date(); setMinutes(((d.getUTCHours() + 3) % 24) * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60); };
-      tick();
-      const iv = setInterval(tick, 1000);
-      return () => clearInterval(iv);
-    }
-    if (!playing) return;
-    const iv = setInterval(() => setMinutes((m) => (m + SPEEDS[speed]!.minPerSec / 4) % 1440), 250);
-    return () => clearInterval(iv);
-  }, [mode, playing, speed]);
+  // Clock on Motion's frame loop (about 12 frames a second): live follows the wall clock in Riyadh time and
+  // moves ships smoothly between seconds; replay advances by the chosen speed. Reduced motion: one step a second.
+  useAnimationFrame((t, delta) => {
+    const step = reduced ? 1000 : 80;
+    if (t - lastFrame.current < step) return;
+    const dt = t - lastFrame.current;
+    lastFrame.current = t;
+    const now = Date.now();
+    setNowMs(now);
+    if (mode === "live") setMinutes(riyadhMinutes(now));
+    else if (playing) setMinutes((m) => (m + (SPEEDS[speed]!.minPerSec * Math.min(dt, 1000)) / 1000) % 1440);
+    void delta;
+  });
 
   // Build the map once.
   useEffect(() => {
@@ -264,18 +272,21 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   useEffect(() => {
     const m = map.current;
     if (!ready || !m) return;
-    (m.getSource("movers") as GeoJSONSource).setData(fc(movers.map((p) => ({ type: "Feature", properties: { id: p.id, name: p.name, kind: p.kind, type: p.type, status: p.status, bearing: p.bearing, sub: `${p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"} · ${p.speedLabel} · SYNTHETIC` }, geometry: { type: "Point", coordinates: p.lngLat } }))));
+    (m.getSource("movers") as GeoJSONSource).setData(fc(movers.map((p) => ({ type: "Feature", properties: { id: p.id, name: p.name, kind: p.kind, type: p.type, status: p.status, bearing: p.bearing, sub: `${p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"} · ${p.speedLabel} · synthetic` }, geometry: { type: "Point", coordinates: p.lngLat } }))));
   }, [ready, movers]);
 
-  // Observed ships from the imported AIS snapshot (positions as broadcast; they do not move with the replay clock).
+  // Observed ships: estimated from each ship's last report (course and speed), moving with the wall clock.
   useEffect(() => {
     const m = map.current;
     if (!ready || !m || !observed) return;
-    (m.getSource("observed") as GeoJSONSource).setData(fc(observed.vessels.map((v) => ({ type: "Feature", properties: {
-      key: v.key, name: v.name, category: v.category, motion: isMoving(v) ? "moving" : "still", bearing: vesselBearing(v),
-      sub: `${v.typeLabel} · ${v.facts.speed_over_ground?.num != null ? `${num(v.facts.speed_over_ground.num, 1)} kn` : "speed not reported"} · OBSERVED (AIS)`,
-    }, geometry: { type: "Point", coordinates: [v.lon, v.lat] } }))));
-  }, [ready, observed]);
+    (m.getSource("observed") as GeoJSONSource).setData(fc(observed.vessels.map((v) => {
+      const e = estimateOf(v, nowMs);
+      return { type: "Feature", properties: {
+        key: v.key, name: v.name, category: v.category, motion: isMoving(v) ? "moving" : "still", bearing: vesselBearing(v),
+        sub: `${v.typeLabel} · ${v.facts.speed_over_ground?.num != null ? `${num(v.facts.speed_over_ground.num, 1)} kn` : "speed not reported"} · ${e.moving ? `estimated, last seen ${ago(e.minutes)}` : `seen ${ago(e.minutes)}`} (AIS)`,
+      }, geometry: { type: "Point", coordinates: [e.lon, e.lat] } };
+    })));
+  }, [ready, observed, nowMs]);
 
   useEffect(() => {
     const m = map.current;
@@ -294,11 +305,11 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   return (
     <div className="grid gap-3">
       {/* Status strip: mode, time, data labels and key counts are always visible (MAP §2, §6). */}
-      <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
-        <Badge tone={mode === "live" ? "ok" : "info"} className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">{mode === "live" ? "SIMULATED LIVE" : "REPLAY"}</Badge>
-        <Badge tone="gold" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">Synthetic movement</Badge>
-        {observed?.capture && <Badge tone="info" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]" title={observed.capture.summary ?? undefined}>Observed AIS · {observed.vessels.length} ships · {formatDate(observed.capture.retrievedAt, true)}</Badge>}
-        {scenario !== "baseline" && <Badge tone="warn" className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">SCENARIO · {SCENARIOS.find((s) => s.key === scenario)!.label}</Badge>}
+      <div className="flex flex-wrap items-center gap-2 text-[13px]">
+        <Badge tone={mode === "live" ? "ok" : "info"} className="text-[13px] font-medium">{mode === "live" ? "Simulated live" : "Replay"}</Badge>
+        <Badge tone="gold" className="text-[13px] font-medium">Synthetic movement</Badge>
+        {observed?.capture && <Badge tone="info" className="text-[13px] font-medium" title={observed.capture.summary ?? undefined}>Observed AIS · {observed.vessels.length} ships · {formatDate(observed.capture.retrievedAt, true)}</Badge>}
+        {scenario !== "baseline" && <Badge tone="warn" className="text-[13px] font-medium">Scenario · {SCENARIOS.find((s) => s.key === scenario)!.label}</Badge>}
         <span className="tabular text-ink-muted">{clock} Riyadh time</span>
         <span className="text-ink-muted">Hormuz transits (24 h): <b className={cn("tabular", transits.now < transits.base * 0.85 ? "text-crit" : "text-ink")}>{transits.now}</b> / {transits.base} baseline</span>
         {holding > 0 && <span className="text-warn">{holding} holding</span>}
@@ -314,7 +325,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       <div className={cn("relative overflow-hidden rounded-lg border border-line", view === "table" && "hidden")} style={{ height: h }}>
         <div ref={box} className="h-full w-full" role="region" aria-label="Movement map of the GCC. A table view with the same data is available." />
         {!compact && (
-          <div className="absolute start-3 top-3 z-10 w-[220px] rounded-md border border-line bg-surface/95 text-[12.5px] shadow-lg backdrop-blur">
+          <div className="absolute start-3 top-3 z-10 w-[220px] rounded-md border border-line bg-surface/95 text-[13px] shadow-lg backdrop-blur">
             <button type="button" className="flex w-full items-center gap-2 px-3 py-2 font-medium hover:bg-surface-2" onClick={() => setLayersOpen((v) => !v)} aria-expanded={layersOpen}><Layers className="size-4 text-accent" />Layers</button>
             {layersOpen && (
               <div className="grid max-h-[420px] gap-2 overflow-y-auto border-t border-line px-3 py-2">
@@ -330,7 +341,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
                   <div className="grid gap-1 border-t border-line pt-2">
                     <div className="eyebrow text-ink-faint">Observed ship types</div>
                     {(Object.keys(OBSERVED_COLOR) as AisCategory[]).map((c) => <div key={c} className="flex items-center gap-2 text-ink-muted"><span aria-hidden className="size-2.5 rounded-sm" style={{ background: OBSERVED_COLOR[c] }} />{AIS_CATEGORY_LABEL[c]}</div>)}
-                    <div className="text-[11px] text-ink-faint">Arrow: under way · square: stopped or not reported</div>
+                    <div className="text-[13px] text-ink-faint">Arrow: under way · square: stopped or not reported</div>
                   </div>
                 )}
               </div>
@@ -351,7 +362,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex gap-1" role="group" aria-label="Mode">
               <Button size="sm" variant={mode === "replay" ? "primary" : "ghost"} onClick={() => { setMode("replay"); setPlaying(true); }}>Replay</Button>
-              <Button size="sm" variant={mode === "live" ? "primary" : "ghost"} onClick={() => setMode("live")}><Radio />Simulated live</Button>
+              <Button size="sm" variant={mode === "live" ? "primary" : "ghost"} onClick={() => setMode("live")}><Radio />Live clock</Button>
             </div>
             {mode === "replay" && (
               <>
@@ -370,15 +381,15 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
         </div>
       )}
       {!compact && (
-        <p className="text-[12px] text-ink-faint">
+        <p className="text-[13px] text-ink-faint">
           {observed?.capture
-            ? <>Ringed marks are real ships observed by AIS in the Strait of Hormuz and its approaches (including Dubai and Fujairah anchorages), captured {formatDate(observed.capture.retrievedAt, true)} by the collector and imported as a signed snapshot. They show where each ship was at capture time and do not move with the replay. Coverage depends on shore stations, and AIS is self-reported, so ships can be missing or misreported. </>
+            ? <>Ringed marks are real ships observed by AIS in the Strait of Hormuz and its approaches (including Dubai and Fujairah anchorages), captured {formatDate(observed.capture.retrievedAt, true)} by the collector and imported as a signed snapshot. Between reports each one moves on an estimate from its last course and speed (for at most 6 hours), shown as "estimated" in its details; it is not a live track. Coverage depends on shore stations, and AIS is self-reported, so ships can be missing or misreported. </>
             : <>No AIS snapshot has been imported, so only simulated ships are shown. Run the AIS collector and import its package from Data &amp; Sources to add observed ships near Hormuz. </>}
           Arrows without a ring are fictional ships and trucks from the movement simulation.
         </p>
       )}
 
-      <SelectionDrawer selected={selected} movers={movers} observed={observed} onClose={() => setSelected(null)} />
+      <SelectionDrawer selected={selected} movers={movers} observed={observed} nowMs={nowMs} onClose={() => setSelected(null)} />
     </div>
   );
 }
@@ -394,34 +405,34 @@ function MoversTable({ movers, observed, entities, onSelect }: { movers: MovingP
         {(["observed", "movers", "assets"] as const).map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => { setTab(t); setShowAll(false); }} className={cn("-mb-px border-b-2 px-4 py-2 text-[13px]", tab === t ? "border-primary font-medium" : "border-transparent text-ink-muted hover:text-ink")}>{t === "observed" ? `Observed ships (${observed.length})` : t === "movers" ? `Simulated ships and trucks (${movers.length})` : `Infrastructure (${entities.filter((e) => ENTITY_LAYER[e.type]).length})`}</button>)}
       </div>
       <div className="max-h-[560px] overflow-auto">
-        <table className="w-full min-w-[720px] text-[12.5px]">
+        <table className="w-full min-w-[720px] text-[13px]">
           <thead className="sticky top-0 bg-surface"><tr className="border-b border-line text-ink-faint">{(tab === "observed" ? ["Name", "Type", "Status", "Destination", "Speed", "Position", "Seen"] : tab === "movers" ? ["Name", "Type", "Status", "Route", "Speed", "Position"] : ["Name", "Type", "Country", "Position", "Class"]).map((h) => <th key={h} className="px-3 py-2 text-start font-medium">{h}</th>)}</tr></thead>
           <tbody>
             {tab === "observed" && !observed.length && <tr><td colSpan={7} className="px-3 py-4 text-ink-muted">No AIS snapshot imported yet.</td></tr>}
             {tab === "observed" ? observed.slice(0, showAll ? undefined : 50).map((v) => (
               <tr key={v.key} role="button" tabIndex={0} aria-label={`Show details for ${v.name}`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "observed", key: v.key })} onKeyDown={rowKeys}>
-                <td className="px-3 py-1.5">{v.name} <span translate="no" className="font-mono text-[10.5px] text-ink-faint">{v.mmsi}</span></td><td className="px-3 py-1.5">{v.typeLabel}</td>
+                <td className="px-3 py-1.5">{v.name} <span translate="no" className="font-mono text-[13px] text-ink-faint">{v.mmsi}</span></td><td className="px-3 py-1.5">{v.typeLabel}</td>
                 <td className="px-3 py-1.5 text-ink-muted">{v.facts.nav_status?.text ?? "—"}</td><td className="px-3 py-1.5 text-ink-muted">{v.facts.destination?.text ?? "—"}</td>
                 <td className="px-3 py-1.5 tabular">{v.facts.speed_over_ground?.num != null ? `${num(v.facts.speed_over_ground.num, 1)}\u00a0kn` : "—"}</td>
-                <td className="px-3 py-1.5 font-mono text-[11px] tabular text-ink-faint">{num(v.lat, 3)}, {num(v.lon, 3)}</td>
+                <td className="px-3 py-1.5 font-mono text-[13px] tabular text-ink-faint">{num(v.lat, 3)}, {num(v.lon, 3)}</td>
                 <td className="px-3 py-1.5 tabular text-ink-faint">{v.observedAt ? formatDate(v.observedAt, true) : "—"}</td>
               </tr>
             )) : tab === "movers" ? movers.slice(0, showAll ? undefined : 50).map((p) => (
               <tr key={p.id} role="button" tabIndex={0} aria-label={`Show ${p.name} on the map`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "mover", id: p.id })} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.currentTarget.click(); } }}>
-                <td className="px-3 py-1.5">{p.name} <span translate="no" className="font-mono text-[10.5px] text-ink-faint">{p.id}</span></td><td className="px-3 py-1.5">{p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"}</td>
+                <td className="px-3 py-1.5">{p.name} <span translate="no" className="font-mono text-[13px] text-ink-faint">{p.id}</span></td><td className="px-3 py-1.5">{p.kind === "vessel" ? VESSEL_LABEL[p.type as keyof typeof VESSEL_LABEL] : "Truck"}</td>
                 <td className="px-3 py-1.5"><Badge tone={p.status === "holding" ? "warn" : p.status === "rerouted" ? "gold" : "neutral"}>{p.status}</Badge></td><td className="px-3 py-1.5 text-ink-muted">{p.laneName}</td>
-                <td className="px-3 py-1.5 tabular">{p.speedLabel}</td><td className="px-3 py-1.5 font-mono text-[11px] tabular text-ink-faint">{num(p.lngLat[1], 2)}, {num(p.lngLat[0], 2)}</td>
+                <td className="px-3 py-1.5 tabular">{p.speedLabel}</td><td className="px-3 py-1.5 font-mono text-[13px] tabular text-ink-faint">{num(p.lngLat[1], 2)}, {num(p.lngLat[0], 2)}</td>
               </tr>
             )) : entities.filter((e) => ENTITY_LAYER[e.type]).slice(0, showAll ? undefined : 50).map((e) => (
               <tr key={e.key} role="button" tabIndex={0} aria-label={`Show ${e.name} on the map`} className="cursor-pointer border-b border-line/50 hover:bg-surface-2" onClick={() => onSelect({ kind: "entity", key: e.key })} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ev.currentTarget.click(); } }}>
                 <td className="px-3 py-1.5">{e.name}</td><td className="px-3 py-1.5">{e.type.replace("_", " ")}</td><td className="px-3 py-1.5">{e.country ?? "—"}</td>
-                <td className="px-3 py-1.5 font-mono text-[11px] tabular text-ink-faint">{num(e.lat, 2)}, {num(e.lon, 2)}</td><td className="px-3 py-1.5"><ClaimBadge claim={e.claim_class} /></td>
+                <td className="px-3 py-1.5 font-mono text-[13px] tabular text-ink-faint">{num(e.lat, 2)}, {num(e.lon, 2)}</td><td className="px-3 py-1.5"><ClaimBadge claim={e.claim_class} /></td>
               </tr>
             ))}
           </tbody>
         </table>
         {!showAll && total > 50 && (
-          <button type="button" onClick={() => setShowAll(true)} className="w-full border-t border-line px-3 py-2 text-[12.5px] text-accent hover:bg-surface-2">
+          <button type="button" onClick={() => setShowAll(true)} className="w-full border-t border-line px-3 py-2 text-[13px] text-accent hover:bg-surface-2">
             Show all {total} rows
           </button>
         )}
@@ -430,7 +441,8 @@ function MoversTable({ movers, observed, entities, onSelect }: { movers: MovingP
   );
 }
 
-function ObservedDetails({ v, capture }: { v: ObservedVessel; capture: NonNullable<ObservedData["capture"]> }) {
+function ObservedDetails({ v, capture, nowMs }: { v: ObservedVessel; capture: NonNullable<ObservedData["capture"]>; nowMs: number }) {
+  const e = estimateOf(v, nowMs);
   const open = useLineage();
   const n = (k: string, digits = 1) => { const f = v.facts[k]; return f && f.num != null ? <FactValue id={f.id} value={Math.round(f.num * 10 ** digits) / 10 ** digits} unit={f.unit} /> : <span className="text-ink-faint">Not reported</span>; };
   const t = (k: string) => { const f = v.facts[k]; return f?.text ? <button type="button" onClick={() => open(f.id)} title="Show where this value comes from" className="rounded px-1 py-0.5 text-start underline decoration-line-strong decoration-dotted underline-offset-4 hover:bg-surface-2 hover:decoration-accent">{f.text}</button> : <span className="text-ink-faint">Not reported</span>; };
@@ -444,13 +456,16 @@ function ObservedDetails({ v, capture }: { v: ObservedVessel; capture: NonNullab
         <Field label="Navigational status">{t("nav_status")}</Field><Field label="Reported destination">{t("destination")}</Field>
         <Field label="Length">{n("length_m", 0)}</Field><Field label="Draught">{n("draught_m")}</Field>
         <Field label="Call sign">{t("call_sign")}</Field><Field label="Capture">{capture.window}</Field>
+        <Field label="Estimated position now">{e.moving || e.capped ? <span className="tabular">{num(e.lat, 3)}, {num(e.lon, 3)}</span> : <span className="text-ink-faint">Same as seen (stopped or course not reported)</span>}</Field>
+        <Field label="Since last report">{ago(e.minutes)}{e.capped ? `; estimate held at ${ESTIMATE_LIMIT_MIN / 60} h` : ""}</Field>
       </dl>
+      <p className="rounded-md border border-warn/40 bg-warn-soft p-3 text-warn">The moving position is an estimate: the last reported course and speed carried forward from the capture, for at most {ESTIMATE_LIMIT_MIN / 60} hours. It is not a live track. The ship may have turned, slowed or stopped.</p>
       <p className="rounded-md border border-line bg-surface-2 p-3 text-ink-muted">Real ship, observed by AIS and imported as a signed snapshot. Values are what the ship broadcast at capture time; destination is typed by the crew and can be out of date. TIGERIS draws no conclusion about cargo, owner or intent from this record.</p>
     </div>
   );
 }
 
-function SelectionDrawer({ selected, movers, observed, onClose }: { selected: Selection | null; movers: MovingPoint[]; observed: ObservedData | null; onClose: () => void }) {
+function SelectionDrawer({ selected, movers, observed, nowMs, onClose }: { selected: Selection | null; movers: MovingPoint[]; observed: ObservedData | null; nowMs: number; onClose: () => void }) {
   const [entity, setEntity] = useState<{ entity: { key: string; name: string; type: string; claim_class: string; location_quality: string | null; attributes: Record<string, unknown>; source_name: string | null }; edges: { id: string; predicate_label: string; other_name: string; other_key: string; relationship_class: string; direction: string }[] } | null>(null);
   useEffect(() => {
     if (selected?.kind !== "entity") return;
@@ -461,10 +476,10 @@ function SelectionDrawer({ selected, movers, observed, onClose }: { selected: Se
   const ship = selected?.kind === "observed" ? observed?.vessels.find((v) => v.key === selected.key) : undefined;
   return (
     <Drawer open={!!selected} onClose={onClose} eyebrow={selected?.kind === "observed" ? "Vessel · observed (AIS)" : selected?.kind === "mover" ? (mover?.kind === "truck" ? "Truck · synthetic" : "Vessel · synthetic") : "Infrastructure"} title={ship?.name ?? mover?.name ?? entity?.entity.name ?? "Loading"}>
-      {ship && observed?.capture && <ObservedDetails v={ship} capture={observed.capture} />}
+      {ship && observed?.capture && <ObservedDetails v={ship} capture={observed.capture} nowMs={nowMs} />}
       {mover && (
         <div className="grid gap-4 text-[13px]">
-          <div className="flex flex-wrap gap-1.5"><Badge tone="gold" className="font-mono">SYNTHETIC</Badge><Badge tone={mover.status === "holding" ? "warn" : mover.status === "rerouted" ? "gold" : "neutral"}>{mover.status}</Badge></div>
+          <div className="flex flex-wrap gap-1.5"><Badge tone="gold" >Synthetic</Badge><Badge tone={mover.status === "holding" ? "warn" : mover.status === "rerouted" ? "gold" : "neutral"}>{mover.status}</Badge></div>
           <dl className="grid grid-cols-2 gap-3">
             <Field label="Simulation id">{mover.id}</Field><Field label="Type">{mover.kind === "vessel" ? VESSEL_LABEL[mover.type as keyof typeof VESSEL_LABEL] : "Truck"}</Field>
             <Field label="Route">{mover.laneName}</Field><Field label="Speed">{mover.speedLabel}</Field>
@@ -482,7 +497,7 @@ function SelectionDrawer({ selected, movers, observed, onClose }: { selected: Se
             const f = v && typeof v === "object" && "factId" in (v as object) ? (v as { value: number; unit: string; factId: string; label?: string; claim: string }) : null;
             return f ? <div key={k} className="flex items-center justify-between gap-3"><span className="text-ink-muted">{f.label ?? k.replace(/_/g, " ")}</span><span className="flex items-center gap-1.5"><FactValue id={f.factId} value={f.value} unit={f.unit} /><ClaimBadge claim={f.claim} /></span></div> : null;
           })}
-          <div><div className="mb-1 font-semibold">Links</div><ul className="grid gap-1">{entity.edges.slice(0, 15).map((e) => <li key={e.id} className="flex flex-wrap items-center gap-1.5"><span className="text-ink-muted">{e.predicate_label}</span>{e.other_name}<ClaimBadge claim={e.relationship_class} /></li>)}</ul></div>
+          <div><div className="mb-1 font-medium">Links</div><ul className="grid gap-1">{entity.edges.slice(0, 15).map((e) => <li key={e.id} className="flex flex-wrap items-center gap-1.5"><span className="text-ink-muted">{e.predicate_label}</span>{e.other_name}<ClaimBadge claim={e.relationship_class} /></li>)}</ul></div>
           <Button asChild variant="secondary" size="sm"><Link href={`/graph?focus=${encodeURIComponent(entity.entity.key)}`}>Open in the intelligence graph</Link></Button>
         </div>
       )}

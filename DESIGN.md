@@ -1,8 +1,8 @@
 ---
-version: 1.0
+version: 2.0
 name: TIGERIS · Sovereign Intelligence OS
-description: "A sovereign command-room interface: a deep navy canvas with a four-step surface ladder and hairline borders, warm ivory text, and restrained gold as the only brand accent — reserved for the primary action, the active place and focus. Page titles are set in Source Serif 4 for institutional gravity; everything an operator reads or works with is IBM Plex Sans (with Plex Sans Arabic and Plex Mono as the same family). Dense, flat, legible: no shadows on content, no gradients, colour never carries meaning alone."
-references: "Structural discipline adapted from the Linear and IBM analyses in VoltAgent/awesome-design-md (MIT). Brand, palette and voice are TIGERIS's own (questionnaire Q009–Q015)."
+description: "A sovereign command-room interface built to the taste skill's system: a deep navy canvas with a four-step surface ladder and hairline borders, warm ivory text, and gold as the one accent — for the primary action, the active place and focus. One family with fixed jobs: Host Grotesk for headings and text at weights 400 and 500, JetBrains Mono for identifiers, IBM Plex Sans Arabic in Arabic. Sentence case, nothing under 13px, quiet hover and press motion, one entrance per page, and one moving centrepiece on sign-in: the Gulf with ships on their lanes."
+references: "System, type, motion and copy rules from the taste skill (Leonxlnx/taste-skill, MIT, installed in .agents/skills/design-taste-frontend). Earlier structure adapted from the Linear and IBM analyses in VoltAgent/awesome-design-md (MIT). Motion via the motion library and its AI kit. Brand, palette and voice are TIGERIS's own (questionnaire Q009–Q015)."
 
 colors:
   # Dark (default)
@@ -38,23 +38,22 @@ colors:
   light-accent: "#a2843f"
 
 typography:
-  page-title:   { fontFamily: Source Serif 4, fontSize: 28px, fontWeight: 600, lineHeight: 1.2, letterSpacing: -0.4px }
-  section-title: { fontFamily: Source Serif 4, fontSize: 20px, fontWeight: 600, lineHeight: 1.3, letterSpacing: -0.2px }
-  panel-title:  { fontFamily: IBM Plex Sans, fontSize: 15px, fontWeight: 600, lineHeight: 1.35, letterSpacing: -0.1px }
-  body:         { fontFamily: IBM Plex Sans, fontSize: 14px, fontWeight: 400, lineHeight: 1.5, letterSpacing: 0 }
-  body-sm:      { fontFamily: IBM Plex Sans, fontSize: 13px, fontWeight: 400, lineHeight: 1.45, letterSpacing: 0 }
-  label:        { fontFamily: IBM Plex Sans, fontSize: 12.5px, fontWeight: 500, lineHeight: 1.3, letterSpacing: 0.1px }
-  caption:      { fontFamily: IBM Plex Sans, fontSize: 12px, fontWeight: 400, lineHeight: 1.4, letterSpacing: 0.1px }
-  eyebrow:      { fontFamily: IBM Plex Sans, fontSize: 11px, fontWeight: 600, lineHeight: 1.3, letterSpacing: 0.8px, textTransform: uppercase }
-  metric:       { fontFamily: IBM Plex Sans, fontSize: 22px, fontWeight: 600, lineHeight: 1.1, letterSpacing: -0.3px, fontVariant: tabular-nums }
-  mono:         { fontFamily: IBM Plex Mono, fontSize: 12px, fontWeight: 400, lineHeight: 1.5, letterSpacing: 0 }
-  arabic:       { fontFamily: IBM Plex Sans Arabic, note: "replaces Plex Sans and Source Serif in Arabic; no letter-spacing, no uppercase" }
+  hero-line:    { fontFamily: Host Grotesk, fontSize: 48px, fontWeight: 500, lineHeight: 1.05, letterSpacing: -3.5% }   # sign-in only
+  page-title:   { fontFamily: Host Grotesk, fontSize: 34px, fontWeight: 500, lineHeight: 1.1, letterSpacing: -2.5% }
+  panel-title:  { fontFamily: Host Grotesk, fontSize: 16px, fontWeight: 500, lineHeight: 1.35, letterSpacing: -1.5% }
+  lead:         { fontFamily: Host Grotesk, fontSize: 16px, fontWeight: 400, lineHeight: 1.6 }   # page descriptions
+  body:         { fontFamily: Host Grotesk, fontSize: 15px, fontWeight: 400, lineHeight: 1.55 }
+  body-sm:      { fontFamily: Host Grotesk, fontSize: 13–14px, fontWeight: 400, lineHeight: 1.45 }   # tables, dense lists
+  label:        { fontFamily: Host Grotesk, fontSize: 13px, fontWeight: 500, note: "sentence case, never tracked capitals" }
+  eyebrow:      { fontFamily: Host Grotesk, fontSize: 13px, fontWeight: 500, color: ink-subtle, note: "sentence case; groups a panel" }
+  mono:         { fontFamily: JetBrains Mono, fontSize: 13px, fontWeight: 400 }   # identifiers and hashes only
+  arabic:       { fontFamily: IBM Plex Sans Arabic, note: "replaces Host Grotesk in Arabic; no letter-spacing" }
+  floor:        "nothing under 13px; weights 400 and 500 only"
 
 rounded:
   xs: 4px     # badges, chips
-  sm: 6px     # buttons, inputs, tabs
-  md: 10px    # panels and cards
-  lg: 14px    # drawers, dialogs, the guide
+  sm: 6px     # buttons, inputs
+  md: 8px     # panels, cards, drawers (the skill's sharp scale, for fintech-grade tools)
   pill: 9999px
 
 spacing:
@@ -67,18 +66,19 @@ spacing:
   content-max: 1480px
 
 components:
-  button-primary:   { backgroundColor: "{colors.primary}", textColor: "{colors.on-primary}", rounded: "{rounded.sm}", height: 36px, padding: "0 14px", typography: label }
-  button-secondary: { backgroundColor: "{colors.surface-2}", border: "1px {colors.hairline-strong}", textColor: "{colors.ink}", rounded: "{rounded.sm}", height: 36px }
+  button-primary:   { backgroundColor: "{colors.primary}", textColor: "{colors.on-primary}", rounded: "{rounded.sm}", height: 40px, padding: "0 16px", fontSize: 14px, hover: "fill steps 14% toward ink, 1px up", press: "1px down, scale .985" }
+  button-secondary: { backgroundColor: "{colors.surface-2}", border: "1px {colors.hairline-strong}", textColor: "{colors.ink}", rounded: "{rounded.sm}", height: 40px, hover: "border and fill step, 1px up" }
   button-ghost:     { backgroundColor: transparent, textColor: "{colors.ink-muted}", hover: "{colors.surface-2}", rounded: "{rounded.sm}" }
   button-danger:    { backgroundColor: "critical at 12%", border: "1px critical at 45%", textColor: "{colors.critical}" }
   panel:            { backgroundColor: "{colors.surface-1}", border: "1px {colors.hairline}", rounded: "{rounded.md}", highlight: "inset 0 1px 0 white at 3% (dark only)" }
   panel-header:     { padding: "16px 20px", border-bottom: "1px {colors.hairline}", typography: "eyebrow + panel-title" }
   badge:            { rounded: "{rounded.xs}", typography: caption-500, padding: "2px 6px", fill: "tone at 12%", border: "tone at 35%", icon: required for status }
-  tabs:             { typography: label 13.5px, active: "ink + 2px {colors.primary} underline", idle: "{colors.ink-muted}" }
+  tabs:             { typography: 14px 500, active: "ink + one 2px {colors.primary} bar that slides to the tab by transform (240ms)", idle: "{colors.ink-subtle}" }
   input:            { backgroundColor: "{colors.surface-2}", border: "1px {colors.hairline-strong}", rounded: "{rounded.sm}", height: 36px, focus: "2px {colors.primary} ring at 45%" }
   table:            { header: "caption 600 {colors.ink-subtle}, surface-2 band", row: "body-sm, 1px hairline divider, hover surface-2", numbers: tabular, align-end }
   nav-item:         { idle: "{colors.ink-muted}", hover: "{colors.surface-2}", active: "{colors.surface-3} + 2px {colors.primary} start border + ink" }
-  top-bar:          { backgroundColor: "{colors.canvas} at 92% with blur", border-bottom: "1px {colors.hairline}", height: 52px }
+  top-bar:          { backgroundColor: "{colors.canvas}, opaque, no blur", border-bottom: "1px {colors.hairline}", height: 52px }
+  motion:           { hover-in: 150ms, hover-out: 120ms, press: 90ms, card-lift: "2px, 180ms", tab-slide: 240ms, ease: "cubic-bezier(.2,.8,.2,1)", entrance: "page title rises out of its mask 700ms, description fades up 12px 520ms" }
 ---
 
 ## Overview
@@ -89,12 +89,11 @@ library and applies them to TIGERIS's own identity:
 
 - **From the Linear analysis:** depth comes from a *surface ladder* (canvas → surface-1 → surface-2 →
   surface-3) and 1px hairlines, not shadows; one chromatic accent, used rarely; compact controls.
-- **From the IBM analysis:** one type superfamily across languages (IBM Plex Sans, Plex Sans Arabic,
-  Plex Mono), flat tiles, and data presented in dense, legible tables with tabular numbers.
+- **From the IBM analysis:** flat tiles, and data presented in dense, legible tables with tabular numbers.
+- **From the taste skill (v2.0):** type, motion and copy rules; see the last section.
 
 What stays TIGERIS: the navy canvas, warm ivory text, restrained gold (dark) and deep emerald (light
-"Foundation" theme), serif page titles, the eight-point star pattern on sign-in and empty states only,
-and the Foundation voice.
+"Foundation" theme), the eight-point star pattern on empty states, and the Foundation voice.
 
 ## Colour
 
@@ -109,11 +108,11 @@ and the Foundation voice.
 
 ## Typography
 
-- **Serif is for titles people read as documents**: page titles, the case title, executive brief
-  headings. Panel titles, labels, tables and everything operational are Plex Sans.
+- **One family with fixed jobs:** Host Grotesk for every heading and text, at 400 and 500 only; size and
+  tight tracking carry the headings, never bold. JetBrains Mono for identifiers. Nothing under 13px.
 - **Numbers are tabular** wherever they line up or update.
-- **Eyebrows** are 11px Plex Sans, uppercase, +0.8px tracking. In Arabic they are sentence case with no
-  tracking (letters must join).
+- **Labels and eyebrows** are 13px at 500 in sentence case, never tracked capitals. Arabic has no
+  tracking anywhere (letters must join).
 - **Mono** only for identifiers and hashes (case keys, content hashes, rule ids).
 
 ## Layout
@@ -138,9 +137,10 @@ Shadows exist only on overlays that float above content.
 
 ## Components
 
-Buttons are 36px high (32px small, 44px large), 6px corners, Plex Sans 500. Badges are 4px-cornered,
-tinted at 12% with a 35% border; status badges always carry an icon. Tabs are text with a 2px gold
-underline when active. Tables use a surface-2 header band, hairline row dividers and end-aligned
+Buttons are 40px high (36px small, 44px large), 6px corners, 14px at 500; they step 1px up on hover and
+press 1px down at .985 scale. Badges are 4px-cornered,
+tinted at 12% with a 35% border; status badges always carry an icon. Tabs are text with one 2px gold bar
+that slides to the active tab. Tables use a surface-2 header band, hairline row dividers and end-aligned
 tabular numbers. Inputs sit on surface-2 with a strong hairline and a gold focus ring.
 
 ## Interface guidelines
@@ -177,3 +177,36 @@ there is no CDN to preconnect to.
 - Don't use the geometric pattern outside sign-in and empty states.
 - Don't track or uppercase Arabic.
 - Don't imitate any reference brand's identity (logo, colours, wording).
+
+## Taste skill (version 2.0)
+
+Version 2.0 applies the taste skill's system (`.agents/skills/design-taste-frontend`) to the app, with TIGERIS's
+own colours kept through the skill's brand path. Its automatic finish check is switched off in the installed copy
+(the `hooks` block removed from its SKILL.md), because the check is written for marketing pages (one section per
+screen, a full-screen hero) and would block unrelated app work; its scripts are still run by hand.
+
+What the app takes from it:
+
+- **Type:** one family with fixed jobs (Host Grotesk; JetBrains Mono for identifiers), weights 400 and 500 only,
+  headings carried by size and tight tracking, sentence case everywhere, nothing under 13px.
+- **Motion in three places:** each page title enters once (it rises out of its mask, then its description fades
+  up); every button, link and linked card answers the pointer (button step and press, a drawn underline, a 2px card
+  lift); tabs move one indicator by transform. Nothing reveals on scroll. Focus shows at once and never animates.
+  Reduced motion rests everything and keeps it visible.
+- **One moving centrepiece on sign-in:** the Gulf at night with the simulated fleet on its lanes, moving on the
+  wall clock in Riyadh time, driven by Motion's frame loop. It replaces the eight-point pattern there (the pattern
+  stays for empty states) and is labelled "Simulated ships".
+- **Live ships on the maps:** the Movement Map and the Command Centre open on the live clock. Real ships from the
+  AIS snapshot move on an estimate from their last reported course and speed, for at most six hours, and say so.
+- **One accent, no violet:** gold in dark, emerald in light; the violet once used for power plants and passenger
+  ships is now rose.
+- **Copy:** the skill's copy-lint passes on sign-in and the Command Centre (panel labels kept on purpose).
+
+Where the app departs from the skill, and why:
+
+- **Density.** Tables and lists use 13–14px text and 40px buttons (36px small), not the skill's 16px body and 44px
+  buttons: analysts work through dense tables. Tap targets stay 40px or more on touch layouts.
+- **Layout.** No one-section-per-screen rhythm, full-screen hero or footer close: those are for marketing pages.
+- **Panel labels.** Small sentence-case labels group panels on dashboards (copy-lint warns about eyebrows).
+- **Sticky case tabs** stay, opaque, under the header: long cases need them in reach.
+- **Status badges** keep their tinted fills with an icon or word, as status is never colour alone (CLAUDE.md rule 11).

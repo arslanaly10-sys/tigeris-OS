@@ -24,8 +24,8 @@ export function ScenariosModule() {
           {groups?.map((g) => (
             <li key={g.group_id}>
               <Link href={`/cases/${g.case_key}?tab=Scenarios`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-surface-2">
-                <span className="min-w-0"><span className="block font-medium">{g.title}</span><span className="text-[12px] text-ink-faint">{g.case_key} · {g.variants} scenario{g.variants > 1 ? "s" : ""} · {g.by} · {formatDate(g.created_at, true)}</span></span>
-                {g.baseline_resilience !== null && <span className="text-[12.5px] text-ink-muted">Baseline resilience <b className="tabular text-ink">{Math.round(g.baseline_resilience)}</b>/100</span>}
+                <span className="min-w-0"><span className="block font-medium">{g.title}</span><span className="text-[13px] text-ink-faint">{g.case_key} · {g.variants} scenario{g.variants > 1 ? "s" : ""} · {g.by} · {formatDate(g.created_at, true)}</span></span>
+                {g.baseline_resilience !== null && <span className="text-[13px] text-ink-muted">Baseline resilience <b className="tabular text-ink">{Math.round(g.baseline_resilience)}</b>/100</span>}
               </Link>
             </li>
           ))}

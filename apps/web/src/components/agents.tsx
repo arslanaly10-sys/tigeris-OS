@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowRight, Bot, ChevronDown, ChevronRight, Cpu, Download, FileText, Gavel, Play, Scale, Send, ShieldCheck, Swords, ThumbsDown, ThumbsUp, Wrench } from "lucide-react";
 import { api } from "@/lib/api";
+import { verdict } from "@/lib/format";
 import { requireText, clearInvalid, useUnsavedWarning } from "@/lib/forms";
 import { formatDate, num } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -57,9 +58,9 @@ export function useProviders() {
 
 export function ProviderPicker({ value, onChange, providers }: { value: string; onChange: (v: string) => void; providers: ProviderInfo[] }) {
   return (
-    <label className="flex items-center gap-2 text-[12.5px] text-ink-muted">
+    <label className="flex items-center gap-2 text-[13px] text-ink-muted">
       Model
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-[12.5px] text-ink">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-[13px] text-ink">
         {providers.filter((p) => p.key !== "deterministic").map((p) => (
           <option key={p.key} value={p.key}>{p.label}{p.usable ? "" : " (blocked: falls back)"}</option>
         ))}
@@ -82,10 +83,10 @@ export function CheckedText({ text, sources, className }: { text: Sentence[]; so
           const clean = t.sentence.replace(/\s*\[S\d+\]/g, "").trim();
           return (
             <span key={i} className={cn(t.status === "unverified" && "rounded-sm bg-warn-soft px-0.5 text-warn")}>
-              {t.status === "unverified" && <span className="me-1 align-[1px] text-[10px] font-semibold uppercase tracking-wide" title={t.reason}>Unverified</span>}
+              {t.status === "unverified" && <span className="me-1 align-[1px] text-[13px] font-medium tracking-wide" title={t.reason}>Unverified</span>}
               {clean}
               {t.tags.map((tag) => (
-                <button key={tag} type="button" onClick={() => setOpen(open === `${i}:${tag}` ? null : `${i}:${tag}`)} aria-expanded={open === `${i}:${tag}`} className="mx-0.5 rounded bg-surface-3 px-1 align-[1px] font-mono text-[10.5px] text-accent hover:underline">{tag}</button>
+                <button key={tag} type="button" onClick={() => setOpen(open === `${i}:${tag}` ? null : `${i}:${tag}`)} aria-expanded={open === `${i}:${tag}`} className="mx-0.5 rounded bg-surface-3 px-1 align-[1px] font-mono text-[13px] text-accent hover:underline">{tag}</button>
               ))}
               {" "}
             </span>
@@ -97,7 +98,7 @@ export function CheckedText({ text, sources, className }: { text: Sentence[]; so
         const s = src(tag!);
         const t = text[Number(i)];
         return s ? (
-          <div className="rounded-md border border-line bg-surface-2 p-2.5 text-[12px]">
+          <div className="rounded-md border border-line bg-surface-2 p-2.5 text-[13px]">
             <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-ink">{s.tag} · {s.label}</span><Badge>{s.kind.replace("_", " ")}</Badge></div>
             <p className="mt-1 text-ink-muted">{s.text}</p>
             {s.kind === "fact" && s.ref && <button type="button" className="mt-1 text-accent hover:underline" onClick={() => showFact(s.ref!)}>Open source lineage</button>}
@@ -106,7 +107,7 @@ export function CheckedText({ text, sources, className }: { text: Sentence[]; so
           </div>
         ) : null;
       })()}
-      {text.some((t) => t.status === "unverified") && <p className="text-[11.5px] text-ink-faint">Highlighted sentences failed the citation check and are shown as unverified: {[...new Set(text.filter((t) => t.status === "unverified").map((t) => t.reason))].join("; ")}.</p>}
+      {text.some((t) => t.status === "unverified") && <p className="text-[13px] text-ink-faint">Highlighted sentences failed the citation check and are shown as unverified: {[...new Set(text.filter((t) => t.status === "unverified").map((t) => t.reason))].join("; ")}.</p>}
       <ResultLineage id={resultId} onClose={() => setResultId(null)} />
     </div>
   );
@@ -144,7 +145,7 @@ export function AgentAnalysis({ caseKey, onDone }: { caseKey: string; onDone?: (
       <Panel className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-2xl">
-            <h3 className="text-[17px] font-semibold">Bounded agent analysis</h3>
+            <h3 className="text-[17px] font-medium">Bounded agent analysis</h3>
             <p className="mt-1 text-[13px] text-ink-muted">Ten agents gather, analyse, challenge each other, score options with the scenario engine and draft the brief. Numbers come only from tools; models only phrase them, and every sentence is checked for citations.</p>
           </div>
           {can("recommendation.draft") ? (
@@ -154,9 +155,9 @@ export function AgentAnalysis({ caseKey, onDone }: { caseKey: string; onDone?: (
             </div>
           ) : <Badge>Your role can read the analysis; analysts run it</Badge>}
         </div>
-        {err && <p role="alert" className="mt-2 text-[12.5px] text-crit">{err}</p>}
+        {err && <p role="alert" className="mt-2 text-[13px] text-crit">{err}</p>}
         {run && (
-          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-line pt-3 text-[12.5px] text-ink-muted">
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-line pt-3 text-[13px] text-ink-muted">
             <Badge tone={run.status === "completed" ? "ok" : run.status === "failed" ? "crit" : "info"}>{run.status}</Badge>
             <span>Requested model: <span className="text-ink">{run.provider_requested}</span></span>
             <span>Steps: <span className="tabular text-ink">{d!.steps.length}</span>/12</span>
@@ -177,7 +178,7 @@ export function AgentAnalysis({ caseKey, onDone }: { caseKey: string; onDone?: (
             const pending = running && !steps.length;
             return (
               <li key={ph.key} className={cn("grid gap-2", pending && "opacity-60")}>
-                <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-ink-faint"><Icon className="size-4 text-accent" />{ph.label}{pending && <span className="normal-case tracking-normal">· waiting</span>}</div>
+                <div className="flex items-center gap-2 text-[13px] font-medium tracking-wider text-ink-faint"><Icon className="size-4 text-accent" />{ph.label}{pending && <span className="normal-case tracking-normal">· waiting</span>}</div>
                 {ph.key === "challenge" && challenges.length > 0 && <Debate challenges={challenges} />}
                 <div className="grid gap-2 md:grid-cols-2">{steps.map((s) => <StepCard key={s.seq} s={s} calls={d.calls.filter((c) => c.step_seq === s.seq)} />)}</div>
               </li>
@@ -189,7 +190,7 @@ export function AgentAnalysis({ caseKey, onDone }: { caseKey: string; onDone?: (
       {d && d.runs.length > 1 && (
         <Panel className="p-4">
           <PanelHeader eyebrow="History" title="Earlier runs" className="p-0 pb-2" />
-          <ul className="grid gap-1 text-[12.5px]">
+          <ul className="grid gap-1 text-[13px]">
             {d.runs.map((r) => <li key={r.id}><button type="button" onClick={() => setRunId(r.id)} className={cn("hover:underline", r.id === d.run?.id ? "font-medium text-ink" : "text-accent")}>{formatDate(r.started_at, true)} · {r.status} · {r.provider_requested} · {r.requested_by_label}</button></li>)}
           </ul>
         </Panel>
@@ -201,11 +202,11 @@ export function AgentAnalysis({ caseKey, onDone }: { caseKey: string; onDone?: (
 function Debate({ challenges }: { challenges: Challenge[] }) {
   return (
     <Panel className="border-primary/30 p-4">
-      <div className="mb-3 flex items-center gap-2"><Swords className="size-4 text-accent" /><span className="font-semibold">Agents challenge each other</span><Badge className="tabular">{challenges.filter((c) => c.status === "accepted").length} accepted · {challenges.filter((c) => c.status === "rebutted").length} rebutted</Badge></div>
+      <div className="mb-3 flex items-center gap-2"><Swords className="size-4 text-accent" /><span className="font-medium">Agents challenge each other</span><Badge className="tabular">{challenges.filter((c) => c.status === "accepted").length} accepted · {challenges.filter((c) => c.status === "rebutted").length} rebutted</Badge></div>
       <ol className="grid gap-3">
         {challenges.map((c) => (
           <li key={c.id} className="grid gap-1.5 rounded-md border border-line bg-surface-2 p-3 text-[13px]">
-            <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
+            <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
               <span translate="no" className="font-mono text-ink-faint">{c.id}</span>
               <span className="font-medium">{AGENT_LABEL[c.challenger] ?? c.challenger}</span><ArrowRight className="size-3.5 text-ink-faint rtl:rotate-180" aria-label="challenges" /><span className="font-medium">{AGENT_LABEL[c.target] ?? c.target}</span>
               <Badge tone={c.status === "accepted" ? "ok" : "info"} className="ms-auto">{c.status === "accepted" ? "Accepted" : "Rebutted"}</Badge>
@@ -213,7 +214,7 @@ function Debate({ challenges }: { challenges: Challenge[] }) {
             <p className="text-ink-muted"><span className="text-ink-faint">Claim:</span> {c.claim}</p>
             <p><span className="text-ink-faint">Challenge:</span> {c.contention}</p>
             <p><span className="text-ink-faint">Response:</span> {c.response}</p>
-            <p className="text-[12px] text-accent">Effect: {c.effect}</p>
+            <p className="text-[13px] text-accent">Effect: {c.effect}</p>
           </li>
         ))}
       </ol>
@@ -226,17 +227,17 @@ function StepCard({ s, calls }: { s: Step; calls: Call[] }) {
   return (
     <Panel className="grid gap-2 p-3.5">
       <div className="flex flex-wrap items-center gap-2">
-        <span translate="no" className="font-mono text-[11px] text-ink-faint">#{s.seq}</span>
-        <span className="font-semibold">{s.agent_key === "sector" ? s.title.split(":")[0] : AGENT_LABEL[s.agent_key] ?? s.agent_key}</span>
+        <span translate="no" className="font-mono text-[13px] text-ink-faint">#{s.seq}</span>
+        <span className="font-medium">{s.agent_key === "sector" ? s.title.split(":")[0] : AGENT_LABEL[s.agent_key] ?? s.agent_key}</span>
         <WriterBadge writer={s.writer} />
-        <span className="ms-auto tabular text-[11.5px] text-ink-faint">{num((s.ms / 1000), 1)} s</span>
+        <span className="ms-auto tabular text-[13px] text-ink-faint">{num((s.ms / 1000), 1)} s</span>
       </div>
-      <p className="text-[12.5px] text-ink-muted">{s.agent_key === "sector" ? s.title.split(": ").slice(1).join(": ") : s.title}</p>
+      <p className="text-[13px] text-ink-muted">{s.agent_key === "sector" ? s.title.split(": ").slice(1).join(": ") : s.title}</p>
       <CheckedText text={s.text} sources={s.sources} className="text-[13.5px]" />
-      {s.fallback_reason && <p className="flex gap-1.5 text-[11.5px] text-ink-faint"><AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warn" />{s.fallback_reason}</p>}
-      <button type="button" onClick={() => setTrace((t) => !t)} aria-expanded={trace} className="flex items-center gap-1 justify-self-start text-[12px] text-accent hover:underline">{trace ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Run trace</button>
+      {s.fallback_reason && <p className="flex gap-1.5 text-[13px] text-ink-faint"><AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warn" />{s.fallback_reason}</p>}
+      <button type="button" onClick={() => setTrace((t) => !t)} aria-expanded={trace} className="flex items-center gap-1 justify-self-start text-[13px] text-accent hover:underline">{trace ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Run trace</button>
       {trace && (
-        <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-2.5 text-[12px]">
+        <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-2.5 text-[13px]">
           <div><div className="mb-1 font-medium">Tool calls</div>
             <ul className="grid gap-1">{s.tool_calls.map((t, i) => <li key={i} className="grid grid-cols-[1fr_auto] gap-2"><span><span translate="no" className="font-mono text-accent">{t.tool}</span> <span className="text-ink-faint">{JSON.stringify(t.input)}</span><br /><span className="text-ink-muted">→ {t.summary}</span></span><span className="tabular text-ink-faint">{t.ms} ms</span></li>)}</ul>
           </div>
@@ -310,44 +311,44 @@ function OptionCard({ r, onChange }: { r: Rec; onChange: () => void }) {
     <li>
       <Panel className="grid gap-3 p-4">
         <div className="flex flex-wrap items-start gap-3">
-          <span className="grid size-9 place-items-center rounded-md bg-primary-soft font-serif text-[18px] font-semibold text-accent" aria-label={`Rank ${r.rank}`}>{r.rank}</span>
+          <span className="grid size-9 place-items-center rounded-md bg-primary-soft font-serif text-[18px] font-medium text-accent" aria-label={`Rank ${r.rank}`}>{r.rank}</span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[16px] font-semibold">{r.title}</h3>
-              <Badge tone={r.governance.result === "PASS" ? "ok" : "warn"}>{r.governance.result === "PASS" ? <ShieldCheck /> : <AlertTriangle />}Policy {r.governance.result}</Badge>
+              <h3 className="text-[16px] font-medium">{r.title}</h3>
+              <Badge tone={r.governance.result === "PASS" ? "ok" : "warn"}>{r.governance.result === "PASS" ? <ShieldCheck /> : <AlertTriangle />}Policy {verdict(r.governance.result).toLowerCase()}</Badge>
               {moved && <Badge tone="info">Moved from #{r.baseRank} by feedback</Badge>}
             </div>
             <p className="mt-0.5 text-[13px] text-ink-muted">{r.description}</p>
           </div>
           <div className="text-end">
-            <div className="tabular text-[20px] font-semibold">{num(r.score, 1)}</div>
-            <div className="text-[11px] text-ink-faint">score{r.learned.adjustment ? ` (${num(r.base_score, 1)} ${r.learned.adjustment > 0 ? "+" : "−"} ${Math.abs(r.learned.adjustment)} learned)` : ""}</div>
+            <div className="tabular text-[20px] font-medium">{num(r.score, 1)}</div>
+            <div className="text-[13px] text-ink-faint">score{r.learned.adjustment ? ` (${num(r.base_score, 1)} ${r.learned.adjustment > 0 ? "+" : "−"} ${Math.abs(r.learned.adjustment)} learned)` : ""}</div>
           </div>
         </div>
-        <dl className="grid gap-3 text-[12.5px] sm:grid-cols-3">
+        <dl className="grid gap-3 text-[13px] sm:grid-cols-3">
           <div><dt className="text-ink-faint">90-day value at risk</dt><dd className="tabular">{fmtUsd(r.effect.var_90d.base)} → <span className="font-medium text-ink">{fmtUsd(r.effect.var_90d.with)}</span></dd></div>
           <div><dt className="text-ink-faint">Resilience score</dt><dd className="tabular">{num(r.effect.resilience.base, 0)} → <span className="font-medium text-ink">{num(r.effect.resilience.with, 0)}</span></dd></div>
           <div><dt className="text-ink-faint">Net shortfall, first 72 h</dt><dd className="tabular">{num(r.effect.shortfall_72h.base, 1)} → <span className="font-medium text-ink">{num(r.effect.shortfall_72h.with, 1)}</span> mb/d</dd></div>
         </dl>
-        <p className="text-[12px] text-ink-faint">Effect basis: {r.effect.basis}. Engine input {r.effect.input_hash.slice(0, 12)}.</p>
+        <p className="text-[13px] text-ink-faint">Effect basis: {r.effect.basis}. Engine input {r.effect.input_hash.slice(0, 12)}.</p>
         <div className="grid gap-3 md:grid-cols-2">
           <div className="grid gap-1.5">
             <div className="flex items-center gap-2">
               <span className="flex gap-0.5" aria-hidden="true">{[1, 2, 3].map((i) => <span key={i} className={cn("h-2 w-5 rounded-sm", i <= steps ? "bg-primary" : "bg-surface-3")} />)}</span>
-              <span className="text-[12.5px] font-medium">Confidence: {r.effectiveBand}</span>
+              <span className="text-[13px] font-medium">Confidence: {r.effectiveBand}</span>
               {r.confidenceAdjustment && <Badge tone="info">Expert adjusted from {r.confidenceAdjustment.from_band}</Badge>}
             </div>
-            <ul className="grid gap-0.5">{r.confidence.components.map((c) => <li key={c.key} className="grid grid-cols-[120px_56px_1fr] gap-2 text-[12px]"><span className="text-ink-muted">{c.label}</span><span className={cn("font-medium", c.level === "high" ? "text-ok" : c.level === "medium" ? "text-info" : "text-warn")}>{c.level}</span><span className="text-ink-faint">{c.basis}</span></li>)}</ul>
-            {r.confidenceAdjustment && <p className="text-[12px] text-ink-muted">{r.confidenceAdjustment.actor_label} ({r.confidenceAdjustment.actor_role.replace("_", " ")}): “{r.confidenceAdjustment.reason}”</p>}
+            <ul className="grid gap-0.5">{r.confidence.components.map((c) => <li key={c.key} className="grid grid-cols-[120px_56px_1fr] gap-2 text-[13px]"><span className="text-ink-muted">{c.label}</span><span className={cn("font-medium", c.level === "high" ? "text-ok" : c.level === "medium" ? "text-info" : "text-warn")}>{c.level}</span><span className="text-ink-faint">{c.basis}</span></li>)}</ul>
+            {r.confidenceAdjustment && <p className="text-[13px] text-ink-muted">{r.confidenceAdjustment.actor_label} ({r.confidenceAdjustment.actor_role.replace("_", " ")}): “{r.confidenceAdjustment.reason}”</p>}
           </div>
-          <div className="grid content-start gap-1 text-[12.5px]">
+          <div className="grid content-start gap-1 text-[13px]">
             <div><span className="text-ink-faint">Owner:</span> {r.owner_role.replace("_", " ")} · <span className="text-ink-faint">Decision by:</span> {r.authority}</div>
             <ul className="list-disc ps-4 text-ink-muted">{r.constraints.map((c) => <li key={c}>{c}</li>)}</ul>
           </div>
         </div>
-        <button type="button" onClick={() => setDetails((x) => !x)} aria-expanded={details} className="flex items-center gap-1 justify-self-start text-[12px] text-accent hover:underline">{details ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Policy checks, score and feedback</button>
+        <button type="button" onClick={() => setDetails((x) => !x)} aria-expanded={details} className="flex items-center gap-1 justify-self-start text-[13px] text-accent hover:underline">{details ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5 rtl:rotate-180" />}Policy checks, score and feedback</button>
         {details && (
-          <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-3 text-[12.5px]">
+          <div className="grid gap-2 rounded-md border border-line bg-surface-2 p-3 text-[13px]">
             <ul className="grid gap-1">{r.governance.checks.map((c) => <li key={c.rule} className="grid grid-cols-[150px_56px_1fr] gap-2"><span className="text-ink-muted">{RULE_LABEL[c.rule] ?? c.rule}</span><span className={c.result === "PASS" ? "text-ok" : "text-warn"}>{c.result}</span><span className="text-ink-faint">{c.detail}</span></li>)}</ul>
             <p className="text-ink-faint">Score = {r.effect.score_formula}. Learned adjustment: 4 points per net vote on this kind of option across the institution, capped at 12 ({r.learned.entries} feedback entr{r.learned.entries === 1 ? "y" : "ies"}).</p>
             {r.feedback.length > 0 && <ul className="grid gap-0.5">{r.feedback.map((f, i) => <li key={i} className="text-ink-muted">{f.vote > 0 ? "▲" : "▼"} {f.actor_label} ({f.actor_role.replace("_", " ")}): “{f.reason}”</li>)}</ul>}
@@ -359,12 +360,12 @@ function OptionCard({ r, onChange }: { r: Rec; onChange: () => void }) {
             <Button size="sm" variant={vote === -1 ? "primary" : "secondary"} onClick={() => setVote(vote === -1 ? null : -1)} aria-pressed={vote === -1}><ThumbsDown />Not useful</Button>
           </>}
           {can("evidence.dispose") && <Button size="sm" variant="ghost" onClick={() => setAdjust((a) => !a)} aria-pressed={adjust}>Adjust confidence</Button>}
-          {msg && <span role="status" className="text-[12px] text-ink-muted">{msg}</span>}
+          {msg && <span role="status" className="text-[13px] text-ink-muted">{msg}</span>}
         </div>
         {(vote !== null || adjust) && (
           <div className="flex flex-wrap items-end gap-2">
-            {adjust && <label className="grid gap-1 text-[12px] text-ink-muted">New band<select value={band} onChange={(e) => setBand(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink">{["low", "medium", "high"].filter((b) => b !== r.effectiveBand).map((b) => <option key={b}>{b}</option>)}</select></label>}
-            <label className="grid flex-1 gap-1 text-[12px] text-ink-muted">Reason (recorded and audited)<input autoComplete="off" id={`reason-${r.id}`} value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" placeholder={adjust ? "e.g. Operator confirmed capacity in writing…" : "e.g. Feasible within the decision window…"} /></label>
+            {adjust && <label className="grid gap-1 text-[13px] text-ink-muted">New band<select value={band} onChange={(e) => setBand(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink">{["low", "medium", "high"].filter((b) => b !== r.effectiveBand).map((b) => <option key={b}>{b}</option>)}</select></label>}
+            <label className="grid flex-1 gap-1 text-[13px] text-ink-muted">Reason (recorded and audited)<input autoComplete="off" id={`reason-${r.id}`} value={reason} onChange={(e) => setReason(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-ink" placeholder={adjust ? "e.g. Operator confirmed capacity in writing…" : "e.g. Feasible within the decision window…"} /></label>
             <Button size="sm" variant="primary" onClick={adjust ? sendAdjust : sendVote}>{adjust ? "Record adjustment" : "Record feedback"}</Button>
           </div>
         )}
@@ -386,8 +387,8 @@ export function BriefPanel({ caseKey }: { caseKey: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="eyebrow text-ink-faint">Executive brief</div>
-          <div className="font-semibold">Version {b.version} · {b.content.classification} · {formatDate(b.created_at, true)}</div>
-          <div className="text-[12px] text-ink-faint">{b.created_by_label} · hash {b.content_hash.slice(0, 12)}</div>
+          <div className="font-medium">Version {b.version} · {b.content.classification} · {formatDate(b.created_at, true)}</div>
+          <div className="text-[13px] text-ink-faint">{b.created_by_label} · hash {b.content_hash.slice(0, 12)}</div>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setOpen((o) => !o)} aria-expanded={open}><FileText />{open ? "Hide brief" : "Read brief"}</Button>
@@ -396,12 +397,12 @@ export function BriefPanel({ caseKey }: { caseKey: string }) {
       </div>
       {open && (
         <article className="mt-4 grid gap-4 border-t border-line pt-4">
-          <p className="rounded-md bg-warn-soft px-3 py-2 text-[12.5px] text-warn">{b.content.status}</p>
+          <p className="rounded-md bg-warn-soft px-3 py-2 text-[13px] text-warn">{b.content.status}</p>
           {b.content.sections.filter((s) => s.sentences.length).map((s) => (
             <section key={s.heading}>
-              <h4 className="mb-1 text-[15px] font-semibold">{s.heading} <span className="ms-1 align-middle"><WriterBadge writer={s.writer} /></span></h4>
+              <h4 className="mb-1 text-[15px] font-medium">{s.heading} <span className="ms-1 align-middle"><WriterBadge writer={s.writer} /></span></h4>
               <p className="font-serif text-[14.5px] leading-relaxed">
-                {s.sentences.map((x, i) => <span key={i} className={cn(x.status === "unverified" && "rounded-sm bg-warn-soft px-0.5 text-warn")} title={x.sources.map((y) => `${y.label}: ${y.text}`).join("\n") || x.reason || ""}>{x.status === "unverified" && <span className="me-1 text-[10px] font-semibold uppercase">Unverified</span>}{x.text} </span>)}
+                {s.sentences.map((x, i) => <span key={i} className={cn(x.status === "unverified" && "rounded-sm bg-warn-soft px-0.5 text-warn")} title={x.sources.map((y) => `${y.label}: ${y.text}`).join("\n") || x.reason || ""}>{x.status === "unverified" && <span className="me-1 text-[13px] font-medium">Unverified</span>}{x.text} </span>)}
               </p>
             </section>
           ))}
@@ -432,22 +433,22 @@ export function AskPanel({ caseKey }: { caseKey: string }) {
   return (
     <div className="grid gap-4">
       <Panel className="p-4">
-        <h3 className="text-[17px] font-semibold">Ask TIGERIS</h3>
+        <h3 className="text-[17px] font-medium">Ask TIGERIS</h3>
         <p className="mt-1 text-[13px] text-ink-muted">Answers come only from this case's records: its signals, evidence, scenario results, options and agent challenges. Every sentence carries its source or is marked unverified. A question the records cannot answer gets that answer.</p>
         <form className="mt-3 flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); const bad = requireText(q, 3, "ask-case", "The question"); if (bad) { setErr(bad); return; } clearInvalid("ask-case"); ask(q.trim()); }}>
           <input autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} id="ask-case" aria-label="Question about this case" placeholder="e.g. What is the 90-day value at risk?…" className="h-9 min-w-[260px] flex-1 rounded-md border border-line bg-surface-2 px-3 text-[13.5px]" />
           <ProviderPicker value={provider ?? defaultProvider} onChange={setProvider} providers={providers} />
           <Button variant="primary" type="submit" disabled={busy}><Send />{busy ? "Answering…" : "Ask"}</Button>
         </form>
-        <div className="mt-2 flex flex-wrap gap-1.5">{examples.map((x) => <button key={x} type="button" disabled={busy} onClick={() => { setQ(x); ask(x); }} className="rounded-full border border-line px-2.5 py-1 text-[12px] text-ink-muted hover:border-line-strong hover:text-ink">{x}</button>)}</div>
-        {err && <p role="alert" className="mt-2 text-[12.5px] text-crit">{err}</p>}
+        <div className="mt-2 flex flex-wrap gap-1.5">{examples.map((x) => <button key={x} type="button" disabled={busy} onClick={() => { setQ(x); ask(x); }} className="rounded-full border border-line px-2.5 py-1 text-[13px] text-ink-muted hover:border-line-strong hover:text-ink">{x}</button>)}</div>
+        {err && <p role="alert" className="mt-2 text-[13px] text-crit">{err}</p>}
       </Panel>
       {items.map((it) => (
         <Panel key={it.id} className="grid gap-2 p-4">
-          <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-faint"><span className="font-medium text-ink">{it.question}</span><span className="ms-auto">{it.requested_by_label} · {formatDate(it.started_at, true)}</span></div>
+          <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink-faint"><span className="font-medium text-ink">{it.question}</span><span className="ms-auto">{it.requested_by_label} · {formatDate(it.started_at, true)}</span></div>
           <div className="flex flex-wrap items-center gap-2"><WriterBadge writer={it.writer} />{it.summary?.answerable === false && <Badge tone="warn">Not answerable from this case</Badge>}</div>
           <CheckedText text={it.text} sources={it.sources} className="text-[14px]" />
-          {it.fallback_reason && <p className="text-[11.5px] text-ink-faint">{it.fallback_reason}</p>}
+          {it.fallback_reason && <p className="text-[13px] text-ink-faint">{it.fallback_reason}</p>}
         </Panel>
       ))}
     </div>
@@ -479,12 +480,12 @@ export function GraphAsk() {
         <Button variant="primary" type="submit" disabled={busy}><Send />{busy ? "Working…" : "Ask"}</Button>
       </form>
       <div className="mt-2 flex flex-wrap gap-1.5">
-        {["What is the path between Strait of Hormuz and Jebel Ali?", "Which holdings are exposed to Bab el-Mandeb?", "What is connected to Ras Tanura?"].map((x) => <button key={x} type="button" disabled={busy} onClick={() => { setQ(x); ask(x); }} className="rounded-full border border-line px-2.5 py-1 text-[12px] text-ink-muted hover:border-line-strong hover:text-ink">{x}</button>)}
+        {["What is the path between Strait of Hormuz and Jebel Ali?", "Which holdings are exposed to Bab el-Mandeb?", "What is connected to Ras Tanura?"].map((x) => <button key={x} type="button" disabled={busy} onClick={() => { setQ(x); ask(x); }} className="rounded-full border border-line px-2.5 py-1 text-[13px] text-ink-muted hover:border-line-strong hover:text-ink">{x}</button>)}
       </div>
-      {err && <p role="alert" className="mt-2 text-[12.5px] text-crit">{err}</p>}
+      {err && <p role="alert" className="mt-2 text-[13px] text-crit">{err}</p>}
       {a && (
         <div className="mt-3 grid gap-2 border-t border-line pt-3">
-          <p className="text-[12px] text-ink-muted">
+          <p className="text-[13px] text-ink-muted">
             Read as: <span className="text-ink">{INTENT[a.interpretation.intent ?? ""] ?? "not understood"}</span>
             {a.interpretation.fromEntity && <> · from <span className="text-ink">{a.interpretation.fromEntity.name}</span></>}
             {a.interpretation.toEntity && <> · to <span className="text-ink">{a.interpretation.toEntity.name}</span></>}
@@ -521,7 +522,7 @@ function ExportMenu({ caseKey }: { caseKey: string }) {
         </select>
         <Button variant="primary" onClick={download}><Download />Download PDF</Button>
       </div>
-      {err && <p role="alert" className="text-[12px] text-crit">{err}</p>}
+      {err && <p role="alert" className="text-[13px] text-crit">{err}</p>}
     </div>
   );
 }

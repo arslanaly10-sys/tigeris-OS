@@ -73,7 +73,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
   }
 
   return (
-    <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex h-[52px] items-center gap-3 border-b border-line bg-bg/90 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex h-[52px] items-center gap-3 border-b border-line bg-bg px-4 sm:px-6">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenu} aria-label="Open navigation"><Menu /></Button>
 
       <Popover.Root open={results.length > 0}>
@@ -96,7 +96,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
             {results.slice(0, 12).map((r, i) => (
               <Link key={i} href={r.href} onClick={() => setQ("")} className="block rounded px-2.5 py-2 hover:bg-surface-2">
                 <div className="line-clamp-1 text-[13px] font-medium">{r.title}</div>
-                <div className="text-[11.5px] text-ink-muted">{r.sub}</div>
+                <div className="text-[13px] text-ink-muted">{r.sub}</div>
               </Link>
             ))}
           </Popover.Content>
@@ -115,18 +115,18 @@ export function Header({ onMenu }: { onMenu: () => void }) {
         <Popover.Root>
           <Popover.Trigger asChild>
             <Button variant="ghost" size="icon" className="relative" aria-label={`${t("header.notifications")}${notes?.unread ? ` (${notes.unread} unread)` : ""}`}>
-              <Bell />{notes?.unread ? <span className="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-crit px-1 text-[10px] font-semibold text-white tabular">{notes.unread}</span> : null}
+              <Bell />{notes?.unread ? <span className="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-crit px-1 text-[13px] font-medium text-white tabular">{notes.unread}</span> : null}
             </Button>
           </Popover.Trigger>
           <Popover.Portal>
             <Popover.Content align="end" sideOffset={6} className="z-50 w-80 rounded-lg border border-line bg-surface p-2 shadow-[var(--overlay-shadow)]">
-              <div className="flex items-center justify-between px-2 py-1.5"><span className="font-semibold">{t("header.notifications")}</span>
-                {notes?.unread ? <button type="button" className="text-[12px] text-accent hover:underline" onClick={async () => { await api("/notifications/read", { json: {} }); setNotes((n) => n && { ...n, unread: 0, notifications: n.notifications.map((x) => ({ ...x, read_at: x.read_at ?? new Date().toISOString() })) }); }}>Mark all read</button> : null}
+              <div className="flex items-center justify-between px-2 py-1.5"><span className="font-medium">{t("header.notifications")}</span>
+                {notes?.unread ? <button type="button" className="text-[13px] text-accent hover:underline" onClick={async () => { await api("/notifications/read", { json: {} }); setNotes((n) => n && { ...n, unread: 0, notifications: n.notifications.map((x) => ({ ...x, read_at: x.read_at ?? new Date().toISOString() })) }); }}>Mark all read</button> : null}
               </div>
               {!notes?.notifications.length && <p className="px-2 pb-2 text-[13px] text-ink-muted">{t("header.noNotifications")}</p>}
               <ul className="max-h-96 overflow-y-auto">
                 {notes?.notifications.map((n) => (
-                  <li key={n.id}><Link href={n.link} className="block rounded px-2 py-2 hover:bg-surface-2"><div className={`text-[13px] ${n.read_at ? "text-ink-muted" : "font-medium"}`}>{n.title}</div><div className="line-clamp-2 text-[12px] text-ink-faint">{n.body}</div></Link></li>
+                  <li key={n.id}><Link href={n.link} className="block rounded px-2 py-2 hover:bg-surface-2"><div className={`text-[13px] ${n.read_at ? "text-ink-muted" : "font-medium"}`}>{n.title}</div><div className="line-clamp-2 text-[13px] text-ink-faint">{n.body}</div></Link></li>
                 ))}
               </ul>
             </Popover.Content>
@@ -140,8 +140,8 @@ export function Header({ onMenu }: { onMenu: () => void }) {
             <button type="button" id="user-menu-trigger" className="flex items-center gap-2.5 rounded-md border border-line bg-surface-2 py-1 ps-1.5 pe-2.5 text-start hover:border-line-strong">
               <span className="grid size-7 place-items-center rounded bg-primary-soft text-accent"><UserRound className="size-4" /></span>
               <span className="hidden min-w-0 md:block">
-                <span className="block max-w-[180px] truncate text-[12.5px] font-medium leading-tight">{s.principal.name}</span>
-                <span className="block max-w-[180px] truncate text-[11px] leading-tight text-ink-muted">{ROLE_LABELS[s.principal.role]} · {s.institution.shortName}</span>
+                <span className="block max-w-[180px] truncate text-[13px] font-medium leading-tight">{s.principal.name}</span>
+                <span className="block max-w-[180px] truncate text-[13px] leading-tight text-ink-muted">{ROLE_LABELS[s.principal.role]} · {s.institution.shortName}</span>
               </span>
               <ChevronDown className="size-3.5 text-ink-faint" />
             </button>
@@ -149,10 +149,10 @@ export function Header({ onMenu }: { onMenu: () => void }) {
           <Dropdown.Portal>
             <Dropdown.Content align="end" sideOffset={6} className="z-50 w-72 rounded-lg border border-line bg-surface p-1.5 shadow-[var(--overlay-shadow)]">
               <div className="px-2.5 py-2">
-                <div className="font-semibold">{s.principal.name}</div>
-                <div className="text-[12px] text-ink-muted">{s.principal.title}</div>
-                <div className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-muted"><Landmark className="size-3.5 text-accent" />{s.institution.name}</div>
-                <div className="text-[11.5px] text-ink-faint">{s.institution.residency}</div>
+                <div className="font-medium">{s.principal.name}</div>
+                <div className="text-[13px] text-ink-muted">{s.principal.title}</div>
+                <div className="mt-2 flex items-center gap-1.5 text-[13px] text-ink-muted"><Landmark className="size-3.5 text-accent" />{s.institution.name}</div>
+                <div className="text-[13px] text-ink-faint">{s.institution.residency}</div>
               </div>
               <Dropdown.Separator className="my-1 h-px bg-line" />
               <Dropdown.Label className="eyebrow px-2.5 py-1 text-ink-faint">{t("header.switchRole")}</Dropdown.Label>
@@ -161,7 +161,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
                   <span className="grid size-4 place-items-center">{p.id === s.principal.id && <Check className="size-4 text-accent" />}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block">{ROLE_LABELS[p.role]}</span>
-                    <span className="block truncate text-[11.5px] text-ink-muted">{p.name}</span>
+                    <span className="block truncate text-[13px] text-ink-muted">{p.name}</span>
                   </span>
                 </Dropdown.Item>
               ))}

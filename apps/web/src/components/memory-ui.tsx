@@ -28,9 +28,9 @@ export function PrecedentList({ hits, semantic, empty, onOpen }: { hits: Hit[]; 
             <Badge tone={CLAIM_TONE[h.claim_class] ?? "neutral"} title={h.source_label}>{h.claim_class}</Badge>
             <span className="ms-auto flex gap-1">{h.matchedBy.map((m) => <Badge key={m} tone={m === "meaning" ? "gold" : "neutral"} title={m === "meaning" ? `Similarity ${h.similarity}` : `Keyword rank ${h.keywordRank}`}>{m === "meaning" ? `meaning ${num(h.similarity ?? 0, 2)}` : "keyword"}</Badge>)}</span>
           </div>
-          <p className="text-[12px] text-ink-faint">{DOMAIN_LABEL[h.domain] ?? h.domain} · {h.region} · {h.period}</p>
-          <p className="line-clamp-2 text-[12.5px] text-ink-muted">{h.summary}</p>
-          {h.lessons[0] && <p className="text-[12.5px]"><span className="text-ink-faint">Lesson:</span> {h.lessons[0]}</p>}
+          <p className="text-[13px] text-ink-faint">{DOMAIN_LABEL[h.domain] ?? h.domain} · {h.region} · {h.period}</p>
+          <p className="line-clamp-2 text-[13px] text-ink-muted">{h.summary}</p>
+          {h.lessons[0] && <p className="text-[13px]"><span className="text-ink-faint">Lesson:</span> {h.lessons[0]}</p>}
         </li>
       ))}
     </ul>
@@ -82,21 +82,21 @@ export function MemoryModule() {
               <select value={domain} onChange={(e) => setDomain(e.target.value)} aria-label="Domain" className="h-9 rounded-md border border-line bg-surface-2 px-2 text-[13px]"><option value="">All domains</option>{domains.map((d) => <option key={d} value={d}>{DOMAIN_LABEL[d] ?? d}</option>)}</select>
               <Button type="submit" variant="primary">Search</Button>
             </form>
-            <div className="mt-2 flex flex-wrap gap-1.5">{["tankers attacked near the strait", "grain export ban", "bank funding stress", "desalination outage", "oil price falls for years"].map((x) => <button key={x} type="button" onClick={() => { setQ(x); search(x); }} className="rounded-full border border-line px-2.5 py-1 text-[12px] text-ink-muted hover:border-line-strong hover:text-ink">{x}</button>)}</div>
+            <div className="mt-2 flex flex-wrap gap-1.5">{["tankers attacked near the strait", "grain export ban", "bank funding stress", "desalination outage", "oil price falls for years"].map((x) => <button key={x} type="button" onClick={() => { setQ(x); search(x); }} className="rounded-full border border-line px-2.5 py-1 text-[13px] text-ink-muted hover:border-line-strong hover:text-ink">{x}</button>)}</div>
           </Panel>
           {res && <Panel className="p-4"><PrecedentList hits={res.hits} semantic={res.semantic} empty="Nothing in memory matches." onOpen={async (id) => { const r = await api<Detail>(`/memory/${id}`); if (r.ok) setDetail(r.data); }} /></Panel>}
         </div>
         <div className="grid content-start gap-5">
           <Panel>
             <PanelHeader eyebrow="Library" title={`${total} approved entries`} />
-            <ul className="grid gap-1 p-4 text-[12.5px]">
+            <ul className="grid gap-1 p-4 text-[13px]">
               {domains.map((d) => <li key={d} className="flex justify-between"><span className="text-ink-muted">{DOMAIN_LABEL[d] ?? d}</span><span className="tabular">{overview!.stats.filter((s) => s.domain === d).map((s) => `${s.n} ${s.claim_class}`).join(" · ")}</span></li>)}
               {overview && <li className="mt-2 text-ink-faint">{overview.embeddings.embedded} entries embedded with {overview.embeddings.model}.</li>}
             </ul>
           </Panel>
           <Panel>
             <PanelHeader eyebrow="Waiting for approval" title="Proposed entries" actions={<Badge className="tabular">{overview?.proposed.length ?? 0}</Badge>} />
-            <div className="grid gap-3 p-4 text-[12.5px]">
+            <div className="grid gap-3 p-4 text-[13px]">
               {!overview?.proposed.length && <p className="text-ink-muted">Nothing waiting. Analysts propose entries from a case's Decision and memory tab.</p>}
               {overview?.proposed.map((x) => (
                 <div key={x.id} className="grid gap-1 rounded-md border border-line p-3">
@@ -112,7 +112,7 @@ export function MemoryModule() {
           {!!overview?.recent.length && (
             <Panel>
               <PanelHeader eyebrow="From our cases" title="Recently approved" />
-              <ul className="grid gap-1 p-4 text-[12.5px]">{overview.recent.map((r) => <li key={r.id}><BookMarked className="me-1 inline size-3.5 text-accent" />{r.title} <span className="text-ink-faint">· {r.case_key} · {r.approved_by_label}</span></li>)}</ul>
+              <ul className="grid gap-1 p-4 text-[13px]">{overview.recent.map((r) => <li key={r.id}><BookMarked className="me-1 inline size-3.5 text-accent" />{r.title} <span className="text-ink-faint">· {r.case_key} · {r.approved_by_label}</span></li>)}</ul>
             </Panel>
           )}
         </div>
@@ -121,11 +121,11 @@ export function MemoryModule() {
         {detail && (
           <div className="grid gap-3 p-5 text-[13px]">
             <div className="flex flex-wrap gap-2"><Badge tone={CLAIM_TONE[detail.claim_class] ?? "neutral"}>{detail.claim_class}</Badge><Badge>{DOMAIN_LABEL[detail.domain] ?? detail.domain}</Badge><Badge>{detail.region}</Badge><Badge>{detail.period}</Badge></div>
-            <p className="text-[12px] text-ink-faint">{detail.source_label}{detail.case_key ? ` · case ${detail.case_key}` : ""}</p>
+            <p className="text-[13px] text-ink-faint">{detail.source_label}{detail.case_key ? ` · case ${detail.case_key}` : ""}</p>
             <p>{detail.summary}</p>
             <p><span className="text-ink-faint">Outcome:</span> {detail.outcome}</p>
             <div><div className="mb-1 text-ink-faint">Lessons</div><ul className="list-disc ps-5">{detail.lessons.map((l) => <li key={l}>{l}</li>)}</ul></div>
-            <p className="text-[12px] text-ink-faint">Approved by {detail.approved_by_label ?? "—"}{detail.approved_at ? ` · ${formatDate(detail.approved_at, true)}` : ""} · {detail.embedding_model ?? "not embedded"}</p>
+            <p className="text-[13px] text-ink-faint">Approved by {detail.approved_by_label ?? "—"}{detail.approved_at ? ` · ${formatDate(detail.approved_at, true)}` : ""} · {detail.embedding_model ?? "not embedded"}</p>
           </div>
         )}
       </Drawer>

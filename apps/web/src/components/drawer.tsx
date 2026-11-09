@@ -21,7 +21,7 @@ export function Drawer({ open, onClose, title, eyebrow, children }: { open: bool
         <header className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
           <div className="min-w-0">
             {eyebrow && <div className="eyebrow text-ink-faint">{eyebrow}</div>}
-            <h2 className="text-[18px] font-semibold leading-snug">{title}</h2>
+            <h2 className="text-[18px] font-medium leading-snug">{title}</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close"><X /></Button>
         </header>
@@ -34,7 +34,7 @@ export function Drawer({ open, onClose, title, eyebrow, children }: { open: bool
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[12px] text-ink-faint">{label}</dt>
+      <dt className="text-[13px] text-ink-faint">{label}</dt>
       <dd className="break-words text-[13px] text-ink">{children}</dd>
     </div>
   );

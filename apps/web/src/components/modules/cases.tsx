@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useUnsavedWarning } from "@/lib/forms";
 import Link from "next/link";
@@ -33,7 +33,7 @@ export function StateTrack({ state }: { state: CaseState }) {
     <ol className="flex flex-wrap items-center gap-1" aria-label={`Case state: ${STATE_LABEL[state]}`}>
       {CASE_STATES.map((s, i) => (
         <li key={s} className="flex items-center gap-1">
-          <span className={cn("rounded px-2 py-0.5 text-[11.5px]", i < idx ? "bg-surface-3 text-ink-muted" : i === idx ? "bg-primary font-semibold text-primary-ink" : "text-ink-faint")} aria-current={i === idx ? "step" : undefined}>{t(`case.state.${s}` as I18nKey)}</span>
+          <span className={cn("rounded px-2 py-0.5 text-[13px]", i < idx ? "bg-surface-3 text-ink-muted" : i === idx ? "bg-primary font-medium text-primary-ink" : "text-ink-faint")} aria-current={i === idx ? "step" : undefined}>{t(`case.state.${s}` as I18nKey)}</span>
           {i < CASE_STATES.length - 1 && <ChevronRight className="size-3 text-ink-faint rtl:rotate-180" aria-hidden="true" />}
         </li>
       ))}
@@ -59,12 +59,12 @@ export function CasesList() {
             <tbody>
               {rows?.map((c) => (
                 <tr key={c.id} className="border-b border-line/60 last:border-0 hover:bg-surface-2">
-                  <td className="px-4 py-3"><Link href={`/cases/${c.case_key}`} className="font-medium hover:underline">{c.title}</Link><div className="flex flex-wrap items-center gap-1.5 text-[11.5px] text-ink-faint"><span translate="no" className="font-mono">{c.case_key}</span> · {DEPTH_LABEL[c.depth]} · {c.domain.replace(/_/g, " ")}</div></td>
+                  <td className="px-4 py-3"><Link href={`/cases/${c.case_key}`} className="font-medium hover:underline">{c.title}</Link><div className="flex flex-wrap items-center gap-1.5 text-[13px] text-ink-faint"><span translate="no" className="font-mono">{c.case_key}</span> · {DEPTH_LABEL[c.depth]} · {c.domain.replace(/_/g, " ")}</div></td>
                   <td className="px-4 py-3"><Badge tone={c.state === "closed" ? "neutral" : c.state === "decision" ? "warn" : "info"}>{STATE_LABEL[c.state]}{c.closure ? ` · ${c.closure.replace("_", " ")}` : ""}</Badge></td>
                   <td className="px-4 py-3 text-ink-muted">{(next[c.state] ?? []).map((r) => ROLE_LABELS[r]).join(" or ") || "—"}</td>
                   <td className="px-4 py-3 text-ink-muted">{c.owner_label}</td>
                   <td className="px-4 py-3 tabular text-ink-muted">{formatDate(c.last_activity_at, true)}</td>
-                  <td className="px-4 py-3 text-ink-faint"><span className="flex items-center gap-2 text-[12px]">{c.signals > 0 && <span>{c.signals} signal{c.signals > 1 ? "s" : ""}</span>}{c.comments > 0 && <span className="flex items-center gap-0.5"><MessageSquare className="size-3" />{c.comments}</span>}</span></td>
+                  <td className="px-4 py-3 text-ink-faint"><span className="flex items-center gap-2 text-[13px]">{c.signals > 0 && <span>{c.signals} signal{c.signals > 1 ? "s" : ""}</span>}{c.comments > 0 && <span className="flex items-center gap-0.5"><MessageSquare className="size-3" />{c.comments}</span>}</span></td>
                 </tr>
               ))}
             </tbody>
@@ -109,18 +109,18 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
   return (
     <>
       <div className="mb-5 grid gap-3">
-        <div className="flex flex-wrap items-center gap-2 text-[12px] text-ink-faint">
+        <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink-faint">
           <Link href="/cases" className="hover:underline">Intelligence Cases</Link><ChevronRight className="size-3 rtl:rotate-180" /><span translate="no" className="font-mono">{c.case_key}</span>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-3xl">
-            <h1 className="text-[30px] font-semibold leading-tight">{c.title}</h1>
+            <h1 className="text-[30px] font-medium leading-tight">{c.title}</h1>
             <p className="mt-1 text-ink-muted">{c.objective}</p>
           </div>
           <div className="flex flex-wrap gap-1.5"><Badge>{DEPTH_LABEL[c.depth]}</Badge><Badge tone="warn">{c.sensitivity}</Badge><Badge>v{c.version}</Badge></div>
         </div>
         <StateTrack state={c.state} />
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-[12.5px] text-ink-muted">
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-ink-muted">
           <span>Owner: <span className="text-ink">{c.owner_label}</span></span>
           <span>Opened by {c.created_by_label} · {formatDate(c.created_at, true)}</span>
           <span>Last activity {formatDate(c.last_activity_at, true)}</span>
@@ -130,13 +130,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
 
       <TransitionBar d={d} onDone={load} role={s.principal.role} />
 
-      <div role="tablist" aria-label="Case workspace" className="sticky top-[52px] z-10 -mx-1 mb-6 mt-6 flex flex-wrap gap-x-1 border-b border-line bg-bg/90 px-1 backdrop-blur-md">
-        {TABS.map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} onClick={() => openTab(t)} className={cn("-mb-px border-b-2 px-3 py-2.5 text-[13.5px] font-medium transition-colors", tab === t ? "border-primary text-ink" : "border-transparent text-ink-faint hover:border-line-strong hover:text-ink")}>
-            {tr(`case.tab.${t}` as I18nKey)}{t === "Discussion" && d.comments.length ? ` (${d.comments.length})` : ""}
-          </button>
-        ))}
-      </div>
+      <CaseTabs tab={tab} onOpen={openTab} label={(t) => `${tr(`case.tab.${t}` as I18nKey)}${t === "Discussion" && d.comments.length ? ` (${d.comments.length})` : ""}`} />
 
       {tab === "Situation" && (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -167,7 +161,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
             {d.evidence.map((e, i) => (
               <li key={i} className="grid gap-1 px-4 py-3 text-[13px]">
                 <div className="flex flex-wrap items-center gap-1.5"><span className="font-medium">{e.title}</span><ValidationBadge state={e.validation_state} /></div>
-                <div className="text-[12px] text-ink-muted">{e.source_name} · added by {e.added_by_label}{e.note ? ` · ${e.note}` : ""}</div>
+                <div className="text-[13px] text-ink-muted">{e.source_name} · added by {e.added_by_label}{e.note ? ` · ${e.note}` : ""}</div>
                 {e.fact_id && <div className="flex items-center gap-2">{e.predicate_label}{e.period ? ` (${e.period})` : ""}: <FactValue id={e.fact_id} value={e.value_num} unit={e.unit} />{e.claim_class && <ClaimBadge claim={e.claim_class} />}</div>}
               </li>
             ))}
@@ -200,7 +194,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
                 <span>
                   {e.kind === "transition" ? <>Moved from <b>{STATE_LABEL[e.from_state as CaseState]}</b> to <b>{STATE_LABEL[e.to_state as CaseState]}</b></> : e.kind === "created" ? "Case opened" : e.kind === "comment" ? `Comment${e.payload.mentions ? ` mentioning ${e.payload.mentions}` : ""}` : e.kind.replace(/_/g, " ")}
                   <span className="text-ink-muted"> · {e.actor_label}{e.actor_role ? ` (${e.actor_role.replace("_", " ")})` : ""}</span>
-                  {e.rationale && <span className="block text-[12.5px] text-ink-muted">&ldquo;{e.rationale}&rdquo;</span>}
+                  {e.rationale && <span className="block text-[13px] text-ink-muted">&ldquo;{e.rationale}&rdquo;</span>}
                 </span>
               </li>
             ))}
@@ -229,20 +223,20 @@ function TransitionBar({ d, onDone, role }: { d: CaseDetail; onDone: () => void;
     <Panel className="grid gap-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
         <span>Next step needs: <b>{d.nextActor.map((r) => ROLE_LABELS[r]).join(" or ")}</b>{d.nextActor.includes(role) ? " — that is you." : ""}</span>
-        <span className="text-[12px] text-ink-faint">Moves are checked on the server and recorded in the audit trail.</span>
+        <span className="text-[13px] text-ink-faint">Moves are checked on the server and recorded in the audit trail.</span>
       </div>
       {needsRationale && <textarea autoComplete="off" id="case-rationale" aria-label="Rationale" rows={2} value={rationale} onChange={(e) => setRationale(e.target.value)} placeholder="e.g. Scenario assumptions reviewed with the energy team…" className="rounded-md border border-line bg-surface-2 p-2 text-[13px]" />}
       <div className="flex flex-wrap gap-2">
         {d.transitions.map((t) => (
           <Button key={t.to + t.label} size="sm" variant={t.allowed ? (t.to === "closed" && t.label !== "Record outcome and close" ? "secondary" : "primary") : "ghost"} disabled={busy} onClick={() => move(t.to)} title={t.allowed ? undefined : `Needs ${t.roles.map((r) => ROLE_LABELS[r]).join(" or ")}`}>
-            {t.label}{!t.allowed && <span className="text-[11px] text-ink-faint">({t.roles.map((r) => ROLE_LABELS[r]).join("/")})</span>}
+            {t.label}{!t.allowed && <span className="text-[13px] text-ink-faint">({t.roles.map((r) => ROLE_LABELS[r]).join("/")})</span>}
           </Button>
         ))}
       </div>
       {result && (
         <div role="status" className={cn("flex items-start gap-2 rounded-md border p-2.5 text-[13px]", result.result === "PASS" ? "border-ok/40 bg-ok-soft text-ok" : result.result === "HOLD" ? "border-warn/40 bg-warn-soft text-warn" : "border-crit/40 bg-crit-soft text-crit")}>
           {result.result === "PASS" ? <CheckCircle2 className="size-4 shrink-0" /> : <ShieldAlert className="size-4 shrink-0" />}
-          <span><b className="font-mono">{result.result}</b> {result.explanation}{result.rule ? <span className="ms-1 font-mono text-[11px] opacity-80">({result.rule})</span> : null}</span>
+          <span><b className="font-mono">{result.result}</b> {result.explanation}{result.rule ? <span className="ms-1 font-mono text-[13px] opacity-80">({result.rule})</span> : null}</span>
         </div>
       )}
     </Panel>
@@ -265,22 +259,45 @@ function Discussion({ d, onDone }: { d: CaseDetail; onDone: () => void }) {
       <Panel>
         <PanelHeader eyebrow="Discussion" title="Comments" />
         {d.comments.length === 0 && <p className="p-4 text-[13px] text-ink-muted">No comments yet.</p>}
-        <ul className="divide-y divide-line">{d.comments.map((c) => <li key={c.id} className="grid gap-1 px-4 py-3 text-[13px]"><div className="text-[12px] text-ink-muted"><b className="text-ink">{c.author_label}</b> · {c.author_role.replace("_", " ")} · {formatDate(c.created_at, true)}</div><p className="whitespace-pre-wrap">{c.body}</p></li>)}</ul>
+        <ul className="divide-y divide-line">{d.comments.map((c) => <li key={c.id} className="grid gap-1 px-4 py-3 text-[13px]"><div className="text-[13px] text-ink-muted"><b className="text-ink">{c.author_label}</b> · {c.author_role.replace("_", " ")} · {formatDate(c.created_at, true)}</div><p className="whitespace-pre-wrap">{c.body}</p></li>)}</ul>
       </Panel>
       <Panel className="grid h-fit gap-3 p-4">
         <label htmlFor="comment-body" className="font-medium">Add a comment</label>
         <textarea autoComplete="off" id="comment-body" rows={4} value={body} onChange={(e) => setBody(e.target.value)} className="rounded-md border border-line bg-surface-2 p-2 text-[13px]" />
         <fieldset className="grid gap-1">
-          <legend className="mb-1 text-[12px] text-ink-muted">Mention colleagues (they are notified)</legend>
+          <legend className="mb-1 text-[13px] text-ink-muted">Mention colleagues (they are notified)</legend>
           {s.roleSwitch.filter((p) => p.id !== s.principal.id).map((p) => (
-            <label key={p.id} className="flex items-center gap-2 text-[12.5px]"><input type="checkbox" checked={mentions.includes(p.id)} onChange={(e) => setMentions((m) => (e.target.checked ? [...m, p.id] : m.filter((x) => x !== p.id)))} />{p.name} <span className="text-ink-faint">· {ROLE_LABELS[p.role]}</span></label>
+            <label key={p.id} className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={mentions.includes(p.id)} onChange={(e) => setMentions((m) => (e.target.checked ? [...m, p.id] : m.filter((x) => x !== p.id)))} />{p.name} <span className="text-ink-faint">· {ROLE_LABELS[p.role]}</span></label>
           ))}
         </fieldset>
         <Button variant="primary" size="sm" disabled={!body.trim()} onClick={send}>Post comment</Button>
-        {err && <p role="alert" className="text-[12px] text-crit">{err}</p>}
+        {err && <p role="alert" className="text-[13px] text-crit">{err}</p>}
       </Panel>
     </div>
   );
 }
 
 export { typeLabel };
+
+/** Case tabs: one gold bar slides to the clicked tab by transform alone (taste skill, motion.md · Tabs). */
+function CaseTabs({ tab, onOpen, label }: { tab: Tab; onOpen: (t: Tab) => void; label: (t: Tab) => string }) {
+  const bar = useRef<HTMLDivElement>(null);
+  const ind = useRef<HTMLSpanElement>(null);
+  const place = useCallback(() => {
+    const el = bar.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!el || !ind.current) return;
+    ind.current.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop + el.offsetHeight - (bar.current!.clientHeight)}px) scaleX(${el.offsetWidth})`;
+  }, []);
+  useLayoutEffect(place, [tab, place]);
+  useEffect(() => { window.addEventListener("resize", place); return () => window.removeEventListener("resize", place); }, [place]);
+  return (
+    <div ref={bar} role="tablist" aria-label="Case workspace" className="sticky top-[52px] z-10 -mx-1 mb-6 mt-6 flex flex-wrap gap-x-1 border-b border-line bg-bg px-1">
+      {TABS.map((t) => (
+        <button key={t} role="tab" aria-selected={tab === t} onClick={() => onOpen(t)} className={cn("px-3 py-3 text-[14px] font-medium transition-colors duration-150", tab === t ? "text-ink" : "text-ink-faint hover:text-ink")}>
+          {label(t)}
+        </button>
+      ))}
+      <span ref={ind} aria-hidden className="tab-ind" />
+    </div>
+  );
+}

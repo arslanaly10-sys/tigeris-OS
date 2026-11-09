@@ -9,8 +9,8 @@ export function Wordmark({ size = "md", className }: { size?: "md" | "lg"; class
         <circle cx="12" cy="12" r="2.2" fill="currentColor" />
       </svg>
       <span className="flex flex-col">
-        <span className={cn("font-serif font-semibold tracking-[0.16em] text-ink", size === "lg" ? "text-[28px]" : "text-[16px]")}>TIGERIS</span>
-        <span className={cn("mt-1 font-sans font-medium uppercase tracking-[0.14em] text-ink-faint", size === "lg" ? "text-[11px]" : "text-[8.5px]")}>Sovereign Intelligence OS</span>
+        <span className={cn("font-serif font-medium text-ink", size === "lg" ? "text-[28px]" : "text-[16px]")}>TIGERIS</span>
+        <span className={cn("mt-1 font-sans font-medium text-ink-faint", size === "lg" ? "text-[13px]" : "text-[8.5px]")}>Sovereign Intelligence OS</span>
       </span>
     </div>
   );

@@ -21,7 +21,7 @@ export function Administration() {
       {denied && (
         <Panel className="flex items-start gap-3 border-crit/40 bg-crit-soft p-4 text-[13px] text-crit" role="alert">
           <ShieldAlert className="size-5 shrink-0" />
-          <div><div className="font-semibold">Access refused</div><p>{denied} Switch to the Administrator role from the menu to manage this page.</p></div>
+          <div><div className="font-medium">Access refused</div><p>{denied} Switch to the Administrator role from the menu to manage this page.</p></div>
         </Panel>
       )}
       {!data && !denied && <div className="h-48 animate-pulse rounded-lg bg-surface-2" />}
@@ -39,14 +39,14 @@ export function Administration() {
                       <td className="px-4 py-2.5 text-ink-muted">{p.title}</td>
                       <td className="px-4 py-2.5 text-ink-muted">{p.division}</td>
                       <td className="px-4 py-2.5"><Badge tone="gold">{ROLE_LABELS[p.role]}</Badge></td>
-                      <td className="px-4 py-2.5 font-mono text-[11.5px] text-ink-faint">{p.email}</td>
+                      <td className="px-4 py-2.5 font-mono text-[13px] text-ink-faint">{p.email}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </Panel>
-          <p className="text-[12px] text-ink-faint">Retention, export rules and model and source allowlists arrive in week 7.</p>
+          <p className="text-[13px] text-ink-faint">Retention, export rules and model and source allowlists arrive in week 7.</p>
         </div>
       )}
     </>

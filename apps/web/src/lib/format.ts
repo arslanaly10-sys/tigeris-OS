@@ -39,3 +39,6 @@ export const humanize = (s: string) => {
   const t = s.replace(/[._]/g, " ");
   return t.charAt(0).toUpperCase() + t.slice(1);
 };
+
+/** Policy verdicts (PASS, HOLD, BLOCK) shown in sentence case. */
+export const verdict = (r: string) => (r ? r.charAt(0) + r.slice(1).toLowerCase() : r);

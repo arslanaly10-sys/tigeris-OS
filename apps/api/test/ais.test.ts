@@ -68,12 +68,13 @@ describe("observed AIS vessels (FR-30, Q086)", () => {
     const analyst = await signIn(GSF.id, "analyst");
     const d = (await app.inject({ method: "GET", url: "/map/observed-vessels", headers: { cookie: analyst } })).json();
     expect(d.capture).not.toBeNull();
-    expect(d.vessels).toHaveLength(2);
+    expect(d.vessels.filter((v: { mmsi: string }) => v.mmsi.startsWith("999"))).toHaveLength(2);
     const t = d.vessels.find((v: { mmsi: string }) => v.mmsi === "999000001");
     expect([t.name, t.category, t.lat, t.lon]).toEqual(["TEST TANKER", "tanker", 26.45, 56.4]);
     const lineage = (await app.inject({ method: "GET", url: `/facts/${t.facts.position_lat.id}/lineage`, headers: { cookie: analyst } })).json();
     expect(lineage.source.key).toBe("aisstream.hormuz");
     const other = (await app.inject({ method: "GET", url: "/map/observed-vessels", headers: { cookie: await signIn(ANIA.id, "analyst") } })).json();
-    expect(other.vessels).toHaveLength(0);
+    // The other institution may hold its own bundled snapshot, but never this institution's uploaded ships.
+    expect(other.vessels.some((v: { mmsi: string }) => v.mmsi.startsWith("999"))).toBe(false);
   });
 });

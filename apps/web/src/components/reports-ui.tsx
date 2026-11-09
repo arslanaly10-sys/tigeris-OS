@@ -42,11 +42,11 @@ export function ReportsModule() {
                   <thead><tr className="border-b border-line text-ink-faint">{["Case", "Version", "Classification", "Written", "Export"].map((h) => <th key={h} className="px-4 py-2 text-start font-medium">{h}</th>)}</tr></thead>
                   <tbody>{d.briefs.map((b) => (
                     <tr key={b.id} className="border-b border-line/60">
-                      <td className="px-4 py-2"><Link href={`/cases/${b.case_key}?tab=Options`} className="font-mono text-[12px] text-accent hover:underline">{b.case_key}</Link><div className="text-ink-muted">{b.title}</div></td>
-                      <td className="px-4 py-2 tabular">v{b.version} of {b.versions}<div translate="no" className="font-mono text-[11px] text-ink-faint">{b.content_hash.slice(0, 12)}</div></td>
+                      <td className="px-4 py-2"><Link href={`/cases/${b.case_key}?tab=Options`} className="font-mono text-[13px] text-accent hover:underline">{b.case_key}</Link><div className="text-ink-muted">{b.title}</div></td>
+                      <td className="px-4 py-2 tabular">v{b.version} of {b.versions}<div translate="no" className="font-mono text-[13px] text-ink-faint">{b.content_hash.slice(0, 12)}</div></td>
                       <td className="px-4 py-2"><Badge tone="warn">{b.classification}</Badge></td>
                       <td className="px-4 py-2 text-ink-muted">{formatDate(b.created_at, true)}</td>
-                      <td className="px-4 py-2">{can("export.create") ? <div className="flex flex-wrap gap-1">{["internal", "board", ...(s.principal.role === "executive" ? ["partner"] : [])].map((a) => <Button key={a} size="sm" variant="ghost" onClick={() => download(b.case_key, a)}><Download />{a}</Button>)}</div> : <span className="text-[12px] text-ink-faint">Needs export permission</span>}</td>
+                      <td className="px-4 py-2">{can("export.create") ? <div className="flex flex-wrap gap-1">{["internal", "board", ...(s.principal.role === "executive" ? ["partner"] : [])].map((a) => <Button key={a} size="sm" variant="ghost" onClick={() => download(b.case_key, a)}><Download />{a}</Button>)}</div> : <span className="text-[13px] text-ink-faint">Needs export permission</span>}</td>
                     </tr>
                   ))}</tbody>
                 </table>
@@ -61,11 +61,11 @@ export function ReportsModule() {
                 {d.backtests.map((b) => (
                   <li key={b.id} className="grid gap-0.5 rounded-md border border-line p-3">
                     <div className="flex flex-wrap items-center gap-2"><span className="font-medium tabular">{num(b.fitted.response_pct_per_pct, 2)}% per 1% of supply</span><Badge tone={b.status === "adopted" ? "ok" : b.status === "proposed" ? "warn" : "neutral"}>{b.status}</Badge></div>
-                    <div className="text-[12.5px] text-ink-muted tabular">{b.metrics.episodes} episodes · error {num(b.metrics.mae_pp, 1)} pp (assumption {num(b.metrics.prior_mae_pp, 1)} pp) · leave-one-out {num(b.metrics.loo_mae_pp, 1)} pp</div>
-                    <div className="text-[12px] text-ink-faint">Run by {b.run_by_label}{b.adopted_by_label ? ` · adopted by ${b.adopted_by_label}` : ""} · {formatDate(b.created_at, true)}</div>
+                    <div className="text-[13px] text-ink-muted tabular">{b.metrics.episodes} episodes · error {num(b.metrics.mae_pp, 1)} pp (assumption {num(b.metrics.prior_mae_pp, 1)} pp) · leave-one-out {num(b.metrics.loo_mae_pp, 1)} pp</div>
+                    <div className="text-[13px] text-ink-faint">Run by {b.run_by_label}{b.adopted_by_label ? ` · adopted by ${b.adopted_by_label}` : ""} · {formatDate(b.created_at, true)}</div>
                   </li>
                 ))}
-                <li><Link href="/scenarios" className="text-[12.5px] text-accent hover:underline">Open the back-test with its chart and lineage</Link></li>
+                <li><Link href="/scenarios" className="text-[13px] text-accent hover:underline">Open the back-test with its chart and lineage</Link></li>
               </ul>
             </Panel>
             <Panel className="print:border-0">
@@ -73,13 +73,13 @@ export function ReportsModule() {
               <div className="grid gap-3 p-4 text-[13px]">
                 <p className="flex items-center gap-2"><ShieldCheck className="size-4 text-ok" />{d.governance.policy.rules} rules, {d.governance.policy.tests} tests, {d.governance.policy.approvals} approval requirements; export versions: {d.governance.policy.audiences.join(", ")}.</p>
                 <dl className="grid grid-cols-3 gap-3 tabular">
-                  <div><dt className="text-[12px] text-ink-faint">Refused or blocked</dt><dd className="text-[20px] font-semibold">{d.governance.refusals30}</dd></div>
-                  <div><dt className="text-[12px] text-ink-faint">Decisions</dt><dd className="text-[20px] font-semibold">{d.governance.decisions.reduce((a, x) => a + x.n, 0)}</dd><dd className="text-[11.5px] text-ink-faint">{d.governance.decisions.map((x) => `${x.n} ${x.status}`).join(" · ") || "none"}</dd></div>
-                  <div><dt className="text-[12px] text-ink-faint">Exports</dt><dd className="text-[20px] font-semibold">{d.governance.exports.reduce((a, x) => a + x.n, 0)}</dd><dd className="text-[11.5px] text-ink-faint">{d.governance.exports.map((x) => `${x.n} ${x.audience} (${x.redactions} withheld)`).join(" · ") || "none"}</dd></div>
+                  <div><dt className="text-[13px] text-ink-faint">Refused or blocked</dt><dd className="text-[20px] font-medium">{d.governance.refusals30}</dd></div>
+                  <div><dt className="text-[13px] text-ink-faint">Decisions</dt><dd className="text-[20px] font-medium">{d.governance.decisions.reduce((a, x) => a + x.n, 0)}</dd><dd className="text-[13px] text-ink-faint">{d.governance.decisions.map((x) => `${x.n} ${x.status}`).join(" · ") || "none"}</dd></div>
+                  <div><dt className="text-[13px] text-ink-faint">Exports</dt><dd className="text-[20px] font-medium">{d.governance.exports.reduce((a, x) => a + x.n, 0)}</dd><dd className="text-[13px] text-ink-faint">{d.governance.exports.map((x) => `${x.n} ${x.audience} (${x.redactions} withheld)`).join(" · ") || "none"}</dd></div>
                 </dl>
-                <div><div className="mb-1 text-[12px] text-ink-faint">Model calls by provider and outcome</div><p className="text-[12.5px] text-ink-muted">{d.governance.models.map((m) => `${m.provider} ${m.outcome}: ${m.n}`).join(" · ") || "none"}</p></div>
-                <div><div className="mb-1 text-[12px] text-ink-faint">Audit events by action</div>
-                  <ul className="grid grid-cols-2 gap-x-4 text-[12px]">{d.governance.audit30.map((a) => <li key={a.action} className="flex justify-between gap-2"><span className="truncate font-mono text-ink-muted">{a.action}</span><span className="tabular">{a.n}</span></li>)}</ul>
+                <div><div className="mb-1 text-[13px] text-ink-faint">Model calls by provider and outcome</div><p className="text-[13px] text-ink-muted">{d.governance.models.map((m) => `${m.provider} ${m.outcome}: ${m.n}`).join(" · ") || "none"}</p></div>
+                <div><div className="mb-1 text-[13px] text-ink-faint">Audit events by action</div>
+                  <ul className="grid grid-cols-2 gap-x-4 text-[13px]">{d.governance.audit30.map((a) => <li key={a.action} className="flex justify-between gap-2"><span className="truncate font-mono text-ink-muted">{a.action}</span><span className="tabular">{a.n}</span></li>)}</ul>
                 </div>
               </div>
             </Panel>
@@ -129,7 +129,7 @@ export function ArchitecturePage() {
       </Panel>
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         <Panel className="p-4 text-[13px]">
-          <h3 className="mb-2 font-semibold">Built on</h3>
+          <h3 className="mb-2 font-medium">Built on</h3>
           <ul className="grid gap-1 text-ink-muted">
             <li>TypeScript core (Fastify) and web app (Next.js, React)</li>
             <li>Python reasoning service: scenarios, Monte Carlo, back-test</li>
@@ -140,7 +140,7 @@ export function ArchitecturePage() {
           </ul>
         </Panel>
         <Panel className="p-4 text-[13px]">
-          <h3 className="mb-2 font-semibold">Deployment</h3>
+          <h3 className="mb-2 font-medium">Deployment</h3>
           <ul className="grid gap-1 text-ink-muted">
             <li><b className="text-ink">Laptop:</b> offline package, no outbound access needed</li>
             <li><b className="text-ink">Hosted demo VM:</b> same package behind a TLS proxy</li>
@@ -149,14 +149,14 @@ export function ArchitecturePage() {
           </ul>
         </Panel>
         <Panel className="p-4 text-[13px]">
-          <h3 className="mb-2 font-semibold">Roadmap</h3>
+          <h3 className="mb-2 font-medium">Roadmap</h3>
           <ol className="grid gap-1 text-ink-muted">
             <li><b className="text-ink">Demo (8 weeks):</b> this build, public and synthetic data</li>
             <li><b className="text-ink">Week 12:</b> client terminology, first institutional data</li>
             <li><b className="text-ink">Week 24:</b> on-premise pilot with live feeds and the institution&apos;s identity provider</li>
             <li><b className="text-ink">Week 36:</b> production hardening, certification, scale-out</li>
           </ol>
-          <p className="mt-2 text-[12px] text-ink-faint">For sovereign wealth funds, national energy and infrastructure holders, central banks and ministries.</p>
+          <p className="mt-2 text-[13px] text-ink-faint">For sovereign wealth funds, national energy and infrastructure holders, central banks and ministries.</p>
         </Panel>
       </div>
     </>

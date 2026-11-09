@@ -65,7 +65,7 @@ export function GraphCanvas({ nodes, edges, origin, onSelect, height = 520 }: { 
 
 export function EdgeLegend() {
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-ink-muted" aria-label="Link types">
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-muted" aria-label="Link types">
       {Object.entries(EDGE_STYLE).map(([k, s]) => (
         <li key={k} className="flex items-center gap-1.5">
           <svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" stroke={`var(${s.token})`} strokeWidth="2" strokeDasharray={s.line === "dashed" ? "5 3" : s.line === "dotted" ? "1.5 3" : undefined} /></svg>

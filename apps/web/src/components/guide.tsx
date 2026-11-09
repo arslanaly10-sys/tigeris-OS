@@ -53,9 +53,9 @@ export function Guide() {
         <button type="button" onClick={() => save({ ...st, open: false })} aria-label={t("guide.close")} className="ms-auto text-ink-faint hover:text-ink"><X className="size-4" /></button>
       </div>
       <div className="mt-2 flex gap-1" aria-hidden="true">{STEPS.map((_, i) => <span key={i} className={cn("h-1 flex-1 rounded-full", i <= st.step ? "bg-primary" : "bg-surface-3")} />)}</div>
-      <h2 className="mt-3 text-[16px] font-semibold">{title}</h2>
+      <h2 className="mt-3 text-[16px] font-medium">{title}</h2>
       <p className="mt-1 text-[13px] text-ink-muted">{body}</p>
-      <p className="mt-2 text-[12px] text-ink-faint">{t("guide.role")}: {ROLE_LABELS[s.role]}</p>
+      <p className="mt-2 text-[13px] text-ink-faint">{t("guide.role")}: {ROLE_LABELS[s.role]}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {!here && <Button asChild size="sm" variant="primary"><Link href={s.href}>{t("guide.go")}</Link></Button>}
         <Button size="sm" variant="secondary" disabled={st.step === 0} onClick={() => save({ ...st, step: st.step - 1 })}>{t("guide.back")}</Button>

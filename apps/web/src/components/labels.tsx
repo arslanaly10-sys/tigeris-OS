@@ -2,18 +2,18 @@ import { AlertTriangle, Ban, CheckCircle2, CircleDashed, ShieldAlert } from "luc
 import { Badge } from "./ui/badge";
 
 const CLAIM: Record<string, { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" }> = {
-  observed: { label: "OBSERVED", tone: "ok" },
-  sourced: { label: "SOURCED", tone: "info" },
-  inferred: { label: "INFERRED", tone: "warn" },
-  assumed: { label: "ASSUMPTION", tone: "neutral" },
-  synthetic: { label: "SYNTHETIC", tone: "gold" },
-  illustrative: { label: "ILLUSTRATIVE", tone: "gold" },
+  observed: { label: "Observed", tone: "ok" },
+  sourced: { label: "Sourced", tone: "info" },
+  inferred: { label: "Inferred", tone: "warn" },
+  assumed: { label: "Assumption", tone: "neutral" },
+  synthetic: { label: "Synthetic", tone: "gold" },
+  illustrative: { label: "Illustrative", tone: "gold" },
 };
 
 /** Persistent claim badges (FD §6). */
 export function ClaimBadge({ claim }: { claim: string }) {
   const c = CLAIM[claim] ?? { label: claim.toUpperCase(), tone: "neutral" as const };
-  return <Badge tone={c.tone} className="text-[10.5px] font-semibold uppercase tracking-[0.06em]">{c.label}</Badge>;
+  return <Badge tone={c.tone} className="text-[13px] font-medium">{c.label}</Badge>;
 }
 
 const STATE: Record<string, { label: string; tone: "ok" | "warn" | "crit" | "neutral"; icon: React.ReactNode }> = {
