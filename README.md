@@ -9,12 +9,12 @@ Validated evidence, a shared intelligence graph, governed reasoning and named hu
 
 </div>
 
-![Sign-in: the Gulf at night with simulated ships moving through the Strait of Hormuz](docs/screenshots/v2/1-sign-in.png)
+![Sign-in: the Gulf at night with simulated ships moving through the Strait of Hormuz](docs/screenshots/v3/1-sign-in.png)
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/v2/2-command-centre.png" alt="Command Centre in the dark theme: attention queue and the live Gulf map" /></td>
-    <td><img src="docs/screenshots/v2/7-command-centre-light.png" alt="Command Centre in the light theme" /></td>
+    <td><img src="docs/screenshots/v3/2-command-centre.png" alt="Command Centre in the dark theme: attention queue and the live Gulf map" /></td>
+    <td><img src="docs/screenshots/v3/7-command-centre-light.png" alt="Command Centre in the light theme" /></td>
   </tr>
 </table>
 
@@ -31,12 +31,12 @@ TIGERIS follows a question from the first signal to a recorded decision:
 7. **Institutional memory.** Fifty precedents plus the institution's own approved case records, searchable by keyword and by meaning.
 8. **Governance and audit.** Policy as code, a hash-chained append-only audit trail, a live security posture, redacted exports and a sovereignty switch for foreign models.
 
-![Movement Map zoomed to the Strait of Hormuz with its traffic, corridor and infrastructure layers](docs/screenshots/v2/3-movement-map.png)
+![Movement Map zoomed to the Strait of Hormuz with its traffic, corridor and infrastructure layers](docs/screenshots/v3/3-movement-map.png)
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/v2/4-case.png" alt="A case in the dark theme: stage path, next step and the Situation tab" /></td>
-    <td><img src="docs/screenshots/v2/6-case-light.png" alt="The same case in the light theme on the Scenarios tab" /></td>
+    <td><img src="docs/screenshots/v3/4-case.png" alt="A case in the dark theme: stage path, next step and the Situation tab" /></td>
+    <td><img src="docs/screenshots/v3/6-case-light.png" alt="The same case in the light theme on the Scenarios tab" /></td>
   </tr>
 </table>
 
@@ -52,7 +52,16 @@ TIGERIS follows a question from the first signal to a recorded decision:
 | Humans decide | Recommendations only. Separation of duties is enforced, and decisions name the person who made them. |
 | Accessible and Arabic-ready | Status is never colour alone, reduced motion is respected, and key screens run in Arabic (RTL). |
 
-![Governance & Audit with the live security posture](docs/screenshots/v2/5-governance.png)
+![Governance & Audit with the live security posture](docs/screenshots/v3/5-governance.png)
+
+![Sovereignty: the six layers, each checked live, with planned items shown as planned](docs/screenshots/v3/8-sovereignty.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/v3/9-phone-sign-in.png" alt="Sign-in on a phone" /></td>
+    <td width="50%"><img src="docs/screenshots/v3/10-phone-command-centre.png" alt="Command Centre on a phone" /></td>
+  </tr>
+</table>
 
 ## Architecture
 
@@ -69,7 +78,7 @@ TIGERIS follows a question from the first signal to a recorded decision:
 
 | Path | Purpose |
 |---|---|
-| `apps/web` | Next.js 15, React 19, Tailwind 4: sign-in, OS shell and every module |
+| `apps/web` | Next.js 15, React 19, Tailwind 4, Motion and GSAP: sign-in, OS shell and every module |
 | `apps/api` | Fastify API: identity, sessions, cases, policy, decisions, memory, model gateway, agents, audit |
 | `packages/shared` | Roles, permission matrix and shared labels |
 | `services/reasoning` | Python: scenario engine, back-test, local language and embedding models |
@@ -78,7 +87,7 @@ TIGERIS follows a question from the first signal to a recorded decision:
 | `deploy`, `scripts` | Offline package, install script, VM overlay with automatic TLS |
 | `docs` | Scope, architecture decisions (`docs/adr`), weekly progress notes, demo script |
 
-The design system is specified in [`DESIGN.md`](DESIGN.md) (version 2.0). It follows the [taste skill](https://github.com/Leonxlnx/taste-skill) (MIT, installed in `.agents/skills`) for type, motion and copy, with motion built on [Motion](https://motion.dev); earlier structure came from the Linear and IBM analyses in [VoltAgent/awesome-design-md](https://github.com/voltagent/awesome-design-md) (MIT). The brand, navy and gold, is TIGERIS's own.
+The design system is specified in [`DESIGN.md`](DESIGN.md) (version 2.1). It follows the [taste skill](https://github.com/Leonxlnx/taste-skill) (MIT, installed in `.agents/skills`) for type, motion and copy, with motion built on [Motion](https://motion.dev) and [GSAP](https://gsap.com) for sequenced entrances (both bundled, reduced motion respected). Quality is checked against [UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) (MIT, in `.claude/skills`): contrast of at least 4.5:1 in both themes, 44px touch targets, no text under 12px; earlier structure came from the Linear and IBM analyses in [VoltAgent/awesome-design-md](https://github.com/voltagent/awesome-design-md) (MIT). The brand, navy and gold, is TIGERIS's own.
 
 ## Quick start
 

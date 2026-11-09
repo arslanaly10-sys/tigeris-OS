@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Clock3, Cpu, Database, KeyRound, Layers3, ShieldAlert, Users, Workflow, XCircle, type LucideIcon } from "lucide-react";
@@ -11,6 +11,7 @@ import { Panel, PanelHeader } from "../ui/panel";
 import { Badge } from "../ui/badge";
 import { usePrefs } from "../prefs";
 import { CorrelationView } from "../correlation";
+import { FULL, gsap, useGSAP } from "@/lib/gsap";
 
 type CheckStatus = "pass" | "warn" | "fail" | "planned";
 type LayerStatus = "sovereign" | "partial" | "at_risk";
@@ -65,8 +66,15 @@ export function SovereigntyModule() {
 }
 
 function Stack({ d, ar }: { d: Sovereignty; ar: boolean }) {
+  const root = useRef<HTMLDivElement>(null);
+  // The six layers arrive in order, top to bottom; with reduced motion they are simply there.
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+    mm.add(FULL, () => { gsap.from("[data-layer]", { opacity: 0, y: 12, duration: 0.42, ease: "power2.out", stagger: 0.06 }); });
+    return () => mm.revert();
+  }, { scope: root });
   return (
-    <div className="grid gap-5">
+    <div ref={root} className="grid gap-5">
       <Panel className="flex flex-wrap items-center gap-x-8 gap-y-3 p-5">
         <div><div className="text-[13px] text-ink-muted">Layers fully sovereign</div><div className="text-[34px] font-medium tabular leading-tight">{d.summary.sovereign} <span className="text-[18px] text-ink-faint">of {d.layers.length}</span></div></div>
         <div className="flex flex-wrap gap-2">
@@ -81,7 +89,7 @@ function Stack({ d, ar }: { d: Sovereignty; ar: boolean }) {
           const Icon = LAYER_ICON[l.key] ?? Layers3;
           const st = LAYER_STATUS[l.status];
           return (
-            <Panel key={l.key} id={`layer-${l.key}`}>
+            <Panel key={l.key} id={`layer-${l.key}`} data-layer>
               <PanelHeader eyebrow={`Layer ${i + 1}`} title={<span className="flex items-center gap-2"><Icon className="size-4 text-accent" />{ar ? LAYER_AR[l.key] ?? l.name : l.name}</span>} actions={<Badge tone={st.tone}><st.Icon />{ar ? st.ar : st.label}</Badge>} />
               <p className="px-5 pt-4 text-[14px] text-ink-muted">{l.question}</p>
               <ul className="grid gap-3 p-5">
