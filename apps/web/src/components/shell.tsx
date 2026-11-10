@@ -18,7 +18,7 @@ export function Shell({ context, children }: { context: AuthContext; children: R
   return (
     <SessionProvider value={context}>
       <LineageProvider>
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded-[2px] focus:bg-primary focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-primary-ink">Skip to main content</a>
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-primary-ink">Skip to main content</a>
       <div className="flex h-full" data-density={context.density}>
         <div className="hidden lg:block"><Sidebar /></div>
         {open && (

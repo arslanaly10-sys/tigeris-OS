@@ -7,40 +7,43 @@
 */
 :root,
 [data-theme="dark"] {
-  /* tigercapital.ai tokens (docs/brand/TOKENS.md), read from the live site on 10 Nov 2026. The client's brand is ivory
-     only; there is no dark theme, so both data-theme values resolve to it. Faint and status inks are darkened just
-     enough to pass WCAG AA on every surface (test/contrast.test.ts). */
-  --bg: #f9f4ea;           /* --background */
-  --surface: #f5eee3;      /* --card */
-  --surface-2: #f0e7d8;    /* --navy-deep */
-  --surface-3: #e8dcca;    /* --accent */
-  --line: rgba(108, 78, 48, 0.2);        /* --hairline */
-  --line-strong: rgba(78, 52, 31, 0.55); /* --hairline-strong */
-  --ink: #140e09;          /* --foreground */
-  --ink-muted: #4b4037;    /* --muted-foreground */
-  --ink-faint: #5e5144;
-  --primary: #86581d;      /* --gold */
-  --primary-hover: #6e4815;
-  --primary-ink: #f9f4ea;
-  --primary-soft: #efe3cf;
-  --accent: #7a4f17;
-  --gold-soft: #ac8c61;    /* --gold-soft: rules and dots only, never text */
-  --signal: #1447e6;       /* --signal: live state, active step */
-  --ok: #2b6b3c;
-  --ok-soft: #e4eedd;
-  --warn: #8a5208;
-  --warn-soft: #f5e7cf;
-  --crit: #a8322a;
+  /* Command Centre palette (Command Centres brief), applied OS-wide on 10 Nov 2026: ivory surfaces, deep green
+     action colour, gold for eyebrows and rules. Status inks are checked for WCAG AA on every surface
+     (test/contrast.test.ts); gold text uses the darker --accent, never the rule gold. */
+  --bg: #f6f2e9;
+  --surface: #fffdf8;
+  --surface-2: #faf6ee;
+  --surface-3: #eee7d9;
+  --line: #e5dccb;
+  --line-strong: #cdbfa5;
+  --ink: #1c2a23;
+  --ink-muted: #5f5a4e;
+  --ink-faint: #67614f;
+  --heading: #0f3a2e;
+  --primary: #1f4b3b;
+  --primary-hover: #173a2e;
+  --primary-ink: #ffffff;
+  --primary-soft: #e1ece4;
+  --accent: #6f4f1c;
+  --gold: #b68a3f;
+  --gold-soft: #b68a3f;    /* rules and dots only, never text */
+  --signal: #1f4b3b;
+  --ok: #24563f;
+  --ok-soft: #e1ece4;
+  --warn: #6f4f1c;
+  --warn-soft: #f4e8cf;
+  --crit: #9a3328;
   --on-crit: #ffffff;
-  --crit-soft: #f6e0da;
-  --info: #1447e6;
-  --info-soft: #e3e9f8;
-  --pattern: rgba(134, 88, 29, 0.06);
+  --crit-soft: #f6deda;
+  --info: #1f4b6b;
+  --info-soft: #e2eaf0;
+  --dark-card: #12352b;
+  --pattern: rgba(31, 75, 59, 0.05);
   --panel-highlight: none;
-  --overlay-shadow: 0 16px 40px rgba(20, 14, 9, 0.14), 0 2px 6px rgba(20, 14, 9, 0.08);
-  --series-1: #1447e6;
-  --series-2: #a8322a;
-  --series-3: #007785;
+  --overlay-shadow: 0 18px 40px rgba(15, 58, 46, 0.16), 0 2px 6px rgba(15, 58, 46, 0.08);
+  --series-1: #1f4b3b;
+  --series-2: #9a3328;
+  --series-3: #b68a3f;
   --flow-compute: #6e519d;
   --flow-energy: #317a45;
   --flow-transfer: #007785;
@@ -50,40 +53,43 @@
 }
 
 [data-theme="light"] {
-  /* tigercapital.ai tokens (docs/brand/TOKENS.md), read from the live site on 10 Nov 2026. The client's brand is ivory
-     only; there is no dark theme, so both data-theme values resolve to it. Faint and status inks are darkened just
-     enough to pass WCAG AA on every surface (test/contrast.test.ts). */
-  --bg: #f9f4ea;           /* --background */
-  --surface: #f5eee3;      /* --card */
-  --surface-2: #f0e7d8;    /* --navy-deep */
-  --surface-3: #e8dcca;    /* --accent */
-  --line: rgba(108, 78, 48, 0.2);        /* --hairline */
-  --line-strong: rgba(78, 52, 31, 0.55); /* --hairline-strong */
-  --ink: #140e09;          /* --foreground */
-  --ink-muted: #4b4037;    /* --muted-foreground */
-  --ink-faint: #5e5144;
-  --primary: #86581d;      /* --gold */
-  --primary-hover: #6e4815;
-  --primary-ink: #f9f4ea;
-  --primary-soft: #efe3cf;
-  --accent: #7a4f17;
-  --gold-soft: #ac8c61;    /* --gold-soft: rules and dots only, never text */
-  --signal: #1447e6;       /* --signal: live state, active step */
-  --ok: #2b6b3c;
-  --ok-soft: #e4eedd;
-  --warn: #8a5208;
-  --warn-soft: #f5e7cf;
-  --crit: #a8322a;
+  /* Command Centre palette (Command Centres brief), applied OS-wide on 10 Nov 2026: ivory surfaces, deep green
+     action colour, gold for eyebrows and rules. Status inks are checked for WCAG AA on every surface
+     (test/contrast.test.ts); gold text uses the darker --accent, never the rule gold. */
+  --bg: #f6f2e9;
+  --surface: #fffdf8;
+  --surface-2: #faf6ee;
+  --surface-3: #eee7d9;
+  --line: #e5dccb;
+  --line-strong: #cdbfa5;
+  --ink: #1c2a23;
+  --ink-muted: #5f5a4e;
+  --ink-faint: #67614f;
+  --heading: #0f3a2e;
+  --primary: #1f4b3b;
+  --primary-hover: #173a2e;
+  --primary-ink: #ffffff;
+  --primary-soft: #e1ece4;
+  --accent: #6f4f1c;
+  --gold: #b68a3f;
+  --gold-soft: #b68a3f;    /* rules and dots only, never text */
+  --signal: #1f4b3b;
+  --ok: #24563f;
+  --ok-soft: #e1ece4;
+  --warn: #6f4f1c;
+  --warn-soft: #f4e8cf;
+  --crit: #9a3328;
   --on-crit: #ffffff;
-  --crit-soft: #f6e0da;
-  --info: #1447e6;
-  --info-soft: #e3e9f8;
-  --pattern: rgba(134, 88, 29, 0.06);
+  --crit-soft: #f6deda;
+  --info: #1f4b6b;
+  --info-soft: #e2eaf0;
+  --dark-card: #12352b;
+  --pattern: rgba(31, 75, 59, 0.05);
   --panel-highlight: none;
-  --overlay-shadow: 0 16px 40px rgba(20, 14, 9, 0.14), 0 2px 6px rgba(20, 14, 9, 0.08);
-  --series-1: #1447e6;
-  --series-2: #a8322a;
-  --series-3: #007785;
+  --overlay-shadow: 0 18px 40px rgba(15, 58, 46, 0.16), 0 2px 6px rgba(15, 58, 46, 0.08);
+  --series-1: #1f4b3b;
+  --series-2: #9a3328;
+  --series-3: #b68a3f;
   --flow-compute: #6e519d;
   --flow-energy: #317a45;
   --flow-transfer: #007785;
@@ -120,29 +126,29 @@
   --color-series-2: var(--series-2);
   --color-series-3: var(--series-3);
 
-  /* The client's three faces: Manrope for UI text, Space Grotesk for display, JetBrains Mono for labels and system strings. */
-  --font-sans: "Manrope Variable", "IBM Plex Sans Arabic", "Segoe UI", Arial, system-ui, sans-serif;
-  --font-serif: "Space Grotesk Variable", "IBM Plex Sans Arabic", Arial, system-ui, sans-serif;
+  /* Command Centre faces: Inter for UI text, Libre Caslon Text for headings, JetBrains Mono for system strings. */
+  --font-sans: "Inter Variable", "IBM Plex Sans Arabic", "Segoe UI", Arial, system-ui, sans-serif;
+  --font-serif: "Libre Caslon Text", "IBM Plex Sans Arabic", Georgia, serif;
   --font-display: var(--font-serif);
   --font-mono: "JetBrains Mono Variable", ui-monospace, Menlo, Consolas, monospace;
   --color-signal: var(--signal);
   --color-gold-soft: var(--gold-soft);
-  /* Near-square corners, as on the client site (--radius: .125rem). */
-  --radius-sm: 0.125rem;
-  --radius-md: 0.125rem;
-  --radius-lg: 0.125rem;
-  --radius-xl: 0.125rem;
-  /* Weights: 400 and 500 only; nothing bolder (taste skill, layout-v4 §5). */
-  --font-weight-semibold: 500;
-  --font-weight-bold: 500;
+  /* Command Centre radii: pills 6px, buttons 7px, cards 10px. */
+  --radius-sm: 6px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 10px;
+  --color-heading: var(--heading);
+  --color-gold: var(--gold);
+  --color-dark-card: var(--dark-card);
   /* Nothing under 13px. */
   --text-xs: 13px;
   --text-xs--line-height: 1.45;
 }
 
 html[lang="ar"] {
-  --font-sans: "IBM Plex Sans Arabic", "Manrope Variable", Arial, system-ui, sans-serif;
-  --font-serif: "IBM Plex Sans Arabic", "Space Grotesk Variable", Arial, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans Arabic", "Inter Variable", Arial, system-ui, sans-serif;
+  --font-serif: "IBM Plex Sans Arabic", "Libre Caslon Text", Georgia, serif;
 }
 
 /* Motion tokens (taste skill, motion.md): hover in 150, out 120, press 90; one UI ease, one entrance ease. */
@@ -162,19 +168,11 @@ body {
 }
 
 body {
-  /* The site's visible hairline grid: 24px minor, 96px major. */
   background-color: var(--bg);
-  background-image:
-    linear-gradient(rgba(108, 78, 48, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(108, 78, 48, 0.07) 1px, transparent 1px),
-    linear-gradient(rgba(108, 78, 48, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(108, 78, 48, 0.035) 1px, transparent 1px);
-  background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
-  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -182,9 +180,10 @@ body {
 h1,
 h2 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   text-wrap: balance;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
+  color: var(--heading);
 }
 h3,
 h4 {
@@ -194,10 +193,11 @@ h4 {
 }
 .panel-title {
   font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.015em;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--heading);
 }
 
 .tabular {
@@ -206,12 +206,12 @@ h4 {
 
 /* Labels, as on tigercapital.ai: JetBrains Mono, uppercase, wide tracking, gold; parts joined with " · ". */
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--primary);
+  letter-spacing: 0.32em;
+  color: var(--accent);
 }
 /* Figure captions: "Fig. — Coordination debt, resolved". */
 .fig-caption {
@@ -230,8 +230,8 @@ h4 {
 /* Large statements in display type ("AI ≠ Sovereign Intelligence"). */
 .statement {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   line-height: 1.02;
 }
 
@@ -307,7 +307,7 @@ html[lang="ar"] :is(h1, h2, h3, h4, .panel-title, .eyebrow, .fig-caption, .state
 }
 .map-label-gcc {
   font-weight: 500;
-  color: #86581d;
+  color: #1f4b3b;
 }
 .map-ripple {
   width: 24px;

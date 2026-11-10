@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import * as Dropdown from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
-import { Bell, Check, Globe2, Lock, ChevronDown, Database, Landmark, LogOut, Menu, RotateCcw, Search, Server, UserRound, Users } from "lucide-react";
-import { ROLE_LABELS } from "@tigeris/shared";
+import { Bell, Check, Globe2, Lock, ChevronDown, Landmark, LogOut, Menu, RotateCcw, Search, UserRound, Users } from "lucide-react";
+import { INDUSTRIES, ROLE_LABELS, type IndustryKey } from "@tigeris/shared";
+import { sectorByIndustry } from "@/lib/command-centres";
+import { IndustryIcon } from "./industry";
 import { MODULES } from "@/lib/modules";
 import { api } from "@/lib/api";
 import { usePrefs } from "./prefs";
@@ -72,13 +74,39 @@ export function Header({ onMenu }: { onMenu: () => void }) {
     router.refresh();
   }
 
+  const [pending, setPending] = useState<number | null>(null);
+  useEffect(() => {
+    const load = () => api<{ counts: { decisionsPending: number } }>("/attention").then((r) => r.ok && setPending(r.data.counts.decisionsPending));
+    load();
+    const iv = setInterval(load, 30000);
+    return () => clearInterval(iv);
+  }, [s.principal.id]);
+
   return (
-    <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex h-[52px] items-center gap-3 border-b border-line bg-bg px-4 sm:px-6">
+    <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex min-h-[72px] items-center gap-3 border-b border-line bg-bg px-4 py-2.5 sm:px-6">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenu} aria-label="Open navigation"><Menu /></Button>
+
+      <Dropdown.Root>
+        <Dropdown.Trigger asChild>
+          <button type="button" className="hidden min-h-[46px] items-center gap-2.5 rounded-md border border-line bg-surface px-3.5 text-start xl:flex">
+            <Landmark className="size-[18px] text-primary" strokeWidth={1.6} />
+            <span className="grid leading-tight"><span className="text-[10.5px] text-ink-muted">{t("header.institution")}</span><span className="max-w-[170px] truncate text-[13.5px]">{s.institution.shortName}</span></span>
+            <ChevronDown className="size-3.5 text-ink-faint" />
+          </button>
+        </Dropdown.Trigger>
+        <Dropdown.Portal>
+          <Dropdown.Content align="start" sideOffset={6} className="z-50 w-72 rounded-lg border border-line bg-surface p-1.5 shadow-[var(--overlay-shadow)]">
+            <div className="px-2.5 py-2"><div className="font-medium">{s.institution.name}</div><div className="text-[13px] text-ink-faint">{s.institution.residency}</div></div>
+            <Dropdown.Separator className="my-1 h-px bg-line" />
+            <Dropdown.Item className={menuItem} onSelect={signOut}><Users className="size-4 text-ink-faint" />{t("header.switchInstitution")}</Dropdown.Item>
+          </Dropdown.Content>
+        </Dropdown.Portal>
+      </Dropdown.Root>
+      <SectorSelect />
 
       <Popover.Root open={results.length > 0}>
         <Popover.Anchor asChild>
-          <label className="relative flex h-9 min-w-0 max-w-[420px] flex-1 items-center sm:min-w-[160px] xl:min-w-[220px]">
+          <label className="relative flex h-10 min-w-0 max-w-[340px] flex-1 items-center sm:min-w-[110px]">
             <Search className="pointer-events-none absolute start-3 size-4 text-ink-faint" />
             <input autoComplete="off"
               id="global-search"
@@ -87,7 +115,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
               onKeyDown={(e) => { if (e.key === "Escape") setQ(""); if (e.key === "Enter" && results[0]) { router.push(results[0].href); setQ(""); } }}
               placeholder={t("header.search")}
               aria-label={t("header.search")}
-              className="h-9 w-full rounded-md border border-line bg-surface-2 ps-9 pe-3 text-[13px] text-ink placeholder:text-ink-faint"
+              className="h-10 w-full rounded-md border border-line bg-surface ps-9 pe-3 text-[13px] text-ink placeholder:text-ink-faint"
             />
           </label>
         </Popover.Anchor>
@@ -104,12 +132,8 @@ export function Header({ onMenu }: { onMenu: () => void }) {
       </Popover.Root>
 
       <div className="ms-auto flex items-center gap-2">
-        <div className="hidden items-center gap-1.5 xl:flex">
-          <Badge tone="info" title="Deployment profile" className="hidden 2xl:inline-flex"><Server />{t("header.environment")}</Badge>
-          <Badge tone="neutral" title="Data mode" className="hidden min-[1400px]:inline-flex"><Database />{t("header.dataMode")}</Badge>
-        </div>
         <ModelBadge />
-        <Badge tone="gold" className="hidden sm:inline-flex" title={t("header.demo")}><span className="xl:hidden">Demo</span><span className="hidden xl:inline">{t("header.demo")}</span></Badge>
+        <Badge tone="gold" className="hidden 2xl:inline-flex" title={t("header.demo")}>{t("header.demo")}</Badge>
         {lang === "ar" && <Badge tone="info" className="hidden md:inline-flex">{t("arabicDraft")}</Badge>}
 
         <Popover.Root>
@@ -135,15 +159,14 @@ export function Header({ onMenu }: { onMenu: () => void }) {
 
         <PrefToggles />
 
+        <Link href="/decisions" className="btn hidden min-h-[44px] items-center gap-2 whitespace-nowrap rounded-md border border-[#e4cf9f] bg-warn-soft px-4 text-[13.5px] font-medium text-warn sm:inline-flex" aria-label={`${t("header.approvals")} (${pending ?? 0})`}>
+          <span className="size-2 rounded-full bg-gold" aria-hidden /><span className="hidden 2xl:inline">{t("header.approvals")}</span> <span className="tabular">({pending ?? "–"})</span>
+        </Link>
+
         <Dropdown.Root>
           <Dropdown.Trigger asChild>
-            <button type="button" id="user-menu-trigger" className="flex items-center gap-2.5 rounded-md border border-line bg-surface-2 py-1 ps-1.5 pe-2.5 text-start hover:border-line-strong">
-              <span className="grid size-7 place-items-center rounded bg-primary-soft text-accent"><UserRound className="size-4" /></span>
-              <span className="hidden min-w-0 xl:block">
-                <span className="block max-w-[180px] truncate text-[13px] font-medium leading-tight">{s.principal.name}</span>
-                <span className="block max-w-[180px] truncate text-[13px] leading-tight text-ink-muted">{ROLE_LABELS[s.principal.role]} · {s.institution.shortName}</span>
-              </span>
-              <ChevronDown className="size-3.5 text-ink-faint" />
+            <button type="button" id="user-menu-trigger" aria-label={`${s.principal.name}, ${ROLE_LABELS[s.principal.role]}`} className="grid size-11 place-items-center rounded-full border border-line bg-surface hover:border-line-strong">
+              <UserRound className="size-[18px]" strokeWidth={1.6} />
             </button>
           </Dropdown.Trigger>
           <Dropdown.Portal>
@@ -156,7 +179,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
               </div>
               <Dropdown.Separator className="my-1 h-px bg-line" />
               {s.roleSwitch.length > 0 && <>
-              <Dropdown.Label className="eyebrow px-2.5 py-1 text-ink-faint">{t("header.switchRole")}</Dropdown.Label>
+              <Dropdown.Label className="eyebrow px-2.5 py-1">{t("header.switchRole")}</Dropdown.Label>
               {s.roleSwitch.map((p) => (
                 <Dropdown.Item key={p.id} className={menuItem} onSelect={() => p.id !== s.principal.id && switchTo(p.id)}>
                   <span className="grid size-4 place-items-center">{p.id === s.principal.id && <Check className="size-4 text-accent" />}</span>
@@ -184,6 +207,40 @@ export function Header({ onMenu }: { onMenu: () => void }) {
   );
 }
 
+/** Sector select (the industry lens, audited). On a Command Centre page it also opens that sector's centre. */
+function SectorSelect() {
+  const s = useSession();
+  const { t, lang } = usePrefs();
+  const router = useRouter();
+  const path = usePathname();
+  const [busy, setBusy] = useState(false);
+  const current = s.principal.industry;
+  const ind = INDUSTRIES.find((i) => i.key === current);
+  async function change(next: IndustryKey) {
+    if (next === current) return;
+    setBusy(true);
+    const r = await api("/auth/industry", { json: { industry: next } });
+    setBusy(false);
+    if (!r.ok) return;
+    const sec = sectorByIndustry(next);
+    if (path.startsWith("/command-centres") && sec) router.push(`/command-centres/${sec.key}`);
+    router.refresh();
+  }
+  return (
+    <label className="relative hidden min-h-[46px] items-center gap-2.5 rounded-md border border-line bg-surface px-3.5 sm:flex">
+      <IndustryIcon industry={current} className="size-[18px] text-primary" />
+      <span className="grid leading-tight">
+        <span className="text-[10.5px] text-ink-muted">{t("header.sector")}</span>
+        <select value={current} disabled={busy} onChange={(e) => change(e.target.value as IndustryKey)} aria-label={t("header.sector")} style={{ backgroundColor: "transparent" }}
+          className="max-w-[130px] appearance-none truncate border-0 bg-transparent pe-5 text-[13.5px] text-ink disabled:opacity-60 xl:max-w-[190px]" title={ind ? (lang === "ar" ? ind.nameAr : ind.name) : undefined}>
+          {INDUSTRIES.map((i) => <option key={i.key} value={i.key}>{lang === "ar" ? i.nameAr : i.name}</option>)}
+        </select>
+      </span>
+      <ChevronDown className="pointer-events-none absolute end-3 bottom-3 size-3.5 text-ink-faint" />
+    </label>
+  );
+}
+
 /** Always-visible state of the foreign-model switch (Q063). Links to the controls. */
 function ModelBadge() {
   const [s, setS] = useState<{ foreign_models_enabled: boolean; default_provider: string } | null>(null);
@@ -197,7 +254,7 @@ function ModelBadge() {
   const local = s.default_provider === "local" ? "local model" : s.default_provider === "deterministic" ? "no model" : s.default_provider;
   return (
     <Link href="/governance#ai" className="tap hidden items-center md:inline-flex" title="Model sovereignty controls">
-      <Badge tone={s.foreign_models_enabled ? "warn" : "ok"}>{s.foreign_models_enabled ? <Globe2 /> : <Lock />}<span className="hidden xl:inline">{s.foreign_models_enabled ? "Foreign models on" : "Foreign models off"} · </span>{s.foreign_models_enabled ? <span className="xl:hidden">Foreign on</span> : null}<span className={s.foreign_models_enabled ? "hidden xl:inline" : ""}>{local}</span></Badge>
+      <Badge tone={s.foreign_models_enabled ? "warn" : "ok"}>{s.foreign_models_enabled ? <Globe2 /> : <Lock />}<span className="hidden 2xl:inline">{s.foreign_models_enabled ? "Foreign models on" : "Foreign models off"} · </span>{s.foreign_models_enabled ? <span className="2xl:hidden">Foreign on</span> : null}<span className={s.foreign_models_enabled ? "hidden 2xl:inline" : "hidden lg:inline"}>{local}</span></Badge>
     </Link>
   );
 }

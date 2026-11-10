@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import { cn } from "@/lib/cn";
 
 export const buttonVariants = cva(
-  "btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[2px] text-[14px] font-medium disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0",
+  "btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[14px] font-medium disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CommandCentre } from "@/components/command-centre";
-import { SECTORS, sectorByKey } from "@/lib/command-centres";
+import { sectorByKey } from "@/lib/command-centres";
 
-export const generateStaticParams = () => SECTORS.map((s) => ({ sector: s.key }));
 
 export async function generateMetadata({ params }: { params: Promise<{ sector: string }> }): Promise<Metadata> {
   const s = sectorByKey((await params).sector);

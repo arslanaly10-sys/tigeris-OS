@@ -13,6 +13,12 @@ export interface ModuleDef {
 /** The PRD's 11 modules plus Reports, Architecture and About (Q028, Q030, Q036). */
 export const MODULES: ModuleDef[] = [
   {
+    slug: "command-centres", nav: "nav.command-centres", group: "operate", icon: "House",
+    purpose: "Sovereign Overview per sector: eight Command Centres (supply chain, real estate, manufacturing, infrastructure, sovereign capital, energy, banking, insurance) showing this institution's cases, signals and approvals for the sector, with every action routed to the OS module that does it.",
+    arrives: [{ week: 11, items: ["Eight sector Command Centres from the client mockups", "Live cases, signals and approvals per sector", "Start a case from any card"] }],
+    requirements: ["Command Centres brief"],
+  },
+  {
     slug: "boardroom", nav: "nav.boardroom", group: "operate", icon: "Presentation",
     purpose: "One boardroom screen: CSAI, value at stake, readiness, governance confidence, cognitive and coordination debt and time to governed action, all computed, with a ticker and lenses.",
     arrives: [{ week: 10, items: ["Computed indices with formulas", "Opportunity, friction and value lenses"] }],

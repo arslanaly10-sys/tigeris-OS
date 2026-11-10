@@ -24,7 +24,7 @@ export type Block =
   | (Base & { type: "pair"; blocks: Block[] });
 
 export interface Sector {
-  key: string; label: string; icon: string;
+  key: string; industry: string; label: string; icon: string;
   eyebrow?: string; eyebrowCaps?: boolean; badge?: boolean;
   title: string; subtitle: string;
   right: { hero?: string; heroAlt?: string; meta?: string; metaTabs?: Item[] };
@@ -46,7 +46,7 @@ export const NAV = [
 
 export const SECTORS: Sector[] = [
   {
-    key: "supply-chain", label: "Supply Chain & Logistics", icon: "truck", eyebrow: "Proposed interface",
+    key: "supply-chain", industry: "supply_chain", label: "Supply Chain & Logistics", icon: "truck", eyebrow: "Proposed interface",
     title: "Supply Chain & Logistics Command Centre", subtitle: "End-to-end visibility. Resilient networks. Smarter, more secure supply chains.",
     right: { meta: "Last updated: — · Source not connected", metaTabs: [{ title: "Shipments", icon: "ship" }, { title: "Ports & Terminals", icon: "landmark" }, { title: "Land Routes", icon: "truck" }, { title: "Air Cargo", icon: "plane" }, { title: "Warehouses", icon: "warehouse" }, { title: "Distribution", icon: "package" }] },
     approvals: 2, side: "/command/supply-side.webp", footer: FOOT, footerRight: "TIGERIS AI OS · Supply Chain & Logistics",
@@ -83,7 +83,7 @@ export const SECTORS: Sector[] = [
     ],
   },
   {
-    key: "real-estate", label: "Real Estate & Construction", icon: "building-2", eyebrow: "Real Estate & Construction", eyebrowCaps: true,
+    key: "real-estate", industry: "construction_real_estate", label: "Real Estate & Construction", icon: "building-2", eyebrow: "Real Estate & Construction", eyebrowCaps: true,
     title: "Real Estate & Construction Command Centre", subtitle: "Unified intelligence for planning, delivery and sustainable urban growth",
     right: { hero: "/command/realestate-hero.webp", heroAlt: "Illustrative skyline with towers under construction" },
     approvals: 1, side: "/command/realestate-side.webp", footer: ["Last updated: —", "Source: Not connected", "All data requires authorised institutional sources"], footerRight: "TIGERIS AI OS · Real Estate & Construction",
@@ -119,7 +119,7 @@ export const SECTORS: Sector[] = [
     ],
   },
   {
-    key: "manufacturing", label: "Manufacturing", icon: "factory", eyebrow: "TIGERIS AI OS — Manufacturing", eyebrowCaps: true,
+    key: "manufacturing", industry: "manufacturing", label: "Manufacturing", icon: "factory", eyebrow: "TIGERIS AI OS — Manufacturing", eyebrowCaps: true,
     title: "Manufacturing Command Centre", subtitle: "Production resilience, supply security and industrial competitiveness.",
     right: { meta: "Proposed interface · Last updated: — · Source not connected" }, approvals: 1, side: "/command/manufacturing-side.webp", footer: FOOT, footerRight: "TIGERIS AI OS · Manufacturing",
     rows: [
@@ -165,7 +165,7 @@ export const SECTORS: Sector[] = [
     ],
   },
   {
-    key: "infrastructure", label: "Infrastructure & Utilities", icon: "zap", eyebrow: "TIGERIS AI OS", eyebrowCaps: true,
+    key: "infrastructure", industry: "infrastructure", label: "Infrastructure & Utilities", icon: "zap", eyebrow: "TIGERIS AI OS", eyebrowCaps: true,
     title: "Infrastructure & Utilities Command Centre", subtitle: "Resilient infrastructure. Reliable services. A more secure and prosperous nation.",
     right: { hero: "/command/infra-hero.webp", heroAlt: "Illustrative skyline with a water treatment and power corridor" },
     pageTabs: ["Overview", "Critical Assets", "Network Dependencies", "Service Continuity", "Capacity Planning", "Outage Response"],
@@ -207,7 +207,7 @@ export const SECTORS: Sector[] = [
     ],
   },
   {
-    key: "sovereign-capital", label: "Sovereign Capital & Treasury", icon: "landmark", eyebrow: "Proposed interface",
+    key: "sovereign-capital", industry: "sovereign_capital", label: "Sovereign Capital & Treasury", icon: "landmark", eyebrow: "Proposed interface",
     title: "Sovereign Capital & Treasury Command Centre", subtitle: "Align national mandate, capital allocation and treasury operations for long-term, sustainable value.",
     right: { hero: "/command/capital-hero.webp", heroAlt: "Illustrative skyline with the words Capital for a stronger tomorrow" },
     approvals: 1, side: "/command/capital-side.webp", footer: FOOT, footerRight: "TIGERIS AI OS · Sovereign Capital & Treasury",
@@ -237,7 +237,7 @@ export const SECTORS: Sector[] = [
     ],
   },
   {
-    key: "energy", label: "Energy & Oil", icon: "fuel", badge: true,
+    key: "energy", industry: "energy", label: "Energy & Oil", icon: "fuel", badge: true,
     title: "Energy & Oil Command Centre", subtitle: "Production. Infrastructure. Markets. Resilience. A more secure energy future.",
     right: { meta: "Last updated: — · Source: Not connected" }, approvals: 2, side: "/command/energy-side.webp", footer: ["Not connected to live data", "Source: Not connected", "Evidence: Not available"], footerRight: "TIGERIS AI OS · Energy & Oil",
     rows: [
@@ -274,7 +274,7 @@ export const SECTORS: Sector[] = [
     ],
   },
   {
-    key: "banking", label: "Banking & Fintech", icon: "landmark", badge: true, search: true,
+    key: "banking", industry: "banking", label: "Banking & Fintech", icon: "landmark", badge: true, search: true,
     title: "Banking & Fintech Command Centre", subtitle: "Liquidity. Stability. Innovation. A resilient and trusted financial ecosystem for a more prosperous Saudi Arabia.",
     right: { hero: "/command/banking-hero.webp", heroAlt: "Illustrative skyline of financial district towers" }, approvals: 1, side: "/command/banking-side.webp",
     footer: ["Evidence: Not connected", "Last updated: —", "Source not connected"], footerRight: "TIGERIS AI OS · Banking & Fintech",
@@ -320,7 +320,7 @@ export const SECTORS: Sector[] = [
     ],
   },
   {
-    key: "insurance", label: "Insurance", icon: "umbrella", badge: true,
+    key: "insurance", industry: "insurance", label: "Insurance", icon: "umbrella", badge: true,
     title: "Insurance Command Centre", subtitle: "Sector intelligence, risk, and decision support for a resilient insurance ecosystem.",
     right: {}, approvals: 1, side: "/command/insurance-side.webp", footer: FOOT, footerRight: "TIGERIS AI OS · Insurance",
     rows: [
@@ -357,3 +357,4 @@ export const SECTORS: Sector[] = [
   },
 ];
 export const sectorByKey = (k: string) => SECTORS.find((s) => s.key === k);
+export const sectorByIndustry = (i: string | null | undefined) => SECTORS.find((s) => s.industry === i);

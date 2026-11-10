@@ -1,17 +1,12 @@
 "use client";
-import { Languages } from "lucide-react";
 import { usePrefs } from "./prefs";
-import { Button } from "./ui/button";
 
-/** Language switch. The client's brand has one theme (ivory), so there is no theme toggle. */
+/** Language switch, as on the Command Centre mockups: "EN | العربية", the current one in bold. */
 export function PrefToggles() {
-  const { toggleLang, t } = usePrefs();
+  const { toggleLang, lang } = usePrefs();
   return (
-    <div className="flex items-center gap-1">
-      <Button variant="ghost" size="sm" onClick={toggleLang} aria-label="Switch language">
-        <Languages />
-        <span className="text-[13px]">{t("header.language")}</span>
-      </Button>
-    </div>
+    <button type="button" onClick={toggleLang} aria-label={lang === "en" ? "Switch to Arabic" : "Switch to English"} className="tap px-2 text-[13.5px] whitespace-nowrap">
+      <span className={lang === "en" ? "font-bold" : "text-ink-muted"}>EN</span> | <span className={lang === "ar" ? "font-bold" : "text-ink-muted"} lang="ar">العربية</span>
+    </button>
   );
 }

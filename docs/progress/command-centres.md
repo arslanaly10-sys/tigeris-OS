@@ -1,15 +1,27 @@
 # Sector Command Centres
 
-Eight sector screens built from the supplied mockups as routes inside the app:
-`/command-centres/<sector>` for supply-chain, real-estate, manufacturing, infrastructure, sovereign-capital, energy,
-banking and insurance. `/command-centres#energy` (or any sector hash) resolves to the sector route.
+## Phase 2 (10 Nov 2026): inside the OS, the OS restyled to match, features added
 
-- One config (`apps/web/src/lib/command-centres.ts`) and one renderer per block type (`components/command-centre.tsx`).
-- No numbers: metrics show "—" with "Source not connected", charts are empty states, specialists show "Awaiting data",
-  mandate items show "Approval required". Maps and skylines are illustrative crops of the mockups, labelled in alt text.
-- Every button opens a dialog; nothing executes. Nav items other than Sovereign Overview say "Available in the pilot".
-- EN | العربية switches the screen to `dir="rtl"`; copy stays English until Arabic copy is supplied.
-- Layout: 12 columns, 2 columns under 1100px, 1 column under 640px; sidebar becomes a drawer under 900px.
-- Checked at 1440, 1024 and 390px: no horizontal overflow, no console errors, 30 of 30 action buttons on Real Estate open a dialog.
+- **In the OS.** `/command-centres/<sector>` now runs inside the signed-in OS shell (`app/(os)/command-centres`), first in
+  the sidebar as "Sector Command Centres". `/command-centres#energy` still works; with no hash it opens the sector of the
+  person's lens. Opening a sector moves the OS sector lens to it (an audited lens change; permissions do not change).
+- **The whole OS restyled** to the Command Centre system: tokens, Libre Caslon Text + Inter, 10px cards, solid green
+  active nav, palm brand lock-up, 72px top bar with Institution, Sector, EN | العربية and the gold approvals pill
+  (live count of cases awaiting a decision). See DESIGN.md v4.
+- **Live data.** `GET /sectors/:industry` (withTenant) returns this institution's cases, review queue and signals for the
+  sector with row counts. Each Command Centre shows them in an "In this institution" strip (every count and signal
+  links to its list), puts real cases at the top of Priority Intelligence Cases and Expert Review Queue, and fills the
+  Banking mandate status cells with real case counts. Sector figures that need authorised sources stay "—".
+- **Start a case from any card.** `POST /sectors/:industry/cases` (case.create) opens an ordinary case at "detected" in
+  that sector, owned by the person, with a case event and an `appendAudit` record in the same transaction. Nothing executes.
+- **Wired to OS modules.** "View all" and buttons go where the work is done: cases → Intelligence Cases, scenarios →
+  Scenarios & Foresight (Shock Simulator for energy and supply chain), mandates and approvals → Decision Authority and
+  Governor Question, specialists → Playbooks, "Connect authorised data" → Data & Sources, maps → Movement Map.
+- **Arabic.** All 589 Command Centre strings plus dialog text have an Arabic draft (`lib/command-centres-ar.ts`) and follow
+  the OS language and direction.
+- Tests: `apps/api/test/sectors.test.ts` (sector scoping, audited case opening, tenant isolation, 400/403 refusals).
 
-Screenshots at 1440px are in `docs/progress/command-centres/`.
+## Phase 1
+
+Eight sector screens from the supplied mockups, one config (`lib/command-centres.ts`) and a renderer per block type.
+Screenshots at 1440px from phase 1 are in `docs/progress/command-centres/`.

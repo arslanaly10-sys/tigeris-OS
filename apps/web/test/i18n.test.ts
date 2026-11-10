@@ -10,8 +10,8 @@ describe("Arabic coverage for navigation and key screens (Q016)", () => {
     const keys = Object.keys(EN_STRINGS).filter((k) => k.startsWith("header.") || k.startsWith("signin.") || k.startsWith("group."));
     for (const k of keys) expect(AR_STRINGS[k as keyof typeof EN_STRINGS], k).toBeTruthy();
   });
-  it("defines the PRD's eleven modules plus Reports, Sovereignty (9 Nov 2026), Architecture and About", () => {
-    expect(MODULES.filter((m) => m.group !== "meta")).toHaveLength(22);
+  it("defines the PRD's eleven modules plus Reports, Sovereignty (9 Nov 2026), Sector Command Centres (10 Nov 2026), Architecture and About", () => {
+    expect(MODULES.filter((m) => m.group !== "meta")).toHaveLength(23);
     expect(MODULES.map((m) => m.slug)).toEqual(expect.arrayContaining(["command-centre", "graph", "domains", "reports", "sovereignty"]));
   });
 });

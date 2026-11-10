@@ -21,6 +21,7 @@ import { playbookRoutes } from "./routes/playbooks";
 import { fundRoutes } from "./routes/fund";
 import { engagementRoutes, packageRoutes } from "./routes/engagements";
 import { reportRoutes } from "./routes/reports";
+import { sectorRoutes } from "./routes/sectors";
 
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info", redact: ["req.headers.cookie"] } });
@@ -58,5 +59,6 @@ export async function buildApp() {
   await app.register(engagementRoutes);
   await app.register(packageRoutes);
   await app.register(reportRoutes);
+  await app.register(sectorRoutes);
   return app;
 }

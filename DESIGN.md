@@ -1,10 +1,40 @@
 ---
-version: 3.0
+version: 4.0
 name: TIGERIS · Sovereign Intelligence OS
-description: "The client's own brand, taken from tigercapital.ai (docs/brand/TOKENS.md): ivory surfaces on a visible hairline grid, ink text, one gold accent, a blue signal for live state, near-square corners. Space Grotesk for display, Manrope for UI text, JetBrains Mono for labels, figure captions and system strings; IBM Plex Sans Arabic in Arabic."
+description: "The Command Centre system (10 Nov 2026), applied OS-wide from the client's sector Command Centre mockups: ivory surfaces, deep green action colour, gold eyebrows and rules, Libre Caslon Text headings, Inter UI text, 10px cards, 7px buttons, 6px pills. JetBrains Mono stays for system strings; IBM Plex Sans Arabic in Arabic."
 ---
 
-# TIGERIS design system (v3: the client's brand)
+# TIGERIS design system (v4: the Command Centre system)
+
+The whole OS now follows the sector Command Centre mockups (docs/progress/command-centres.md). Tokens live in one place,
+`apps/web/src/app/globals.css`; `test/contrast.test.ts` checks every text token against every surface.
+
+| Role | Token | Value |
+|---|---|---|
+| Page ground | `--bg` | `#f6f2e9` |
+| Cards | `--surface` | `#fffdf8` |
+| Sidebar, bands | `--surface-2` | `#faf6ee` |
+| Fills, soft rules | `--surface-3` | `#eee7d9` |
+| Hairlines | `--line` / `--line-strong` | `#e5dccb` / `#cdbfa5` |
+| Text | `--ink` | `#1c2a23` |
+| Headings | `--heading` | `#0f3a2e` |
+| Action, active nav | `--primary` | `#1f4b3b` (white text) |
+| Gold text (eyebrows, awaiting) | `--accent` / `--warn` | `#6f4f1c` |
+| Gold rules and dots only | `--gold` | `#b68a3f` (never text: fails AA) |
+| High / medium / low | `--crit` / `--warn` / `--ok` on their soft fills | `#9a3328` / `#6f4f1c` / `#24563f` |
+| Dark card | `--dark-card` | `#12352b` |
+
+- Type: headings and page titles in Libre Caslon Text 400 (page H1 40px, card titles 19px, subtitles 16.5px); UI text
+  in Inter 14px; eyebrows Inter 11.5px uppercase, tracking .32em, gold text.
+- Shape: cards 10px radius, 16px 18px padding, 16px gaps; buttons 7px, at least 40px tall; pills 6px.
+- Shell: 236px sidebar with the palm mark, "TIGERIS AI OS" and the tagline, solid green active item, the sector
+  illustration at the foot; 72px top bar with Institution, Sector (the audited lens), search, model switch, notifications,
+  EN | العربية, the gold "Approval required (n)" pill and the avatar.
+- Icons: Lucide at stroke 1.6. Status is never colour alone; every pill carries a word.
+
+The v3 notes below are kept for history; where they disagree with v4, v4 wins.
+
+## History: v3 (the client's tigercapital.ai brand)
 
 From brief v3 §13, the prototype must look as if it belongs to tigercapital.ai. Every value here comes from the live
 site's stylesheet (verified 10 Nov 2026). Tokens live in one place: `apps/web/src/app/globals.css`. No hex values in

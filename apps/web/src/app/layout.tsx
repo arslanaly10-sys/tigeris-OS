@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
-import "@fontsource-variable/manrope";
-import "@fontsource-variable/space-grotesk";
+import "@fontsource-variable/inter";
+import "@fontsource/libre-caslon-text/400.css";
+import "@fontsource/libre-caslon-text/700.css";
+import "@fontsource/libre-caslon-text/400-italic.css";
 import "@fontsource-variable/jetbrains-mono";
 import "@fontsource/ibm-plex-sans-arabic/400.css";
 import "@fontsource/ibm-plex-sans-arabic/500.css";
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
 export async function generateViewport(): Promise<Viewport> {
   const jar = await cookies();
   const light = jar.get(THEME_COOKIE)?.value === "light";
-  return { themeColor: light ? "#f6f5f0" : "#070d18", colorScheme: light ? "light" : "dark" };
+  return { themeColor: light ? "#f6f2e9" : "#f6f2e9", colorScheme: "light" };
 }
 
 /** Without a saved choice, the first language follows the browser (Accept-Language), never location. */
