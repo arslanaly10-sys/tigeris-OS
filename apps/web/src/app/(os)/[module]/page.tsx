@@ -22,6 +22,8 @@ import { PlaybooksModule } from "@/components/playbooks-ui";
 import { FundModule } from "@/components/fund-ui";
 import { GapReportModule } from "@/components/gap-report-ui";
 import { BriefingIntakeModule } from "@/components/briefing-intake-ui";
+import { BoardroomModule } from "@/components/boardroom-ui";
+import { SimulatorModule } from "@/components/simulator-ui";
 
 const CUSTOM: Record<string, () => React.ReactNode> = {
   "command-centre": () => <CommandCentre />,
@@ -45,6 +47,8 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
   fund: () => <Suspense><FundModule /></Suspense>,
   "gap-report": () => <Suspense><GapReportModule /></Suspense>,
   briefing: () => <BriefingIntakeModule />,
+  boardroom: () => <BoardroomModule />,
+  simulator: () => <SimulatorModule />,
 };
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {

@@ -14,3 +14,5 @@ export * from "./config/diagnosis-rubric";
 export * from "./config/valuation-defaults";
 export * from "./engine/diagnosis";
 export * from "./engine/valuation";
+export * from "./config/transmission";
+export * from "./engine/simulation";

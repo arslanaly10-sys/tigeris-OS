@@ -13,6 +13,12 @@ export interface ModuleDef {
 /** The PRD's 11 modules plus Reports, Architecture and About (Q028, Q030, Q036). */
 export const MODULES: ModuleDef[] = [
   {
+    slug: "boardroom", nav: "nav.boardroom", group: "operate", icon: "Presentation",
+    purpose: "One boardroom screen: CSAI, value at stake, readiness, governance confidence, cognitive and coordination debt and time to governed action, all computed, with a ticker and lenses.",
+    arrives: [{ week: 10, items: ["Computed indices with formulas", "Opportunity, friction and value lenses"] }],
+    requirements: ["Brief v3 §7 module 12"],
+  },
+  {
     slug: "briefing", nav: "nav.briefing", group: "operate", icon: "ClipboardPen",
     purpose: "Private institutional briefing intake, mirroring the client's briefing form; opens an engagement whose challenge and mandate seed the diagnosis.",
     arrives: [{ week: 10, items: ["Client briefing fields verbatim", "Approximate mandate feeds the value model"] }],
@@ -38,6 +44,12 @@ export const MODULES: ModuleDef[] = [
     purpose: "The eight-gap diagnosis with confidence and evidence, CSAI and debt indices, value at stake with editable assumptions, and before and after TIGERIS. Workshop mode edits inputs live.",
     arrives: [{ week: 10, items: ["Rubric v3 with placeholder bands", "Value at stake in percentage points, capped", "Workshop edits on the Ledger"] }],
     requirements: ["Brief v3 §3, §4"],
+  },
+  {
+    slug: "simulator", nav: "nav.simulator", group: "operate", icon: "Zap",
+    purpose: "Hormuz shock simulator: parameters through a transparent transmission graph to three orders of effect, the impact panel, scenario outlook and re-derived sleeves, with provenance.",
+    arrives: [{ week: 10, items: ["Transmission graph with placeholder coefficients", "Provenance for every effect"] }],
+    requirements: ["Brief v3 §5"],
   },
   {
     slug: "playbooks", nav: "nav.playbooks", group: "operate", icon: "BookOpenCheck",

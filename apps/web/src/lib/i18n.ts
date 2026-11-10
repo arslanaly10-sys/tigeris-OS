@@ -28,6 +28,8 @@ const en = {
   "nav.playbooks": "Playbooks",
   "nav.fund": "Fund Apps",
   "nav.briefing": "Briefing Intake",
+  "nav.boardroom": "Boardroom",
+  "nav.simulator": "Shock Simulator",
   "nav.gap-report": "Gap Report",
   "nav.administration": "Administration",
   "nav.architecture": "Architecture",
@@ -130,6 +132,8 @@ const ar: Partial<Record<Key, string>> = {
   "nav.playbooks": "أدلة التشغيل",
   "nav.fund": "تطبيقات الصندوق",
   "nav.briefing": "طلب الإحاطة",
+  "nav.boardroom": "غرفة المجلس",
+  "nav.simulator": "محاكي الصدمات",
   "nav.gap-report": "تقرير الفجوات",
   "nav.administration": "الإدارة",
   "nav.architecture": "البنية",
@@ -209,6 +213,8 @@ const ar: Partial<Record<Key, string>> = {
 
 /** Arabic page descriptions for the key screens; English descriptions stay with each component. */
 export const AR_DESCRIPTIONS: Partial<Record<string, string>> = {
+  "nav.boardroom": "شاشة واحدة للمجلس: المؤشرات المركبة والقيمة المعرضة للخطر وحالة الاستجابة لأزمة هرمز، وكلها محسوبة مع معادلاتها وتصنيفاتها.",
+  "nav.simulator": "صدمة واحدة وثلاث درجات من الأثر: حرّك أي معامل فيُعاد حساب كل رقم تابع، واختر أي أثر لترى كيف اشتُق.",
   "nav.briefing": "طلب إحاطة مؤسسية خاصة وفق نموذج العميل؛ يفتح ارتباطاً تغذي تحدياته وتفويضه التشخيص.",
   "nav.gap-report": "تشخيص الفجوات الثماني مع الثقة والأدلة، ومؤشرات CSAI والديون، والقيمة المعرضة للخطر بافتراضات قابلة للتعديل، وما قبل تيجيرس وما بعده.",
   "nav.fund": "أربعة تطبيقات للصندوق على بيانات تركيبية: فرز الصفقات مقابل التفويض، ومسودات مذكرات لجنة الاستثمار، ومراقبة المحفظة، وتقارير المجلس والمستثمرين. أرقام حتمية؛ وحوّل الصفقة إلى حالة للجنة.",
