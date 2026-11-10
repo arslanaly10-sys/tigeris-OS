@@ -11,7 +11,7 @@ describe("Arabic coverage for navigation and key screens (Q016)", () => {
     for (const k of keys) expect(AR_STRINGS[k as keyof typeof EN_STRINGS], k).toBeTruthy();
   });
   it("defines the PRD's eleven modules plus Reports, Sovereignty (9 Nov 2026), Architecture and About", () => {
-    expect(MODULES.filter((m) => m.group !== "meta")).toHaveLength(21);
+    expect(MODULES.filter((m) => m.group !== "meta")).toHaveLength(22);
     expect(MODULES.map((m) => m.slug)).toEqual(expect.arrayContaining(["command-centre", "graph", "domains", "reports", "sovereignty"]));
   });
 });

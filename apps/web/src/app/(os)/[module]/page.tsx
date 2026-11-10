@@ -24,6 +24,7 @@ import { GapReportModule } from "@/components/gap-report-ui";
 import { BriefingIntakeModule } from "@/components/briefing-intake-ui";
 import { BoardroomModule } from "@/components/boardroom-ui";
 import { SimulatorModule } from "@/components/simulator-ui";
+import { GovernorModule } from "@/components/governor-ui";
 
 const CUSTOM: Record<string, () => React.ReactNode> = {
   "command-centre": () => <CommandCentre />,
@@ -49,6 +50,7 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
   briefing: () => <BriefingIntakeModule />,
   boardroom: () => <BoardroomModule />,
   simulator: () => <SimulatorModule />,
+  governor: () => <GovernorModule />,
 };
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {

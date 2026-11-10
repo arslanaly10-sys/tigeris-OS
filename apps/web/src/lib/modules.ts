@@ -52,6 +52,12 @@ export const MODULES: ModuleDef[] = [
     requirements: ["Brief v3 §5"],
   },
   {
+    slug: "governor", nav: "nav.governor", group: "operate", icon: "Landmark",
+    purpose: "Governor question to decision brief (engine facts only, validated), decision package with required authority, approval by the named role, owners from the 72-hour plan, and the Ledger.",
+    arrives: [{ week: 10, items: ["Cached, validated decision briefs", "Authority matrix and approvals", "Ledger with hashes"] }],
+    requirements: ["Brief v3 §6, §12"],
+  },
+  {
     slug: "playbooks", nav: "nav.playbooks", group: "operate", icon: "BookOpenCheck",
     purpose: "Thirteen governed sovereign playbooks from Tiger Capital's doctrine: six-stage loop, specialist hand-off, recommended path against counterfactual; start a case from any.",
     arrives: [{ week: 9, items: ["Thirteen playbooks with the six-stage loop", "Start a case from a playbook"] }],

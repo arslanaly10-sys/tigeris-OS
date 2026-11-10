@@ -29,6 +29,7 @@ const en = {
   "nav.fund": "Fund Apps",
   "nav.briefing": "Briefing Intake",
   "nav.boardroom": "Boardroom",
+  "nav.governor": "Governor Question",
   "nav.simulator": "Shock Simulator",
   "nav.gap-report": "Gap Report",
   "nav.administration": "Administration",
@@ -133,6 +134,7 @@ const ar: Partial<Record<Key, string>> = {
   "nav.fund": "تطبيقات الصندوق",
   "nav.briefing": "طلب الإحاطة",
   "nav.boardroom": "غرفة المجلس",
+  "nav.governor": "سؤال القيادة",
   "nav.simulator": "محاكي الصدمات",
   "nav.gap-report": "تقرير الفجوات",
   "nav.administration": "الإدارة",
@@ -213,6 +215,7 @@ const ar: Partial<Record<Key, string>> = {
 
 /** Arabic page descriptions for the key screens; English descriptions stay with each component. */
 export const AR_DESCRIPTIONS: Partial<Record<string, string>> = {
+  "nav.governor": "اطرح سؤال القيادة؛ الجواب إحاطة قرار مبنية على حقائق المحرك، بآثار الدرجات الثلاث والخيارات والصلاحية المطلوبة وخطة 72 ساعة، ثم حزمة قرار لمعتمد مسمّى.",
   "nav.boardroom": "شاشة واحدة للمجلس: المؤشرات المركبة والقيمة المعرضة للخطر وحالة الاستجابة لأزمة هرمز، وكلها محسوبة مع معادلاتها وتصنيفاتها.",
   "nav.simulator": "صدمة واحدة وثلاث درجات من الأثر: حرّك أي معامل فيُعاد حساب كل رقم تابع، واختر أي أثر لترى كيف اشتُق.",
   "nav.briefing": "طلب إحاطة مؤسسية خاصة وفق نموذج العميل؛ يفتح ارتباطاً تغذي تحدياته وتفويضه التشخيص.",
