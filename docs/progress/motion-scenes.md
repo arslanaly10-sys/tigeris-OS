@@ -40,3 +40,22 @@ Measured on the `/scenes` gallery in headless Chromium, ambient mode, 3 s per sc
 - 03 (Trade corridor chokepoint), 10 (Decision ledger) and 13 (Strategic use cases) have no plate. The brief says not to invent visuals, so they wait.
 - The Python plate sources (`render_site.py`, `render_more.py`) have not arrived. Geometry was measured from the plates, so it is close but not exact.
 - The scenes are not yet wired into the OS screens (§7 of the brief). The welcome page already uses 06.
+
+## Scenes 03, 10 and 13 (10 Nov 2026): drafts without plates
+
+No plates or plate sources were supplied for these three, so (with the client's go-ahead) they are drawn from the written
+brief in the existing scene style and labelled "draft, no plate" in their Fig. captions and in the gallery. When plates
+arrive, the final frames are matched to them as for the other ten.
+
+- **03 Trade corridor chokepoint** (`ChokepointScene`): coastlines draw, land hatching fades in, tracks draw west to east,
+  strait rings expand, callout slides in. Vessels travel the tracks (one in four signal blue) and respawn; `throughputPct`
+  sets how many move and how fast; `disruption` turns the tracks to risk, pulses the strait and makes vessels queue before
+  the gap. Synthetic and labelled SYNTHETIC by default; `vessels` shows stored positions instead (labelled REPLAY).
+  Geometry and the projection stand-in live in `lib/scene-data/chokepoint.ts`. 60 fps in headless Chromium.
+- **10 Decision ledger** (`LedgerScene`): append-only; new rows enter at the bottom, flash once in their flow colour, the
+  timeline extends and the hash types in. No ambient motion. Rows never reorder or disappear from the data.
+- **13 Strategic use cases** (`UseCasesScene`): five cards rise in left to right; each emblem moves only on hover or
+  focus (allocation arcs rebalance, corridor lines converge, compute chips light, diplomacy circles overlap, development
+  bars grow then the trend draws). Card 02 (Corridor) is the live golden path with a slow sheen. Copy comes from the
+  playbooks in `packages/shared`: Mandate alignment, Energy export continuity, Sovereign intelligence not borrowed,
+  National programme coordination, Domestic industrial capability. Cards are keyboard-focusable and report the playbook key.
