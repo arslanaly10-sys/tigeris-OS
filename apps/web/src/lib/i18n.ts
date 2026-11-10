@@ -27,6 +27,8 @@ const en = {
   "nav.diagnostic": "Gap Diagnostic",
   "nav.playbooks": "Playbooks",
   "nav.fund": "Fund Apps",
+  "nav.briefing": "Briefing Intake",
+  "nav.gap-report": "Gap Report",
   "nav.administration": "Administration",
   "nav.architecture": "Architecture",
   "nav.about": "About TIGERIS",
@@ -127,6 +129,8 @@ const ar: Partial<Record<Key, string>> = {
   "nav.diagnostic": "تشخيص الفجوات",
   "nav.playbooks": "أدلة التشغيل",
   "nav.fund": "تطبيقات الصندوق",
+  "nav.briefing": "طلب الإحاطة",
+  "nav.gap-report": "تقرير الفجوات",
   "nav.administration": "الإدارة",
   "nav.architecture": "البنية",
   "nav.about": "عن تايغرس",
@@ -205,6 +209,8 @@ const ar: Partial<Record<Key, string>> = {
 
 /** Arabic page descriptions for the key screens; English descriptions stay with each component. */
 export const AR_DESCRIPTIONS: Partial<Record<string, string>> = {
+  "nav.briefing": "طلب إحاطة مؤسسية خاصة وفق نموذج العميل؛ يفتح ارتباطاً تغذي تحدياته وتفويضه التشخيص.",
+  "nav.gap-report": "تشخيص الفجوات الثماني مع الثقة والأدلة، ومؤشرات CSAI والديون، والقيمة المعرضة للخطر بافتراضات قابلة للتعديل، وما قبل تيجيرس وما بعده.",
   "nav.fund": "أربعة تطبيقات للصندوق على بيانات تركيبية: فرز الصفقات مقابل التفويض، ومسودات مذكرات لجنة الاستثمار، ومراقبة المحفظة، وتقارير المجلس والمستثمرين. أرقام حتمية؛ وحوّل الصفقة إلى حالة للجنة.",
   "nav.command-centre": "هنا تظهر البنود التي تحتاج انتباهك، مع سبب ظهور كل منها.",
   "nav.signals": "إشارات من المصادر المعتمدة والبث التجريبي، مع درجة الثقة ومكوناتها وسبب ظهور كل إشارة.",

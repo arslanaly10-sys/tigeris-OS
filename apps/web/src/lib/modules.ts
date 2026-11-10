@@ -13,6 +13,12 @@ export interface ModuleDef {
 /** The PRD's 11 modules plus Reports, Architecture and About (Q028, Q030, Q036). */
 export const MODULES: ModuleDef[] = [
   {
+    slug: "briefing", nav: "nav.briefing", group: "operate", icon: "ClipboardPen",
+    purpose: "Private institutional briefing intake, mirroring the client's briefing form; opens an engagement whose challenge and mandate seed the diagnosis.",
+    arrives: [{ week: 10, items: ["Client briefing fields verbatim", "Approximate mandate feeds the value model"] }],
+    requirements: ["Brief v3 §7.1"],
+  },
+  {
     slug: "command-centre", nav: "nav.command-centre", group: "operate", icon: "LayoutGrid",
     purpose: "Where attention is needed now: priority signals, open cases, pending approvals, stale sources and the next task, beside a live map of the Gulf.",
     arrives: [
@@ -26,6 +32,12 @@ export const MODULES: ModuleDef[] = [
     purpose: "Sovereign gap diagnostic: seven gaps scored with their evidence, value at stake as a planning range, and before and after TIGERIS.",
     arrives: [{ week: 9, items: ["Gap diagnostic with saved, audited assessments", "Public readiness check for the website"] }],
     requirements: ["Commercial model, steps 1 to 3"],
+  },
+  {
+    slug: "gap-report", nav: "nav.gap-report", group: "operate", icon: "Radar",
+    purpose: "The eight-gap diagnosis with confidence and evidence, CSAI and debt indices, value at stake with editable assumptions, and before and after TIGERIS. Workshop mode edits inputs live.",
+    arrives: [{ week: 10, items: ["Rubric v3 with placeholder bands", "Value at stake in percentage points, capped", "Workshop edits on the Ledger"] }],
+    requirements: ["Brief v3 §3, §4"],
   },
   {
     slug: "playbooks", nav: "nav.playbooks", group: "operate", icon: "BookOpenCheck",

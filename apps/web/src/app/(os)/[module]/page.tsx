@@ -20,6 +20,8 @@ import { SovereigntyModule } from "@/components/modules/sovereignty";
 import { DiagnosticModule } from "@/components/diagnostic-ui";
 import { PlaybooksModule } from "@/components/playbooks-ui";
 import { FundModule } from "@/components/fund-ui";
+import { GapReportModule } from "@/components/gap-report-ui";
+import { BriefingIntakeModule } from "@/components/briefing-intake-ui";
 
 const CUSTOM: Record<string, () => React.ReactNode> = {
   "command-centre": () => <CommandCentre />,
@@ -41,6 +43,8 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
   diagnostic: () => <Suspense><DiagnosticModule /></Suspense>,
   playbooks: () => <Suspense><PlaybooksModule /></Suspense>,
   fund: () => <Suspense><FundModule /></Suspense>,
+  "gap-report": () => <Suspense><GapReportModule /></Suspense>,
+  briefing: () => <BriefingIntakeModule />,
 };
 
 export default async function ModulePage({ params }: { params: Promise<{ module: string }> }) {
