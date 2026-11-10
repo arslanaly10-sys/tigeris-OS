@@ -19,7 +19,7 @@ import { backtestRoutes } from "./routes/backtests";
 import { diagnosticRoutes } from "./routes/diagnostic";
 import { playbookRoutes } from "./routes/playbooks";
 import { fundRoutes } from "./routes/fund";
-import { engagementRoutes } from "./routes/engagements";
+import { engagementRoutes, packageRoutes } from "./routes/engagements";
 import { reportRoutes } from "./routes/reports";
 
 export async function buildApp() {
@@ -56,6 +56,7 @@ export async function buildApp() {
   await app.register(playbookRoutes);
   await app.register(fundRoutes);
   await app.register(engagementRoutes);
+  await app.register(packageRoutes);
   await app.register(reportRoutes);
   return app;
 }

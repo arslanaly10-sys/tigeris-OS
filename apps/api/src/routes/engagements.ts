@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withTenant } from "../db";
 import { requirePermission, type Principal } from "../session";
 import { createEngagement, editAssumption, editInput, loadEngagement } from "../workflow/engagements";
+import { createPackage, decidePackage, generateBrief, ledger, listPackages } from "../workflow/packages";
 
 const actorOf = (p: Principal) => ({ id: p.principalId, label: p.displayName, role: p.role });
 const intakeSchema = z.object({
@@ -41,5 +42,40 @@ export async function engagementRoutes(app: FastifyInstance) {
     const p = req.principal!;
     const r = await withTenant(p.institutionId, (tx) => editAssumption(tx, p.institutionId, actorOf(p), id, key, value));
     return r.status === 200 ? r : reply.code(r.status).send({ error: "refused", message: r.message });
+  });
+}
+
+export async function packageRoutes(app: FastifyInstance) {
+  const q = z.object({ question: z.string().trim().min(5).max(500) });
+  app.post("/engagements/:id/brief", { preHandler: requirePermission("case.read") }, async (req, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    const { question } = q.parse(req.body);
+    const p = req.principal!;
+    const r = await withTenant(p.institutionId, (tx) => generateBrief(tx, p.institutionId, actorOf(p), id, question));
+    return r.status === 200 ? r : reply.code(r.status).send({ error: "unavailable", message: r.message, problems: "problems" in r ? r.problems : undefined });
+  });
+  app.post("/engagements/:id/packages", { preHandler: requirePermission("diagnostic.run") }, async (req, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    const { question } = q.parse(req.body);
+    const p = req.principal!;
+    const r = await withTenant(p.institutionId, (tx) => createPackage(tx, p.institutionId, actorOf(p), id, question));
+    return r.status === 200 ? r : reply.code(r.status).send({ error: "refused", message: r.message });
+  });
+  app.get("/engagements/:id/packages", { preHandler: requirePermission("case.read") }, async (req) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    const p = req.principal!;
+    return withTenant(p.institutionId, async (tx) => ({ packages: await listPackages(tx, id) }));
+  });
+  app.post("/packages/:id/decision", { preHandler: requirePermission("decision.approve") }, async (req, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    const b = z.object({ decision: z.enum(["approve", "reject", "request_changes"]), comment: z.string().max(2000).default("") }).parse(req.body);
+    const p = req.principal!;
+    const r = await withTenant(p.institutionId, (tx) => decidePackage(tx, p.institutionId, actorOf(p), id, b.decision, b.comment));
+    return r.status === 200 ? r : reply.code(r.status).send({ error: "refused", message: r.message });
+  });
+  app.get("/engagements/:id/ledger", { preHandler: requirePermission("case.read") }, async (req) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    const p = req.principal!;
+    return withTenant(p.institutionId, async (tx) => ({ entries: await ledger(tx, id) }));
   });
 }

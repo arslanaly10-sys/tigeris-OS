@@ -16,3 +16,5 @@ export * from "./engine/diagnosis";
 export * from "./engine/valuation";
 export * from "./config/transmission";
 export * from "./engine/simulation";
+export * from "./config/authority";
+export * from "./engine/brief";
