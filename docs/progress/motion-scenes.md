@@ -37,7 +37,7 @@ Measured on the `/scenes` gallery in headless Chromium, ambient mode, 3 s per sc
 
 ## Not built yet
 
-- 03 (Trade corridor chokepoint), 10 (Decision ledger) and 13 (Strategic use cases) have no plate. The brief says not to invent visuals, so they wait.
+- 03 (Trade corridor chokepoint), 10 (Decision ledger) and 13 (Strategic use cases) had no plate; they are now built as labelled drafts (see the section at the end).
 - The Python plate sources (`render_site.py`, `render_more.py`) have not arrived. Geometry was measured from the plates, so it is close but not exact.
 - The scenes are not yet wired into the OS screens (§7 of the brief). The welcome page already uses 06.
 
