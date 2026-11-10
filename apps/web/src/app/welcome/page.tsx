@@ -35,6 +35,7 @@ export default function WelcomePage() {
             <div className="flex flex-wrap content-start gap-3 lg:justify-end">
               <Link href="/sign-in" className="btn inline-flex h-11 items-center gap-2 rounded-[2px] bg-primary px-5 text-[14px] font-medium text-primary-ink hover:bg-primary-hover">Enter the prototype<ArrowRight className="size-4 rtl:rotate-180" /></Link>
               <Link href="/readiness" className="btn inline-flex h-11 items-center gap-2 rounded-[2px] border border-[var(--line-strong)] px-5 text-[14px] font-medium hover:bg-surface-2">Sovereign readiness check</Link>
+              <Link href="/command-centres" className="btn inline-flex h-11 items-center gap-2 rounded-[2px] border border-[var(--line-strong)] px-5 text-[14px] font-medium hover:bg-surface-2">Sector Command Centres</Link>
             </div>
           </div>
           <p className="fig-caption">{LOOP_LINE.join(" · ")}</p>
