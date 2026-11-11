@@ -76,6 +76,12 @@ export const MODULES: ModuleDef[] = [
     requirements: ["Brain Co FinanceOS lesson: start with a first application"],
   },
   {
+    slug: "packs", nav: "nav.packs", group: "operate", icon: "Boxes",
+    purpose: "Sovereign OS Packs for finance, health, insurance and government: six workflows each, with what each reads, checks, who decides and which sovereign layer protects it, and a worked queue scored by deterministic rules on synthetic data.",
+    arrives: [{ week: 12, items: ["Four packs, 24 workflows", "Worked queues with rule checks", "Open any item as a case"] }],
+    requirements: ["docs/research/brain-co.md", "Doctrine 03"],
+  },
+  {
     slug: "signals", nav: "nav.signals", group: "operate", icon: "RadioTower",
     purpose: "Validated, unvalidated, conflicting and dismissed signals, with source, freshness, corroboration and disposition.",
     arrives: [
@@ -148,6 +154,12 @@ export const MODULES: ModuleDef[] = [
     requirements: ["FR-06", "FR-08", "TR-017"],
   },
   {
+    slug: "sovereign", nav: "nav.sovereign", group: "control", icon: "Crown",
+    purpose: "What sovereign intelligence means: the definition, the six-layer test, sovereign against dependent side by side, and the Sovereign Capability Index computed from this institution's records.",
+    arrives: [{ week: 12, items: ["Definition and six-layer test", "Sovereign Capability Index (control, convergence, operationalisation)"] }],
+    requirements: ["Doctrine 01–04", "Q063"],
+  },
+  {
     slug: "sovereignty", nav: "nav.sovereignty", group: "control", icon: "Landmark",
     purpose: "What stays inside the institution's control, layer by layer, checked live; keys and cryptography with the pilot plan.",
     arrives: [{ week: 9, items: ["Sovereignty stack with live checks", "Keys and cryptography inventory", "Pilot plan for HSM, confidential computing and post-quantum cryptography"] }],
@@ -170,6 +182,12 @@ export const MODULES: ModuleDef[] = [
     purpose: "Interactive one-slide architecture for investors and their CTOs.",
     arrives: [{ week: 8, items: ["Clickable layers linked to the live components"] }],
     requirements: ["Q036", "AC-12"],
+  },
+  {
+    slug: "doctrine", nav: "nav.doctrine", group: "meta", icon: "ScrollText",
+    purpose: "The four doctrines TIGERIS is built on, what each means in the OS, and the screen that proves it.",
+    arrives: [{ week: 12, items: ["Doctrine 01–04 with proof links"] }],
+    requirements: ["Client doctrine"],
   },
   {
     slug: "about", nav: "nav.about", group: "meta", icon: "Info",

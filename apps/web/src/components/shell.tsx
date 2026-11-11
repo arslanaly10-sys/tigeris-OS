@@ -11,6 +11,7 @@ import { usePrefs } from "./prefs";
 import { cn } from "@/lib/cn";
 import { MotionConfig, motion } from "motion/react";
 import { spring } from "./motion-kit";
+import { SovereignStrip } from "./sovereign-ui";
 
 export function Shell({ context, children }: { context: AuthContext; children: React.ReactNode }) {
   const { t } = usePrefs();
@@ -33,7 +34,7 @@ export function Shell({ context, children }: { context: AuthContext; children: R
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-clip overscroll-contain [scroll-padding-top:112px]">
           <Header onMenu={() => setOpen(true)} />
           <main key={context.principal.industry} id="main" tabIndex={-1} className={cn("outline-none", "mx-auto w-full max-w-[1480px] flex-1 px-4 py-5 sm:px-6", context.density === "spacious" ? "lg:px-8 lg:py-6" : "lg:px-6")}>
-            <motion.div key={path} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={spring}>{children}</motion.div>
+            <motion.div key={path} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={spring}>{!path.startsWith("/command-centres") && <SovereignStrip />}{children}</motion.div>
           </main>
           <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-6 py-3 pe-36 text-[13px] text-ink-faint">
             <span>{t("footer.notice")}</span>

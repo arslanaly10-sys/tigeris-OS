@@ -12,7 +12,9 @@ export function IndustryIcon({ industry, className }: { industry: string | Indus
 
 export const industryName = (key: string | null | undefined, lang: "en" | "ar" = "en") => {
   const i = industryOf(key);
-  return i ? (lang === "ar" ? i.nameAr : i.name) : key ?? "";
+  if (i) return lang === "ar" ? i.nameAr : i.name;
+  if (key === "public_sector") return lang === "ar" ? "القطاع الحكومي" : "Government and public sector"; // Sovereign OS government pack
+  return key ? key.replace(/_/g, " ") : "";
 };
 
 /** Splits a list by the industry lens: the person's industry first, the rest one click away. */

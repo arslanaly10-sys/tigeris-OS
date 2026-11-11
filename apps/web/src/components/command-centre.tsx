@@ -12,6 +12,8 @@ import { useSession } from "./session-context";
 import { AnimatePresence, motion } from "motion/react";
 import { CountUp, Stagger, StaggerItem, spring } from "./motion-kit";
 import { MapMotion } from "./cc-map-motion";
+import { DoctrineStrip, SovereignStrip } from "./sovereign-ui";
+import { DOCTRINE_FOR } from "@/content/sovereign";
 
 const MotionLink = motion.create(Link);
 
@@ -438,6 +440,7 @@ export function CommandCentre({ sectorKey }: { sectorKey: string }) {
     <C.Provider value={ctx}>
       <div className="cc">
         <div className="cc-content">
+          <SovereignStrip />
           <div className="cc-head">
             <div className="cc-head-l">
               {s.eyebrow && <p className={`cc-eyebrow${s.eyebrowCaps ? "" : " plain"}`}>{tr(s.eyebrow)}</p>}
@@ -474,6 +477,7 @@ export function CommandCentre({ sectorKey }: { sectorKey: string }) {
             </Stagger>
           ))}
 
+          <DoctrineStrip n={DOCTRINE_FOR[s.key] ?? "01"} />
           <footer className="cc-foot"><div>{s.footer.map((f) => <span key={f}>{tr(f)}</span>)}</div><span><Link href={`/command-centres-original/${s.key}`} className="cc-link" style={{ display: "inline", marginInlineEnd: 16 }}>{tr("Mockup version")}</Link>{tr(s.footerRight)}</span></footer>
         </div>
         {a && <Dialog a={a} onClose={() => setAsk(null)} />}

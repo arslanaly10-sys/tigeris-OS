@@ -9,7 +9,7 @@ import { usePrefs } from "@/components/prefs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BriefingScene } from "@/components/scenes/BriefingScene";
-import { DOCTRINE } from "@/content/client-copy";
+import { DoctrineRotator } from "@/components/doctrine-rotator";
 import { Badge } from "@/components/ui/badge";
 import { Wordmark } from "@/components/wordmark";
 import { PrefToggles } from "@/components/pref-toggles";
@@ -80,7 +80,7 @@ export default function SignInPage() {
         <div className="relative"><Wordmark size="lg" /></div>
         <div className="relative max-w-xl space-y-5">
           <p className="eyebrow">Private Institutional Briefing · Sovereign Alignment</p>
-          <p className="statement text-[52px] text-ink">{DOCTRINE}</p>
+          <DoctrineRotator />
           <p className="max-w-[46ch] text-[16px] text-ink-muted">{t("product.tagline")} An institution-owned intelligence and decision layer: evidence is validated, linked and reasoned over, then put before a named person to decide.</p>
         </div>
         <BriefingScene chrome={false} className="block h-auto w-full" />

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { withTenant } from "../db";
+import { withTenant, type Tx } from "../db";
+import type { Principal } from "../session";
 import { verifyChain } from "../audit";
 import { requirePermission } from "../session";
 import { getSettings, providerStatus } from "../ai/gateway";
@@ -20,10 +21,8 @@ interface Layer { key: string; name: string; question: string; status: "sovereig
 
 const layerStatus = (checks: Check[]): Layer["status"] => (checks.some((c) => c.status === "fail") ? "at_risk" : checks.every((c) => c.status === "pass") ? "sovereign" : "partial");
 
-export async function sovereigntyRoutes(app: FastifyInstance) {
-  app.get("/sovereignty", { preHandler: requirePermission("evidence.read") }, async (req) => {
-    const p = req.principal!;
-    return withTenant(p.institutionId, async (tx) => {
+/** The six-layer stack for the signed-in institution, every check read live. Shared by /sovereignty and /sovereignty/index. */
+async function buildStack(tx: Tx, p: Principal) {
       const inst = (await tx.query("SELECT name, residency, environment FROM institutions WHERE id = $1", [p.institutionId])).rows[0];
       const s = await getSettings(tx);
       const providers = await providerStatus(s);
@@ -105,7 +104,63 @@ export async function sovereigntyRoutes(app: FastifyInstance) {
         { name: "Post-quantum cryptography", what: "Signatures and key exchange that stay secure against future quantum computers.", needs: ["This inventory kept current (Ed25519 is the one quantum-vulnerable algorithm in use)", "Hybrid signatures with ML-DSA (NIST FIPS 204) for data packages", "ML-KEM (NIST FIPS 203) in TLS once the reverse proxy supports it"] },
       ];
       const summary = { sovereign: layers.filter((l) => l.status === "sovereign").length, partial: layers.filter((l) => l.status === "partial").length, atRisk: layers.filter((l) => l.status === "at_risk").length };
-      return { checkedAt: new Date().toISOString(), institution: inst.name, residency: inst.residency, framework: "TIGERIS sovereignty stack (to be aligned with the McKinsey explainer when its text is supplied)", summary, layers, keys, planned };
+      return { checkedAt: new Date().toISOString(), institution: inst.name as string, residency: inst.residency as string, framework: "TIGERIS sovereignty stack (to be aligned with the McKinsey explainer when its text is supplied)", summary, layers, keys, planned };
+}
+
+/**
+ * Sovereign Capability Index (SCI), 0–100, MODELLED. Three parts, each a ratio read from this institution's records:
+ * - Control (weight 0.4): the six layers, sovereign = 1, partly sovereign = 0.5, at risk = 0, divided by six.
+ * - Convergence (0.3), Doctrine 01: how many of the six functions run inside TIGERIS for this institution
+ *   (perception, reasoning, capital allocation, governance, execution, learning), each live when its records exist.
+ * - Operationalisation (0.3), Doctrine 03: the share of cases and decision packages that reached a governed
+ *   outcome (a named decision, or an approved package with owners) rather than stopping as information.
+ * Weights are placeholders pending the client CTO's sign-off, like the rubric bands.
+ */
+export const SCI_WEIGHTS = { control: 0.4, convergence: 0.3, operational: 0.3 } as const;
+export function sciScore(control: number, convergence: number, operational: number) {
+  const v = 100 * (SCI_WEIGHTS.control * control + SCI_WEIGHTS.convergence * convergence + SCI_WEIGHTS.operational * operational);
+  return Math.round(v * 10) / 10;
+}
+
+export async function sovereigntyRoutes(app: FastifyInstance) {
+  app.get("/sovereignty", { preHandler: requirePermission("evidence.read") }, async (req) => {
+    const p = req.principal!;
+    return withTenant(p.institutionId, (tx) => buildStack(tx, p));
+  });
+
+  app.get("/sovereignty/index", { preHandler: requirePermission("evidence.read") }, async (req) => {
+    const p = req.principal!;
+    return withTenant(p.institutionId, async (tx) => {
+      const st = await buildStack(tx, p);
+      const one = async (sql: string) => Number((await tx.query(sql)).rows[0].n);
+      const fn = [
+        { key: "perception", label: "Perception", doctrine: "Signals detected and validated", n: await one("SELECT count(*)::int AS n FROM signals"), source: "signals", href: "/signals" },
+        { key: "reasoning", label: "Reasoning", doctrine: "Scenarios run and briefs reasoned from evidence", n: (await one("SELECT count(*)::int AS n FROM scenario_runs")) + (await one("SELECT count(*)::int AS n FROM case_briefs")), source: "scenario_runs + case_briefs", href: "/scenarios" },
+        { key: "capital", label: "Capital allocation", doctrine: "Decision envelopes and mandate-level packages", n: (await one("SELECT count(*)::int AS n FROM decision_envelopes WHERE status <> 'revoked'")) + (await one("SELECT count(*)::int AS n FROM decision_packages")), source: "decision_envelopes + decision_packages", href: "/governor" },
+        { key: "governance", label: "Governance", doctrine: "Decisions approved by the named authority", n: (await one("SELECT count(*)::int AS n FROM decisions WHERE status = 'approved'")) + (await one("SELECT count(*)::int AS n FROM decision_packages WHERE status = 'approved'")), source: "decisions + decision_packages (approved)", href: "/decisions" },
+        { key: "execution", label: "Execution", doctrine: "Hand-offs and tasks with a named owner", n: (await one("SELECT count(*)::int AS n FROM handoffs")) + (await one("SELECT count(*)::int AS n FROM package_tasks")), source: "handoffs + package_tasks", href: "/decisions" },
+        { key: "learning", label: "Learning", doctrine: "Precedents from closed cases and feedback that re-ranks options", n: (await one("SELECT count(*)::int AS n FROM precedents WHERE case_id IS NOT NULL")) + (await one("SELECT count(*)::int AS n FROM recommendation_feedback")), source: "precedents (from cases) + recommendation_feedback", href: "/memory" },
+      ].map((f) => ({ ...f, live: f.n > 0 }));
+      const cases = await one("SELECT count(*)::int AS n FROM cases");
+      const decided = await one("SELECT count(DISTINCT case_id)::int AS n FROM decisions WHERE status IN ('approved','rejected')");
+      const pkgs = await one("SELECT count(*)::int AS n FROM decision_packages");
+      const pkgsDone = await one("SELECT count(*)::int AS n FROM decision_packages p WHERE status = 'approved' AND EXISTS (SELECT 1 FROM package_tasks t WHERE t.package_id = p.id)");
+      const control = (st.summary.sovereign + 0.5 * st.summary.partial) / st.layers.length;
+      const convergence = fn.filter((f) => f.live).length / fn.length;
+      const operational = cases + pkgs ? (decided + pkgsDone) / (cases + pkgs) : 0;
+      return {
+        checkedAt: st.checkedAt, institution: st.institution, label: "MODELLED", weightsStatus: "placeholder pending the client CTO's sign-off",
+        score: sciScore(control, convergence, operational),
+        formula: "SCI = 100 × (0.4 × control + 0.3 × convergence + 0.3 × operationalisation)",
+        parts: {
+          control: { value: control, weight: SCI_WEIGHTS.control, detail: `${st.summary.sovereign} sovereign, ${st.summary.partial} partly sovereign, ${st.summary.atRisk} at risk, of ${st.layers.length} layers` },
+          convergence: { value: convergence, weight: SCI_WEIGHTS.convergence, detail: `${fn.filter((f) => f.live).length} of ${fn.length} functions run inside TIGERIS` },
+          operational: { value: operational, weight: SCI_WEIGHTS.operational, detail: `${decided} of ${cases} cases reached a named decision; ${pkgsDone} of ${pkgs} decision packages approved with owners` },
+        },
+        functions: fn,
+        layers: st.layers.map((l) => ({ key: l.key, name: l.name, status: l.status, open: l.checks.filter((c) => c.status !== "pass").map((c) => ({ label: c.label, status: c.status })) })),
+        summary: st.summary, residency: st.residency,
+      };
     });
   });
 }

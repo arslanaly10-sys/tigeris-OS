@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { CountUp, Flash, Stagger, StaggerItem, spring } from "./motion-kit";
+import { BoardroomSovereign, DoctrineStrip } from "./sovereign-ui";
 import { DEFAULT_SHOCK, simulate, type Diagnosis, type Valuation } from "@tigeris/shared";
 import { api } from "@/lib/api";
 import { PageHeader } from "./page-header";
@@ -93,6 +94,8 @@ export function BoardroomModule() {
           </Panel>
           </StaggerItem>
         </Stagger>
+        <BoardroomSovereign />
+        <DoctrineStrip n="03" />
         <Stagger className="grid gap-4 xl:grid-cols-2">
           <StaggerItem><Panel className="overflow-hidden"><PanelHeader eyebrow="Operating loop" title="Where the institution is now" /><OperatingLoopScene activeStep={coord !== null && coord < 50 ? 8 : 7} chrome={false} className="block h-auto w-full" /></Panel></StaggerItem>
           <StaggerItem><Panel className="overflow-hidden"><PanelHeader eyebrow="L3 orchestration" title={coord !== null && coord < 50 ? "Coordination debt, resolved" : "Coordination debt, rising: no owner assigned"} actions={<DataLabel kind="MODELLED" />} />

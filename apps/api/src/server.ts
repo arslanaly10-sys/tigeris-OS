@@ -15,6 +15,7 @@ import { aiRoutes } from "./routes/ai";
 import { decisionRoutes } from "./routes/decisions";
 import { securityRoutes } from "./routes/security";
 import { sovereigntyRoutes } from "./routes/sovereignty";
+import { packsRoutes } from "./routes/packs";
 import { intelRoutes } from "./routes/intel";
 import { backtestRoutes } from "./routes/backtests";
 import { diagnosticRoutes } from "./routes/diagnostic";
@@ -59,6 +60,7 @@ export async function buildApp() {
   await app.register(decisionRoutes);
   await app.register(securityRoutes);
   await app.register(sovereigntyRoutes);
+  await app.register(packsRoutes);
   await app.register(intelRoutes);
   await app.register(backtestRoutes);
   await app.register(diagnosticRoutes);
