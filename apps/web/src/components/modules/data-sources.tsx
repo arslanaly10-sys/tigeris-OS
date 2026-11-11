@@ -76,7 +76,7 @@ function IndicatorsView() {
   if (!data) return <Loading />;
   const cell = (col: Indicators["columns"][number], iso: string) => col.rows.find((r) => r.subject === iso);
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Panel>
         <PanelHeader eyebrow="Latest available value per source" title="GCC macro and energy baseline"
           actions={<><ClaimBadge claim="observed" /><Badge>Click any number for its lineage</Badge></>} />
@@ -113,7 +113,7 @@ function IndicatorsView() {
         <p className="border-t border-line px-4 py-3 text-[13px] text-ink-muted">Sources: World Bank WDI, IMF World Economic Outlook, JODI Oil World Database. Values marked conflict disagree with another source beyond tolerance; open them to see both.</p>
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Panel>
           <PanelHeader eyebrow="U.S. Energy Information Administration" title="Strait of Hormuz" actions={<ClaimBadge claim="sourced" />} />
           <ul className="divide-y divide-line">
@@ -151,7 +151,7 @@ function RegistryView() {
   if (error) return <ErrorNote message={error} />;
   if (!data) return <Loading />;
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Panel>
         <PanelHeader eyebrow="Registry" title="Sources" actions={<Badge className="tabular">{data.sources.filter((s) => s.status === "approved").length} approved of {data.sources.length}</Badge>} />
         <div className="overflow-x-auto">
@@ -226,8 +226,8 @@ function ImportsView({ onChanged, onOpenEvidence }: { onChanged: () => void; onO
   };
 
   return (
-    <div className="grid gap-5">
-      <div className="grid gap-5 lg:grid-cols-2">
+    <div className="grid gap-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Panel>
           <PanelHeader eyebrow="Air-gap pattern" title="Import a signed package" />
           <div className="grid gap-3 p-4 text-[13px]">
@@ -376,7 +376,7 @@ function EvidenceDrawer({ id, onClose }: { id: string | null; onClose: () => voi
   return (
     <Drawer open={!!id} onClose={onClose} eyebrow="Evidence record" title={d?.evidence.title ?? "Loading"}>
       {!d ? <Loading /> : (
-        <div className="grid gap-5">
+        <div className="grid gap-4">
           <div className="flex flex-wrap gap-2"><ValidationBadge state={d.evidence.validation_state} /><ClaimBadge claim={d.evidence.data_class === "public" ? "observed" : d.evidence.data_class} /><Badge>{d.evidence.classification}</Badge></div>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
             <Field label="Source">{d.evidence.source_name}</Field>

@@ -50,7 +50,7 @@ export function PlaybooksModule() {
         })}
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start">
         <Panel className="lg:sticky lg:top-[72px]">
           <PanelHeader eyebrow={ar ? "دليل التشغيل" : "Playbooks"} title={`${list.length} ${ar ? "سيناريو" : list.length === 1 ? "scenario" : "scenarios"}`} />
           <ul className="divide-y divide-line">
@@ -103,12 +103,12 @@ function PlaybookDetail({ pb, ar }: { pb: Playbook; ar: boolean }) {
     if (r.ok) router.push(`/cases/${r.data.caseKey}`); else setError(r.message);
   }
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Panel>
         <PanelHeader eyebrow={pb.gaps.map((g) => gapName(g, ar)).join(" · ")} title={<span className="text-[20px]">{t?.title ?? pb.title}</span>}
           actions={<div className="flex flex-wrap justify-end gap-2"><Badge tone="gold">{ar ? "توضيحي" : "Illustrative"}</Badge>
             {can("case.create") && <Button size="sm" variant="primary" disabled={busy} onClick={start}><FolderPlus />{busy ? (ar ? "جارٍ الفتح…" : "Opening…") : ar ? "ابدأ حالة" : "Start a case"}</Button>}</div>} />
-        <div className="grid gap-4 p-5 text-[14px]">
+        <div className="grid gap-4 p-4 text-[14px]">
           <p className="font-serif text-[18px] leading-snug text-accent">{t?.doctrine ?? pb.doctrine}</p>
           <dl className="grid gap-3 sm:grid-cols-[120px_1fr]">
             <dt className="text-ink-muted">{ar ? "النية" : "Intent"}</dt><dd className="max-w-[62ch]">{t?.intent ?? pb.intent}</dd>
@@ -125,7 +125,7 @@ function PlaybookDetail({ pb, ar }: { pb: Playbook; ar: boolean }) {
 
       <Panel>
         <PanelHeader eyebrow={ar ? "تسليم بين المتخصصين" : "Specialist hand-off"} title={ar ? "من الرصد إلى الحوكمة" : "Sentinel to Governance"} />
-        <ol className="grid gap-0 p-5">
+        <ol className="grid gap-0 p-4">
           {SPECIALISTS.slice(0, -1).map((s, i) => (
             <li key={s} className="grid grid-cols-[150px_1fr] gap-3 border-s border-line-strong pb-4 ps-4 last:pb-0 sm:grid-cols-[190px_1fr]">
               <span className="relative text-[13px] font-medium"><span className="absolute -start-[21px] top-1 size-2.5 rounded-full bg-primary" />{ar ? SPECIALISTS_AR[s] : s} <ArrowRight className="inline size-3.5 text-ink-faint rtl:rotate-180" /> {ar ? SPECIALISTS_AR[SPECIALISTS[i + 1]!] : SPECIALISTS[i + 1]}</span>
@@ -136,13 +136,13 @@ function PlaybookDetail({ pb, ar }: { pb: Playbook; ar: boolean }) {
         <p className="border-t border-line px-5 py-3 text-[13px] text-ink-muted"><span className="text-ink">{ar ? "الرسم: " : "Graph: "}</span>{pb.graph}</p>
       </Panel>
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <Panel className="border-primary/50 p-5">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Panel className="border-primary/50 p-4">
           <div className="eyebrow text-accent">{ar ? "المسار الموصى به" : "Recommended path"}</div>
           <p className="mt-2 text-[15px]">{t?.recommended ?? pb.recommended}</p>
           <p className="mt-3 text-[13px] text-ink-muted">{pb.outcome}</p>
         </Panel>
-        <Panel className="p-5">
+        <Panel className="p-4">
           <div className="eyebrow text-ink-faint">{ar ? "البديل" : "Counterfactual"}</div>
           <p className="mt-2 text-[15px]">{t?.counterfactual ?? pb.counterfactual}</p>
           <p className="mt-3 text-[13px] text-ink-muted"><span className="text-ink">{ar ? "المفاضلة: " : "Trade-off: "}</span>{pb.tradeoff}</p>
@@ -150,8 +150,8 @@ function PlaybookDetail({ pb, ar }: { pb: Playbook; ar: boolean }) {
       </div>
 
       <Panel className="grid gap-px bg-line md:grid-cols-2">
-        <div className="bg-surface p-5 text-[14px]"><div className="eyebrow mb-1 text-ink-faint">{ar ? "قبل احتساب القيمة" : "Before claiming value"}</div><p className="text-ink-muted">{pb.validate}</p></div>
-        <div className="bg-surface p-5 text-[14px]"><div className="eyebrow mb-1 text-ink-faint">{ar ? "ما تحفظه الذاكرة" : "What memory keeps"}</div><p className="text-ink-muted">{pb.memory}</p></div>
+        <div className="bg-surface p-4 text-[14px]"><div className="eyebrow mb-1 text-ink-faint">{ar ? "قبل احتساب القيمة" : "Before claiming value"}</div><p className="text-ink-muted">{pb.validate}</p></div>
+        <div className="bg-surface p-4 text-[14px]"><div className="eyebrow mb-1 text-ink-faint">{ar ? "ما تحفظه الذاكرة" : "What memory keeps"}</div><p className="text-ink-muted">{pb.memory}</p></div>
       </Panel>
       <p className="text-[13px] text-ink-faint">
         {ar ? "سيناريو توضيحي من عقيدة تايغر كابيتال؛ لا أدلة متصلة ولا معاملات حية ولا قيمة مقاسة." : "Illustrative scenario from Tiger Capital's TIGERIS doctrine: no connected evidence, live transactions or measured value. A case started from it begins at “detected” and needs the institution's own evidence."}

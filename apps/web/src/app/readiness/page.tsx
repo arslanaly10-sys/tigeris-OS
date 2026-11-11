@@ -35,7 +35,7 @@ export default function ReadinessCheck() {
       <main className="mx-auto grid w-full max-w-[1100px] gap-6 px-4 py-8 sm:px-8">
         <section className="grid gap-3">
           <p className="eyebrow text-accent">Sovereign readiness check</p>
-          <h1 className="max-w-[24ch] text-[34px] font-medium leading-tight">More AI does not mean more sovereign capability.</h1>
+          <h1 className="max-w-[24ch] text-[28px] font-medium leading-tight">More AI does not mean more sovereign capability.</h1>
           <p className="max-w-[60ch] text-[16px] text-ink-muted">Coordination debt, slow governance, lost memory and unmeasured AI spend widen the distance between sovereign intent and sovereign value. Answer {QUESTION_COUNT} questions across seven gaps to see where your institution stands and what closing the gaps could be worth. About 15 minutes.</p>
           <p className="text-[13px] text-ink-faint">Everything stays in your browser: nothing you enter is sent or stored.</p>
         </section>

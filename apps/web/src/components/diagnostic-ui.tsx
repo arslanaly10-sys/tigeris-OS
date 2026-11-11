@@ -53,7 +53,7 @@ export function GapReport({ result, meta, actions, publicView = false }: {
   const v = result.valueAtStake;
   const [showBasis, setShowBasis] = useState(false);
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Panel>
         <PanelHeader eyebrow={meta.subject} title="Diagnostic summary" actions={<div className="flex flex-wrap justify-end gap-2">
           <Badge tone={meta.synthetic ? "gold" : "neutral"}>{meta.dataMode}</Badge>
@@ -71,9 +71,9 @@ export function GapReport({ result, meta, actions, publicView = false }: {
               note: v.aumUsd ? `A year: ${v.bpLow} to ${v.bpHigh} basis points of ${formatUsd(v.aumUsd)}` : "Basis points of assets a year; add an asset figure for a dollar range",
             },
           ].map((k) => (
-            <div key={k.label} className="bg-surface p-5">
+            <div key={k.label} className="bg-surface p-4">
               <div className="text-[13px] text-ink-muted">{k.label}</div>
-              <div className="mt-1 text-[30px] font-medium leading-tight tabular">{k.value}</div>
+              <div className="mt-1 text-[26px] font-medium leading-tight tabular">{k.value}</div>
               <div className="mt-1 text-[13px] text-ink-faint">{k.note}</div>
             </div>
           ))}
@@ -96,10 +96,10 @@ export function GapReport({ result, meta, actions, publicView = false }: {
         </div>
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Panel>
           <PanelHeader eyebrow="Seven gaps, scored 0 to 4" title="Where the institution stands" />
-          <ul className="grid gap-4 p-5">
+          <ul className="grid gap-4 p-4">
             {result.gaps.map((g) => (
               <li key={g.key} className="grid gap-1.5">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-[14px]">
@@ -121,9 +121,9 @@ export function GapReport({ result, meta, actions, publicView = false }: {
         <Panel>
           <PanelHeader eyebrow="Where closing the gap is worth most" title="Priorities" />
           {result.priorities.length === 0 ? (
-            <p className="p-5 text-[14px] text-ink-muted">No gap has value at stake: every assessed gap scores at the top of the scale.</p>
+            <p className="p-4 text-[14px] text-ink-muted">No gap has value at stake: every assessed gap scores at the top of the scale.</p>
           ) : (
-            <ol className="grid gap-3 p-5">
+            <ol className="grid gap-3 p-4">
               {result.priorities.map((k, i) => {
                 const g = result.gaps.find((x) => x.key === k)!;
                 return (
@@ -136,7 +136,7 @@ export function GapReport({ result, meta, actions, publicView = false }: {
             </ol>
           )}
           {result.recommendedPilot && (
-            <div className="border-t border-line p-5 text-[14px]">
+            <div className="border-t border-line p-4 text-[14px]">
               <div className="eyebrow text-ink-faint">Recommended first mandate pilot</div>
               <p className="mt-1">Close <span className="font-medium">{gapDef(result.recommendedPilot.gap).name.toLowerCase()}</span> first, through {result.recommendedPilot.label.toLowerCase()}.</p>
               {!publicView && <Link href={result.recommendedPilot.href} className="tap mt-2 inline-flex items-center gap-1 text-[13px] text-accent hover:underline">See it in TIGERIS<ArrowRight className="size-4 rtl:rotate-180" /></Link>}
@@ -180,11 +180,11 @@ export function GapQuestionnaire({ answers, setAnswers, showEvidence = true }: {
   const set = (questionId: string, patch: Partial<DiagnosticAnswer>) =>
     setAnswers({ ...answers, [questionId]: { questionId, score: answers[questionId]?.score ?? 0, evidence: answers[questionId]?.evidence ?? "self_report", ...patch } });
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       {GAPS.map((g, gi) => (
         <Panel key={g.key}>
           <PanelHeader eyebrow={`Gap ${gi + 1} of ${GAPS.length}`} title={lang === "ar" ? g.nameAr : g.name} actions={<span className="text-[13px] text-ink-faint">{g.questions.filter((q) => answers[q.id]).length} of 2 answered</span>} />
-          <div className="grid gap-6 p-5">
+          <div className="grid gap-5 p-4">
             {g.questions.map((q) => (
               <fieldset key={q.id} className="grid gap-2">
                 <legend className="mb-1 max-w-[70ch] text-[15px] font-medium">{q.text}</legend>
@@ -311,9 +311,9 @@ function NewAssessment({ onSaved }: { onSaved: (a: Assessment) => void }) {
     if (r.ok) onSaved(r.data); else setError(r.message);
   }
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-      <div className="grid gap-5">
-        <Panel className="grid gap-4 p-5 sm:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+      <div className="grid gap-4">
+        <Panel className="grid gap-4 p-4 sm:grid-cols-3">
           <label className="grid gap-1.5 text-[13px] text-ink-muted">Title<input autoComplete="off" value={title} onChange={(e) => setTitle(e.target.value)} className="h-10 rounded-md border border-line bg-surface-2 px-3 text-[14px] text-ink" /></label>
           <label className="grid gap-1.5 text-[13px] text-ink-muted">What is assessed<input autoComplete="off" value={subject} onChange={(e) => setSubject(e.target.value)} className="h-10 rounded-md border border-line bg-surface-2 px-3 text-[14px] text-ink" /></label>
           <AumInput value={aum} onChange={setAum} />
@@ -324,10 +324,10 @@ function NewAssessment({ onSaved }: { onSaved: (a: Assessment) => void }) {
         </Panel>
         <GapQuestionnaire answers={answers} setAnswers={setAnswers} />
       </div>
-      <Panel className="grid gap-3 p-5 lg:sticky lg:top-[72px]">
+      <Panel className="grid gap-3 p-4 lg:sticky lg:top-[72px]">
         <div className="eyebrow text-ink-faint">Live preview</div>
         <div className="text-[13px] text-ink-muted">{answered} of {QUESTION_COUNT} questions answered</div>
-        <div className="text-[30px] font-medium tabular leading-tight">{preview.readinessPct === null ? "–" : `${preview.readinessPct}%`}<span className="ms-2 text-[14px] text-ink-faint">readiness</span></div>
+        <div className="text-[26px] font-medium tabular leading-tight">{preview.readinessPct === null ? "–" : `${preview.readinessPct}%`}<span className="ms-2 text-[14px] text-ink-faint">readiness</span></div>
         <div className="text-[14px]">Value at stake: {preview.valueAtStake.lowUsd !== null ? `${formatUsd(preview.valueAtStake.lowUsd)} to ${formatUsd(preview.valueAtStake.highUsd!)}` : `${preview.valueAtStake.bpLow} to ${preview.valueAtStake.bpHigh} bp`} a year <Badge tone="warn" className="ms-1">Planning range</Badge></div>
         <p className="text-[13px] text-ink-faint">The server recomputes everything when you save; the saved assessment and its inputs go on the audit trail.</p>
         {error && <p role="alert" className="text-[13px] text-crit">{error}</p>}
@@ -365,7 +365,7 @@ function History({ list, onOpen }: { list: Assessment[] | null; onOpen: (id: str
 
 function Method() {
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Panel>
         <PanelHeader eyebrow="Like a car diagnostic: what is wrong, how bad, what it costs, what fixes it" title="The seven gaps" />
         <div className="overflow-x-auto">
@@ -385,7 +385,7 @@ function Method() {
           </table>
         </div>
       </Panel>
-      <Panel className="grid gap-3 p-5 text-[14px]">
+      <Panel className="grid gap-3 p-4 text-[14px]">
         <h2 className="text-[16px] font-medium">Scoring and evidence</h2>
         <p className="max-w-[64ch] text-ink-muted">Each question is answered 0 (worst) to 4 (best); a gap's score is the mean of its two answers. Severity: under 1.5 critical, under 2.5 major, under 3.5 moderate, otherwise minor. Every answer records its evidence: self-reported, from interviews, or measured. A gap, and the whole report, is only as strong as its weakest evidence.</p>
         <p className="max-w-[64ch] text-ink-muted">Three steps raise the evidence: the public readiness check (self-report), the executive briefing (interviews), and the paid diagnostic (measured samples: timestamps, logs, retrieval tests).</p>

@@ -12,14 +12,13 @@ import { MODULES } from "@/lib/modules";
 import { api } from "@/lib/api";
 import { usePrefs } from "./prefs";
 import { useSession } from "./session-context";
-import { PrefToggles } from "./pref-toggles";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 
 const menuItem = "flex cursor-pointer select-none items-center gap-2.5 rounded px-2.5 py-2 text-[13px] text-ink outline-none data-[highlighted]:bg-surface-2";
 
 export function Header({ onMenu }: { onMenu: () => void }) {
-  const { t, lang } = usePrefs();
+  const { t, lang, toggleLang } = usePrefs();
   const s = useSession();
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -83,14 +82,14 @@ export function Header({ onMenu }: { onMenu: () => void }) {
   }, [s.principal.id]);
 
   return (
-    <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex min-h-[72px] items-center gap-3 border-b border-line bg-bg px-4 py-2.5 sm:px-6">
+    <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 flex min-h-[64px] items-center gap-2.5 border-b border-line bg-bg px-4 py-2 sm:px-6">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenu} aria-label="Open navigation"><Menu /></Button>
 
       <Dropdown.Root>
         <Dropdown.Trigger asChild>
-          <button type="button" className="hidden min-h-[46px] items-center gap-2.5 rounded-md border border-line bg-surface px-3.5 text-start xl:flex">
-            <Landmark className="size-[18px] text-primary" strokeWidth={1.6} />
-            <span className="grid leading-tight"><span className="text-[10.5px] text-ink-muted">{t("header.institution")}</span><span className="max-w-[170px] truncate text-[13.5px]">{s.institution.shortName}</span></span>
+          <button type="button" className="hidden min-h-[40px] items-center gap-2 rounded-md border border-line bg-surface px-3 text-start xl:flex">
+            <Landmark className="size-4 text-primary" strokeWidth={1.6} />
+            <span className="grid leading-tight"><span className="text-[10px] text-ink-muted">{t("header.institution")}</span><span className="max-w-[170px] truncate text-[13px]">{s.institution.shortName}</span></span>
             <ChevronDown className="size-3.5 text-ink-faint" />
           </button>
         </Dropdown.Trigger>
@@ -106,7 +105,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
 
       <Popover.Root open={results.length > 0}>
         <Popover.Anchor asChild>
-          <label className="relative flex h-10 min-w-0 max-w-[340px] flex-1 items-center sm:min-w-[110px]">
+          <label className="relative flex h-9 min-w-0 max-w-[320px] flex-1 items-center sm:min-w-[110px]">
             <Search className="pointer-events-none absolute start-3 size-4 text-ink-faint" />
             <input autoComplete="off"
               id="global-search"
@@ -115,7 +114,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
               onKeyDown={(e) => { if (e.key === "Escape") setQ(""); if (e.key === "Enter" && results[0]) { router.push(results[0].href); setQ(""); } }}
               placeholder={t("header.search")}
               aria-label={t("header.search")}
-              className="h-10 w-full rounded-md border border-line bg-surface ps-9 pe-3 text-[13px] text-ink placeholder:text-ink-faint"
+              className="h-9 w-full rounded-md border border-line bg-surface ps-9 pe-3 text-[13px] text-ink placeholder:text-ink-faint"
             />
           </label>
         </Popover.Anchor>
@@ -133,50 +132,43 @@ export function Header({ onMenu }: { onMenu: () => void }) {
 
       <div className="ms-auto flex items-center gap-2">
         <ModelBadge />
-        <Badge tone="gold" className="hidden 2xl:inline-flex" title={t("header.demo")}>{t("header.demo")}</Badge>
-        {lang === "ar" && <Badge tone="info" className="hidden md:inline-flex">{t("arabicDraft")}</Badge>}
 
-        <Popover.Root>
-          <Popover.Trigger asChild>
-            <Button variant="ghost" size="icon" className="relative" aria-label={`${t("header.notifications")}${notes?.unread ? ` (${notes.unread} unread)` : ""}`}>
-              <Bell />{notes?.unread ? <span className="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-crit px-1 text-[13px] font-medium text-on-crit tabular">{notes.unread}</span> : null}
-            </Button>
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Content align="end" sideOffset={6} className="z-50 w-80 rounded-lg border border-line bg-surface p-2 shadow-[var(--overlay-shadow)]">
-              <div className="flex items-center justify-between px-2 py-1.5"><span className="font-medium">{t("header.notifications")}</span>
-                {notes?.unread ? <button type="button" className="tap text-[13px] text-accent hover:underline" onClick={async () => { await api("/notifications/read", { json: {} }); setNotes((n) => n && { ...n, unread: 0, notifications: n.notifications.map((x) => ({ ...x, read_at: x.read_at ?? new Date().toISOString() })) }); }}>Mark all read</button> : null}
-              </div>
-              {!notes?.notifications.length && <p className="px-2 pb-2 text-[13px] text-ink-muted">{t("header.noNotifications")}</p>}
-              <ul className="max-h-96 overflow-y-auto">
-                {notes?.notifications.map((n) => (
-                  <li key={n.id}><Link href={n.link} className="block rounded px-2 py-2 hover:bg-surface-2"><div className={`text-[13px] ${n.read_at ? "text-ink-muted" : "font-medium"}`}>{n.title}</div><div className="line-clamp-2 text-[13px] text-ink-faint">{n.body}</div></Link></li>
-                ))}
-              </ul>
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
-
-        <PrefToggles />
-
-        <Link href="/decisions" className="btn hidden min-h-[44px] items-center gap-2 whitespace-nowrap rounded-md border border-[#e4cf9f] bg-warn-soft px-4 text-[13.5px] font-medium text-warn sm:inline-flex" aria-label={`${t("header.approvals")} (${pending ?? 0})`}>
-          <span className="size-2 rounded-full bg-gold" aria-hidden /><span className="hidden 2xl:inline">{t("header.approvals")}</span> <span className="tabular">({pending ?? "–"})</span>
+        <Link href="/decisions" className="btn hidden min-h-[40px] items-center gap-2 whitespace-nowrap rounded-md border border-[#e4cf9f] bg-warn-soft px-3 text-[13px] font-medium text-warn sm:inline-flex" aria-label={`${t("header.approvals")} (${pending ?? 0})`}>
+          <span className="size-2 rounded-full bg-gold" aria-hidden /><span className="hidden xl:inline">{t("header.approvals")}</span> <span className="tabular">({pending ?? "–"})</span>
         </Link>
 
         <Dropdown.Root>
           <Dropdown.Trigger asChild>
-            <button type="button" id="user-menu-trigger" aria-label={`${s.principal.name}, ${ROLE_LABELS[s.principal.role]}`} className="grid size-11 place-items-center rounded-full border border-line bg-surface hover:border-line-strong">
+            <button type="button" id="user-menu-trigger" aria-label={`${s.principal.name}, ${ROLE_LABELS[s.principal.role]}${notes?.unread ? `, ${notes.unread} unread notifications` : ""}`} className="relative grid size-10 place-items-center rounded-full border border-line bg-surface hover:border-line-strong">
               <UserRound className="size-[18px]" strokeWidth={1.6} />
+              {notes?.unread ? <span aria-hidden className="absolute -end-1 -top-1 grid min-w-[18px] place-items-center rounded-full bg-crit px-1 text-[11px] font-medium leading-[18px] text-on-crit tabular">{notes.unread}</span> : null}
             </button>
           </Dropdown.Trigger>
           <Dropdown.Portal>
-            <Dropdown.Content align="end" sideOffset={6} className="z-50 w-72 rounded-lg border border-line bg-surface p-1.5 shadow-[var(--overlay-shadow)]">
+            <Dropdown.Content align="end" sideOffset={6} className="z-50 max-h-[85vh] w-80 overflow-y-auto rounded-lg border border-line bg-surface p-1.5 shadow-[var(--overlay-shadow)]">
               <div className="px-2.5 py-2">
-                <div className="font-medium">{s.principal.name}</div>
+                <div className="flex items-center justify-between gap-2"><span className="font-medium">{s.principal.name}</span><Badge tone="gold" title={t("header.demo")}>{t("header.demo")}</Badge></div>
                 <div className="text-[13px] text-ink-muted">{s.principal.title}</div>
                 <div className="mt-2 flex items-center gap-1.5 text-[13px] text-ink-muted"><Landmark className="size-3.5 text-accent" />{s.institution.name}</div>
                 <div className="text-[13px] text-ink-faint">{s.institution.residency}</div>
               </div>
+              <Dropdown.Separator className="my-1 h-px bg-line" />
+              <Dropdown.Label className="flex items-center justify-between px-2.5 py-1">
+                <span className="eyebrow">{t("header.notifications")}{notes?.unread ? ` · ${notes.unread}` : ""}</span>
+                {notes?.unread ? <button type="button" className="tap text-[12px] text-accent hover:underline" onClick={async () => { await api("/notifications/read", { json: {} }); setNotes((n) => n && { ...n, unread: 0, notifications: n.notifications.map((x) => ({ ...x, read_at: x.read_at ?? new Date().toISOString() })) }); }}>Mark all read</button> : null}
+              </Dropdown.Label>
+              {!notes?.notifications.length && <p className="px-2.5 pb-1.5 text-[12.5px] text-ink-muted">{t("header.noNotifications")}</p>}
+              {notes?.notifications.slice(0, 4).map((n) => (
+                <Dropdown.Item key={n.id} asChild className={menuItem}>
+                  <Link href={n.link} className="!items-start"><Bell className="mt-0.5 size-4 shrink-0 text-ink-faint" /><span className="min-w-0"><span className={`line-clamp-1 ${n.read_at ? "text-ink-muted" : "font-medium"}`}>{n.title}</span><span className="line-clamp-1 text-[12px] text-ink-faint">{n.body}</span></span></Link>
+                </Dropdown.Item>
+              ))}
+              <Dropdown.Separator className="my-1 h-px bg-line" />
+              <Dropdown.Item className={menuItem} onSelect={(e) => { e.preventDefault(); toggleLang(); }}>
+                <Globe2 className="size-4 text-ink-faint" /><span className="flex-1">Language</span>
+                <span className="text-[12.5px]"><span className={lang === "en" ? "font-bold" : "text-ink-muted"}>EN</span> | <span className={lang === "ar" ? "font-bold" : "text-ink-muted"} lang="ar">العربية</span></span>
+              </Dropdown.Item>
+              {lang === "ar" && <div className="px-2.5 pb-1"><Badge tone="info">{t("arabicDraft")}</Badge></div>}
               <Dropdown.Separator className="my-1 h-px bg-line" />
               {s.roleSwitch.length > 0 && <>
               <Dropdown.Label className="eyebrow px-2.5 py-1">{t("header.switchRole")}</Dropdown.Label>
@@ -227,16 +219,16 @@ function SectorSelect() {
     router.refresh();
   }
   return (
-    <label className="relative hidden min-h-[46px] items-center gap-2.5 rounded-md border border-line bg-surface px-3.5 sm:flex">
-      <IndustryIcon industry={current} className="size-[18px] text-primary" />
+    <label className="relative hidden min-h-[40px] items-center gap-2 rounded-md border border-line bg-surface px-3 sm:flex">
+      <IndustryIcon industry={current} className="size-4 text-primary" />
       <span className="grid leading-tight">
-        <span className="text-[10.5px] text-ink-muted">{t("header.sector")}</span>
+        <span className="text-[10px] text-ink-muted">{t("header.sector")}</span>
         <select value={current} disabled={busy} onChange={(e) => change(e.target.value as IndustryKey)} aria-label={t("header.sector")} style={{ backgroundColor: "transparent" }}
-          className="max-w-[130px] appearance-none truncate border-0 bg-transparent pe-5 text-[13.5px] text-ink disabled:opacity-60 xl:max-w-[190px]" title={ind ? (lang === "ar" ? ind.nameAr : ind.name) : undefined}>
+          className="max-w-[130px] appearance-none truncate border-0 bg-transparent pe-5 text-[13px] text-ink disabled:opacity-60 xl:max-w-[190px]" title={ind ? (lang === "ar" ? ind.nameAr : ind.name) : undefined}>
           {INDUSTRIES.map((i) => <option key={i.key} value={i.key}>{lang === "ar" ? i.nameAr : i.name}</option>)}
         </select>
       </span>
-      <ChevronDown className="pointer-events-none absolute end-3 bottom-3 size-3.5 text-ink-faint" />
+      <ChevronDown className="pointer-events-none absolute end-3 bottom-2.5 size-3.5 text-ink-faint" />
     </label>
   );
 }
@@ -254,7 +246,7 @@ function ModelBadge() {
   const local = s.default_provider === "local" ? "local model" : s.default_provider === "deterministic" ? "no model" : s.default_provider;
   return (
     <Link href="/governance#ai" className="tap hidden items-center md:inline-flex" title="Model sovereignty controls">
-      <Badge tone={s.foreign_models_enabled ? "warn" : "ok"}>{s.foreign_models_enabled ? <Globe2 /> : <Lock />}<span className="hidden 2xl:inline">{s.foreign_models_enabled ? "Foreign models on" : "Foreign models off"} · </span>{s.foreign_models_enabled ? <span className="2xl:hidden">Foreign on</span> : null}<span className={s.foreign_models_enabled ? "hidden 2xl:inline" : "hidden lg:inline"}>{local}</span></Badge>
+      <Badge tone={s.foreign_models_enabled ? "warn" : "ok"} title={`${s.foreign_models_enabled ? "Foreign models on" : "Foreign models off"} · ${local}`}>{s.foreign_models_enabled ? <Globe2 /> : <Lock />}<span>{s.foreign_models_enabled ? "Foreign on" : "Sovereign"}</span></Badge>
     </Link>
   );
 }

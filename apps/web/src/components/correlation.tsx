@@ -37,14 +37,14 @@ export function CorrelationView() {
   if (!d) return msg ? <p role="alert" className="rounded-md border border-crit/40 bg-crit-soft p-3 text-crit">{msg}</p> : <div className="h-72 animate-pulse rounded-lg bg-surface-2" />;
   if (!d.findings.length) return <Panel className="p-6 text-ink-muted">No area has enough related events to correlate. A finding needs at least three events of two kinds in the same area within 72 hours.</Panel>;
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <p className="max-w-[75ch] text-[14px] text-ink-muted">Signals and voyage anomalies in the same area and 72-hour window are weighed against competing explanations. Each item is marked consistent, inconsistent or neutral for each explanation; the one with the fewest inconsistencies ranks first (Analysis of Competing Hypotheses). Rules are fixed and listed in the source package; no model is involved and nothing is acted on.</p>
       {msg && <p role="status" className="text-[13px] text-ink-muted">{msg}</p>}
       {d.findings.map((f) => (
         <Panel key={f.id}>
           <PanelHeader eyebrow={`${f.areaName} · ${formatDate(f.windowFrom, true)} – ${formatDate(f.windowTo, true)}`} title={f.title}
             actions={<><Badge tone={CONF_TONE[f.confidence]}>Confidence: {f.confidence}</Badge>{f.dataModes.map((m) => <ModeBadge key={m} mode={m} />)}<Button size="sm" variant="primary" onClick={() => download(f)}><Download />Download source package</Button></>} />
-          <div className="grid gap-5 p-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="grid gap-4 p-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="grid content-start gap-3">
               <div className="text-[13px] text-ink-faint">Competing hypotheses, ranked{f.hypotheses.filter((x) => x.rank === 1).length > 1 ? " (a tie means more evidence is needed to tell them apart)" : ""}</div>
               <ol className="grid gap-2">

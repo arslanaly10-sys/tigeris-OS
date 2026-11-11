@@ -41,7 +41,7 @@ export function SimulatorModule() {
   return (
     <>
       <PageHeader nav="nav.simulator" description="One shock, three orders of effect. Move a parameter and every dependent figure recomputes from the transmission graph; select any effect to see exactly how it was derived." />
-      <div className="grid gap-5">
+      <div className="grid gap-4">
         <Panel>
           <PanelHeader eyebrow="Simulate · parameters" title="Strait of Hormuz disruption" actions={<><DataLabel kind="MODELLED" /><span className="sys text-ink-faint" suppressHydrationWarning>{TRANSMISSION_VERSION} · {run.ms} ms</span></>} />
           <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -59,7 +59,7 @@ export function SimulatorModule() {
 
         <Panel className="overflow-hidden"><ShockScene shockKey={shockKey} durationDays={p.durationDays} nodes={nodes} edges={ILLUSTRATIVE_SHOCK.edges} label="Modelled" className="block h-auto w-full" /></Panel>
 
-        <div className="grid gap-5 xl:grid-cols-3">
+        <div className="grid gap-4 xl:grid-cols-3">
           <Panel>
             <PanelHeader eyebrow="Real-time impact (Kingdom)" title="Impact panel" actions={<DataLabel kind="MODELLED" />} />
             <dl className="grid gap-3 p-4">

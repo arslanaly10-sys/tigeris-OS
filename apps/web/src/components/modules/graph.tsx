@@ -60,7 +60,7 @@ export function GraphModule() {
         </div>
       )}
       <div className="mb-5"><GraphAsk /></div>
-      <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)_380px]">
+      <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)_380px]">
         <Panel className="flex max-h-[680px] flex-col">
           <div className="border-b border-line p-3">
             <label className="relative flex items-center">

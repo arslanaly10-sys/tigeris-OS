@@ -55,7 +55,7 @@ export function BoardroomModule() {
   return (
     <>
       <PageHeader nav="nav.boardroom" description="One screen for the board: the composite indices, value at stake and the state of the Hormuz response, all computed, each with its formula and label." />
-      <div className="grid gap-5">
+      <div className="grid gap-4">
         {/* Ticker */}
         <div className="overflow-hidden border-y border-line py-2" aria-label="Signal ticker">
           <motion.div className="eyebrow flex w-max gap-10 whitespace-nowrap" animate={reduce ? undefined : { x: ["0%", "-50%"] }} transition={{ duration: 60, repeat: Infinity, ease: "linear" }}>
@@ -69,7 +69,7 @@ export function BoardroomModule() {
           {cards.map((c) => (
             <Panel key={c.k} className="grid content-start gap-1 p-4">
               <span className="eyebrow">{c.k}</span>
-              <span className="tabular font-serif text-[36px] font-bold leading-none">{c.v}</span>
+              <span className="tabular font-serif text-[28px] font-bold leading-none">{c.v}</span>
               <span className="text-[12.5px] text-ink-muted">{c.formula} · {c.better}</span>
               <span><DataLabel kind="MODELLED" /></span>
             </Panel>
@@ -82,7 +82,7 @@ export function BoardroomModule() {
             <ul className="grid gap-1 text-[13px]">{lensRows.map(([a, b]) => <li key={a} className="flex justify-between gap-2"><span>{a}</span><span className="tabular">{b}</span></li>)}</ul>
           </Panel>
         </div>
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           <Panel className="overflow-hidden"><PanelHeader eyebrow="Operating loop" title="Where the institution is now" /><OperatingLoopScene activeStep={coord !== null && coord < 50 ? 8 : 7} chrome={false} className="block h-auto w-full" /></Panel>
           <Panel className="overflow-hidden"><PanelHeader eyebrow="L3 orchestration" title={coord !== null && coord < 50 ? "Coordination debt, resolved" : "Coordination debt, rising: no owner assigned"} actions={<DataLabel kind="MODELLED" />} />
             <CoordinationScene state={coord !== null && coord < 50 ? "resolved" : "fragmented"} chrome={false} className="block h-auto w-full" /></Panel>

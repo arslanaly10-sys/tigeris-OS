@@ -73,7 +73,7 @@ export function GovernorModule() {
   return (
     <>
       <PageHeader nav="nav.governor" description="Ask the leadership question. The answer is a decision brief built from the engine's facts, with first, second and third-order effects, options, the authority it needs and a 72-hour plan; it becomes a decision package for a named approver." />
-      <div className="grid gap-5">
+      <div className="grid gap-4">
         <Panel>
           <PanelHeader eyebrow="Governor question" title="A briefing, not a chat" actions={<span className="sys text-ink-faint">demo mode · cached briefs · numbers from the engine only</span>} />
           <div className="grid gap-3 p-4">
@@ -88,10 +88,10 @@ export function GovernorModule() {
         {b && (
           <Panel>
             <PanelHeader eyebrow="Decision brief" title={b.brief.question} actions={<><DataLabel kind="MODELLED" /><Badge tone="ok"><ShieldCheck />numbers checked against {Object.keys(b.facts).length} facts</Badge></>} />
-            <div className="grid gap-5 p-5">
+            <div className="grid gap-4 p-4">
               <p className="max-w-[90ch] font-serif text-[18px] leading-relaxed">{b.brief.situation}</p>
               {(section("What happens next?") || section("Show me the risks") || section("Where is the opportunity?")) && (
-                <div className="grid gap-5 lg:grid-cols-3"><Claims title="First order · shock" items={b.brief.effects.first} facts={b.facts} /><Claims title="Second order · exposure" items={b.brief.effects.second} facts={b.facts} /><Claims title="Third order · opportunity" items={b.brief.effects.third} facts={b.facts} /></div>
+                <div className="grid gap-4 lg:grid-cols-3"><Claims title="First order · shock" items={b.brief.effects.first} facts={b.facts} /><Claims title="Second order · exposure" items={b.brief.effects.second} facts={b.facts} /><Claims title="Third order · opportunity" items={b.brief.effects.third} facts={b.facts} /></div>
               )}
               {section("Stress-test this recommendation") && (
                 <div className="grid gap-2"><h4 className="eyebrow">Options</h4>
@@ -102,7 +102,7 @@ export function GovernorModule() {
                 <div><div className="eyebrow">Who has authority?</div><p className="text-[14px]">{b.brief.authorityRequired}</p></div>
                 <div><div className="eyebrow">What requires approval?</div><p className="text-[14px]">{b.brief.approvalThreshold}</p></div>
               </div>
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <div><h4 className="eyebrow mb-2">72-hour plan</h4><ol className="grid gap-1.5 text-[14px]">{b.brief.plan72h.map((p) => <li key={p.action} className="grid grid-cols-[48px_1fr] gap-2"><span className="tabular text-accent">+{p.dueHours}h</span><span>{p.action} <span className="text-ink-faint">· {p.owner}</span></span></li>)}</ol></div>
                 <div><h4 className="eyebrow mb-2">Five-year implications</h4><ul className="grid gap-1.5 text-[14px]">{b.brief.fiveYearImplications.map((x) => <li key={x}>{x}</li>)}</ul>
                   <h4 className="eyebrow mb-1 mt-4">Assumptions</h4><ul className="grid gap-1 text-[13px] text-ink-muted">{b.brief.assumptions.map((x) => <li key={x}>{x}</li>)}</ul></div>
@@ -113,10 +113,10 @@ export function GovernorModule() {
           </Panel>
         )}
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <Panel>
             <PanelHeader eyebrow="Decide · govern · coordinate" title="Decision packages" />
-            {!pkgs.length ? <p className="p-5 text-ink-muted">No package yet. Brief the question, then create a package.</p> : (
+            {!pkgs.length ? <p className="p-4 text-ink-muted">No package yet. Brief the question, then create a package.</p> : (
               <ul className="grid gap-3 p-4">{pkgs.map((p) => (
                 <li key={p.id} className="grid gap-2 border border-line p-3 text-[13.5px]">
                   <div className="flex flex-wrap items-center gap-2"><Gavel className="size-4 text-accent" /><span className="font-medium">{p.recommended}</span>

@@ -63,7 +63,7 @@ function LineageBody({ d }: { d: Lineage }) {
   const f = d.fact;
   const e = d.evidence;
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <div className="rounded-lg border border-line bg-surface-2 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <ClaimBadge claim={f.claim_class} />

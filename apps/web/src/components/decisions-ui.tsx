@@ -54,7 +54,7 @@ export function DecisionPanel({ caseKey, onChange }: { caseKey: string; onChange
   if (!d) return <div className="h-60 animate-pulse rounded-lg bg-surface-2" />;
   const live = d.decisions.find((x) => x.status === "pending" || x.status === "approved");
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Panel className="flex flex-wrap items-center gap-3 p-3 text-[13px] text-ink-muted"><Gavel className="size-4 text-accent" />Every step below is checked by the active policy (v{d.policy.version}, hash {d.policy.hash}) on the server. Decisions create handoff tasks only; nothing executes from TIGERIS.</Panel>
       {!live && <RecordDecision caseKey={caseKey} data={d} onDone={refresh} />}
       {d.decisions.map((x) => <DecisionCard key={x.id} d={x} onDone={refresh} />)}
@@ -72,7 +72,7 @@ function RecordDecision({ caseKey, data, onDone }: { caseKey: string; data: Deci
   const [route, setRoute] = useState<string>("committee");
   useUnsavedWarning(rationale.trim().length > 0);
   const [res, setRes] = useState<{ ok: boolean; message: string; trace?: RuleTrace[] } | null>(null);
-  if (!data.options.length) return <Panel className="p-5 text-ink-muted">No ranked options yet. Run the agent analysis first; a decision is always taken on one option.</Panel>;
+  if (!data.options.length) return <Panel className="p-4 text-ink-muted">No ranked options yet. Run the agent analysis first; a decision is always taken on one option.</Panel>;
   const o = data.options.find((x) => x.id === opt)!;
   async function submit() {
     const r = await api<{ decisionStatus: string; required: number; handoffs: number; envelope: string | null }>(`/cases/${caseKey}/decisions`, { json: { recommendationId: opt, outcome, rationale, ...(outcome === "approve" && route !== "committee" ? { envelopeId: route } : {}) } });

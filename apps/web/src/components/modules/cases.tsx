@@ -123,7 +123,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 max-w-3xl">
-            <h1 className="text-[30px] font-medium leading-tight">{c.title}</h1>
+            <h1 className="text-[26px] font-medium leading-tight">{c.title}</h1>
             <p className="mt-1 max-w-[46ch] text-ink-muted">{c.objective}</p>
           </div>
           <div className="flex flex-wrap gap-1.5"><Badge>{DEPTH_LABEL[c.depth]}</Badge><Badge tone="warn">{c.sensitivity}</Badge><Badge>v{c.version}</Badge></div>
@@ -142,13 +142,13 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
       <CaseTabs tab={tab} onOpen={openTab} label={(t) => `${tr(`case.tab.${t}` as I18nKey)}${t === "Discussion" && d.comments.length ? ` (${d.comments.length})` : ""}`} />
 
       {tab === "Situation" && (
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <Panel className="grid gap-4 p-5 text-[14px]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <Panel className="grid gap-4 p-4 text-[14px]">
             <div><div className="eyebrow mb-1 text-ink-faint">What changed</div><p className="max-w-[48ch]">{c.situation}</p></div>
             <div><div className="eyebrow mb-1 text-ink-faint">Why it matters</div><p className="max-w-[48ch]">{c.why_it_matters}</p></div>
             {c.open_questions.length > 0 && <div><div className="eyebrow mb-1 text-ink-faint">Unresolved questions</div><ul className="grid list-disc gap-1 ps-5">{c.open_questions.map((q) => <li key={q}>{q}</li>)}</ul></div>}
           </Panel>
-          <div className="grid h-fit gap-5">
+          <div className="grid h-fit gap-4">
             <Panel>
               <PanelHeader eyebrow="Signals" title="What raised this case" />
               {d.signals.length === 0 && <p className="p-4 text-[13px] text-ink-muted">Opened without a signal (requested directly).</p>}
@@ -179,7 +179,7 @@ export function CaseWorkspace({ caseKey }: { caseKey: string }) {
       )}
 
       {tab === "Impact graph" && (
-        <Panel className="p-5">
+        <Panel className="p-4">
           {d.impact ? <PathList paths={d.impact} onSelect={(k) => (window.location.href = `/graph?focus=${encodeURIComponent(k)}`)} /> : <p className="text-ink-muted">No origin entity in scope.</p>}
         </Panel>
       )}
@@ -264,7 +264,7 @@ function Discussion({ d, onDone }: { d: CaseDetail; onDone: () => void }) {
     setBody(""); setMentions([]); onDone();
   }
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
       <Panel>
         <PanelHeader eyebrow="Discussion" title="Comments" />
         {d.comments.length === 0 && <p className="p-4 text-[13px] text-ink-muted">No comments yet.</p>}

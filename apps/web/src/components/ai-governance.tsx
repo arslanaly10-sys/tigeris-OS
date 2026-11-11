@@ -54,10 +54,10 @@ export function AiGovernance() {
   }
   const totals = (usage?.byProvider ?? []).reduce((t, r) => ({ calls: t.calls + (r.outcome === "ok" ? r.calls : 0), cached: t.cached + (r.outcome === "cached" ? r.calls : 0), blocked: t.blocked + (r.outcome === "blocked" ? r.calls : 0), tokens: t.tokens + r.tokens_in + r.tokens_out, cost: t.cost + r.cost_usd, ms: t.ms + r.ms }), { calls: 0, cached: 0, blocked: 0, tokens: 0, cost: 0, ms: 0 });
   return (
-    <section id="ai" className="mt-5 grid gap-5" aria-labelledby="ai-heading">
+    <section id="ai" className="mt-5 grid gap-4" aria-labelledby="ai-heading">
       <h2 id="ai-heading" className="text-[20px] font-medium">AI models and agents</h2>
-      <Panel className={cn("p-5", s.foreign_models_enabled ? "border-warn/50" : "border-ok/40")}>
-        <div className="flex flex-wrap items-center gap-5">
+      <Panel className={cn("p-4", s.foreign_models_enabled ? "border-warn/50" : "border-ok/40")}>
+        <div className="flex flex-wrap items-center gap-4">
           <div className={cn("grid size-14 place-items-center rounded-full border-2", s.foreign_models_enabled ? "border-warn text-warn" : "border-ok text-ok")}>{s.foreign_models_enabled ? <Globe2 className="size-7" /> : <Lock className="size-7" />}</div>
           {/* At least 16rem (or the full row) so on a phone the text wraps below the icon instead of shrinking to nothing. */}
           <div className="min-w-[min(100%,16rem)] flex-1">

@@ -26,7 +26,7 @@ export function Administration() {
       )}
       {!data && !denied && <div className="h-48 animate-pulse rounded-lg bg-surface-2" />}
       {data && (
-        <div className="grid gap-5">
+        <div className="grid gap-4">
           <Panel>
             <PanelHeader eyebrow="Directory" title="People and roles" actions={<Badge className="tabular">{data.people.length} people · {data.divisions.length} divisions</Badge>} />
             <div className="overflow-x-auto">

@@ -63,7 +63,7 @@ export function SignalsModule() {
   return (
     <>
       <PageHeader nav="nav.signals" description="Things that may need attention, with why each was surfaced and how confident the system is. Simulated and synthetic signals are labelled on every screen." />
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Panel>
           <PanelHeader eyebrow="Queue" title="Signals" actions={
             <select id="signal-filter" aria-label="Filter by status" value={filter} onChange={(e) => setFilter(e.target.value)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-[13px]">
@@ -157,7 +157,7 @@ function SignalDrawer({ id, onClose }: { id: string | null; onClose: () => void 
   return (
     <Drawer open={!!id} onClose={onClose} eyebrow="Signal" title={d?.signal.title ?? "Loading"}>
       {!d ? <div className="h-64 animate-pulse rounded bg-surface-2" /> : (
-        <div className="grid gap-5 text-[13px]">
+        <div className="grid gap-4 text-[13px]">
           <div className="flex flex-wrap gap-1.5"><Badge tone={URGENCY_TONE[d.signal.urgency]}>{d.signal.urgency}</Badge><ModeBadge mode={d.signal.data_mode} /><Badge>{industryName(d.signal.domain)}</Badge><Badge>{d.signal.status.replace("_", " ")}</Badge></div>
           <p>{d.signal.summary}</p>
           <div className="rounded-md border border-line bg-surface-2 p-3"><div className="mb-1 font-medium">Why this was surfaced</div><p className="text-ink-muted">{d.signal.why_surfaced}</p></div>

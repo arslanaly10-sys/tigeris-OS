@@ -60,7 +60,7 @@ export default function ScenesPage() {
           <Wordmark />
           <span className="eyebrow">Live motion scenes · gallery</span>
         </header>
-        <main className="grid gap-5 px-6 py-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <main className="grid gap-4 px-6 py-6 xl:grid-cols-[280px_minmax(0,1fr)]">
           <nav aria-label="Scenes" className="grid content-start gap-1">
             {SCENES.map((x) => (
               <button key={x.n} type="button" onClick={() => { setActive(x.n); setCompare(false); setPlayKey((k) => k + 1); }} aria-current={x.n === active}

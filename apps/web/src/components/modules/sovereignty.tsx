@@ -74,9 +74,9 @@ function Stack({ d, ar }: { d: Sovereignty; ar: boolean }) {
     return () => mm.revert();
   }, { scope: root });
   return (
-    <div ref={root} className="grid gap-5">
-      <Panel className="flex flex-wrap items-center gap-x-8 gap-y-3 p-5">
-        <div><div className="text-[13px] text-ink-muted">Layers fully sovereign</div><div className="text-[34px] font-medium tabular leading-tight">{d.summary.sovereign} <span className="text-[18px] text-ink-faint">of {d.layers.length}</span></div></div>
+    <div ref={root} className="grid gap-4">
+      <Panel className="flex flex-wrap items-center gap-x-8 gap-y-3 p-4">
+        <div><div className="text-[13px] text-ink-muted">Layers fully sovereign</div><div className="text-[28px] font-medium tabular leading-tight">{d.summary.sovereign} <span className="text-[18px] text-ink-faint">of {d.layers.length}</span></div></div>
         <div className="flex flex-wrap gap-2">
           {d.summary.partial > 0 && <Badge tone="warn"><AlertTriangle />{d.summary.partial} partly sovereign</Badge>}
           {d.summary.atRisk > 0 && <Badge tone="crit"><ShieldAlert />{d.summary.atRisk} at risk</Badge>}
@@ -84,7 +84,7 @@ function Stack({ d, ar }: { d: Sovereignty; ar: boolean }) {
         </div>
         <p className="max-w-[60ch] text-[14px] text-ink-muted">A layer is sovereign when every check passes. Planned items keep a layer partly sovereign until the pilot delivers them.</p>
       </Panel>
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {d.layers.map((l, i) => {
           const Icon = LAYER_ICON[l.key] ?? Layers3;
           const st = LAYER_STATUS[l.status];
@@ -92,7 +92,7 @@ function Stack({ d, ar }: { d: Sovereignty; ar: boolean }) {
             <Panel key={l.key} id={`layer-${l.key}`} data-layer>
               <PanelHeader eyebrow={`Layer ${i + 1}`} title={<span className="flex items-center gap-2"><Icon className="size-4 text-accent" />{ar ? LAYER_AR[l.key] ?? l.name : l.name}</span>} actions={<Badge tone={st.tone}><st.Icon />{ar ? st.ar : st.label}</Badge>} />
               <p className="px-5 pt-4 text-[14px] text-ink-muted">{l.question}</p>
-              <ul className="grid gap-3 p-5">
+              <ul className="grid gap-3 p-4">
                 {l.checks.map((c) => {
                   const k = CHECK[c.status];
                   return (
@@ -113,7 +113,7 @@ function Stack({ d, ar }: { d: Sovereignty; ar: boolean }) {
 
 function Keys({ d }: { d: Sovereignty }) {
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Panel>
         <PanelHeader eyebrow="In use now, checked live" title="Keys and cryptography inventory" actions={<Badge>{d.keys.length} items</Badge>} />
         <div className="overflow-x-auto">
@@ -135,11 +135,11 @@ function Keys({ d }: { d: Sovereignty }) {
         </div>
         <p className="border-t border-line px-4 py-3 text-[13px] text-ink-muted">Hashes (SHA-256) stay sound against quantum computers at their current length. The Ed25519 package signature is the one item to migrate; the plan is below.</p>
       </Panel>
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {d.planned.map((p) => (
           <Panel key={p.name}>
             <PanelHeader eyebrow="Planned for the pilot" title={p.name} actions={<Badge><Clock3 />planned</Badge>} />
-            <div className="grid gap-3 p-5 text-[13px]">
+            <div className="grid gap-3 p-4 text-[13px]">
               <p className="text-[14px] text-ink-muted">{p.what}</p>
               <div><div className="mb-1 text-ink-faint">What it needs</div><ul className="list-disc ps-5 text-ink">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul></div>
             </div>

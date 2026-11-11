@@ -70,7 +70,7 @@ export function GapReportModule() {
       {!list ? <div className="h-40 animate-pulse bg-surface-2" /> : !list.length ? (
         <Panel className="p-6 text-ink-muted">No engagement yet. Start one from the <Link className="text-accent underline" href="/briefing">briefing intake</Link>.</Panel>
       ) : !d ? <div className="h-40 animate-pulse bg-surface-2" /> : (
-        <div className="grid gap-5">
+        <div className="grid gap-4">
           <div className="flex flex-wrap items-center gap-3 text-[13px]">
             <label className="flex items-center gap-2">Engagement
               <select value={id ?? ""} onChange={(e) => setId(e.target.value)} className="h-9 border border-line bg-surface px-2">{list.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</select></label>
@@ -85,7 +85,7 @@ export function GapReportModule() {
             {[["CSAI · Compound Sovereign Advantage", d.diagnosis.indices.csai, "100 minus the weighted mean of all eight gaps", true], ["Coordination debt", d.diagnosis.indices.coordinationDebt, "Gap 1 score", false], ["Cognitive debt", d.diagnosis.indices.cognitiveDebt, "Mean of governance velocity, memory and drift", false]].map(([k, v, sub, good]) => (
               <Panel key={k as string} className="grid gap-1 p-4">
                 <span className="eyebrow">{k as string}</span>
-                <span className="tabular font-serif text-[40px] font-bold leading-none">{num(v as number | null)}</span>
+                <span className="tabular font-serif text-[28px] font-bold leading-none">{num(v as number | null)}</span>
                 <span className="text-[13px] text-ink-muted">{sub as string} · {good ? "higher is better" : "lower is better"}</span>
                 <span><DataLabel kind="MODELLED" /></span>
               </Panel>
@@ -123,7 +123,7 @@ export function GapReportModule() {
           </Panel>
 
           {/* Value at stake */}
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
             <Panel>
               <PanelHeader eyebrow="Quantify · value at stake" title="Percentage points of the mandate, capped by the ceiling" actions={<DataLabel kind="MODELLED" />} />
               <div className="grid gap-4 p-4">

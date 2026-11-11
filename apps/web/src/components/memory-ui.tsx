@@ -76,8 +76,8 @@ export function MemoryModule() {
     <>
       <PageHeader nav="nav.memory" description="Precedents and the institution's own approved case records, searchable by keyword and by meaning. Meaning search uses a small embedding model on this machine; nothing leaves it. Every entry says whether it is an illustrative summary, a synthetic record or the institution's own." />
       <ScatteredMemory />
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="grid content-start gap-5">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid content-start gap-4">
           <Panel className="p-4">
             <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); search(q); }}>
               <div className="relative min-w-[260px] flex-1"><Search className="absolute start-2.5 top-2.5 size-4 text-ink-faint" /><input autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search memory" placeholder="e.g. What happened when tankers were attacked near the strait?…" className="h-9 w-full rounded-md border border-line bg-surface-2 ps-8 pe-3 text-[13.5px]" /></div>
@@ -88,7 +88,7 @@ export function MemoryModule() {
           </Panel>
           {res && <Panel className="p-4"><PrecedentList hits={res.hits} semantic={res.semantic} empty="Nothing in memory matches." onOpen={async (id) => { const r = await api<Detail>(`/memory/${id}`); if (r.ok) setDetail(r.data); }} /></Panel>}
         </div>
-        <div className="grid content-start gap-5">
+        <div className="grid content-start gap-4">
           <Panel>
             <PanelHeader eyebrow="Library" title={`${total} approved entries`} />
             <ul className="grid gap-1 p-4 text-[13px]">
@@ -121,7 +121,7 @@ export function MemoryModule() {
       </div>
       <Drawer open={!!detail} onClose={() => setDetail(null)} eyebrow="Precedent" title={detail?.title ?? ""}>
         {detail && (
-          <div className="grid gap-3 p-5 text-[13px]">
+          <div className="grid gap-3 p-4 text-[13px]">
             <div className="flex flex-wrap gap-2"><Badge tone={CLAIM_TONE[detail.claim_class] ?? "neutral"}>{detail.claim_class}</Badge><Badge>{DOMAIN_LABEL[detail.domain] ?? detail.domain}</Badge><Badge>{detail.region}</Badge><Badge>{detail.period}</Badge></div>
             <p className="text-[13px] text-ink-faint">{detail.source_label}{detail.case_key ? ` · case ${detail.case_key}` : ""}</p>
             <p>{detail.summary}</p>

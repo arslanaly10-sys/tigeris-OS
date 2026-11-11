@@ -54,7 +54,7 @@ export function GovernanceAudit() {
   return (
     <>
       <PageHeader nav="nav.governance" description="Every sign-in, role switch, refused request and check is written to an append-only audit trail. Each event is hash-linked to the one before it, so any later change is detectable." />
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Panel>
           <PanelHeader eyebrow="Tamper evidence" title="Verify the audit chain" actions={<Button variant="primary" size="sm" onClick={runVerify} disabled={busy !== null}><Fingerprint />Verify now</Button>} />
           <div className="p-4 text-[13px]">

@@ -92,9 +92,9 @@ export function PolicyEditor() {
   useUnsavedWarning(dirty);
   const lines = source.split("\n").length;
   return (
-    <section className="mt-5 grid gap-5" aria-labelledby="policy-heading">
+    <section className="mt-5 grid gap-4" aria-labelledby="policy-heading">
       <h2 id="policy-heading" className="text-[20px] font-medium">Policy as code</h2>
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Panel>
           <PanelHeader eyebrow={viewing ? `Version ${viewing.version} · ${viewing.status}${dirty ? " · edited" : ""}` : "Policy"} title="Rules, approvals, redaction and tests" actions={v && <Badge tone={v.ok ? "ok" : "crit"}>{v.ok ? <CheckCircle2 /> : <XCircle />}{v.ok ? `${v.rules} rules compile` : `${v.errors.length} error(s)`}</Badge>} />
           <div className="grid gap-3 p-4">
@@ -113,7 +113,7 @@ export function PolicyEditor() {
             {msg && <p role="status" className={cn("text-[13px]", msg.ok ? "text-ok" : "text-warn")}>{msg.text}</p>}
           </div>
         </Panel>
-        <div className="grid content-start gap-5">
+        <div className="grid content-start gap-4">
           <Panel>
             <PanelHeader eyebrow="Tests" title={v ? `${v.tests.filter((t) => t.pass).length} of ${v.tests.length} pass` : "Tests"} actions={<FlaskConical className="size-4 text-accent" />} />
             <ul className="grid gap-1.5 p-4 text-[13px]">

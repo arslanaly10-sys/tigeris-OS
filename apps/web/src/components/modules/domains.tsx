@@ -23,7 +23,7 @@ export function DomainsModule() {
       {!rows && <div className="h-64 animate-pulse rounded-lg bg-surface-2" />}
       <div className="grid gap-4 md:grid-cols-2">
         {rows && [...rows].sort((a, b) => Number(b.key === lens) - Number(a.key === lens)).map((d) => (
-          <Panel key={d.key} className={cn("grid gap-3 p-5", d.key === lens && "border-primary/60")}>
+          <Panel key={d.key} className={cn("grid gap-3 p-4", d.key === lens && "border-primary/60")}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-md bg-surface-2 text-accent"><IndustryIcon industry={d.key} className="size-[18px]" /></span>

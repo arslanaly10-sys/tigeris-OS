@@ -30,7 +30,7 @@ export default function TrustPage() {
       <main className="mx-auto grid w-full max-w-[1100px] gap-6 px-4 py-8 sm:px-8">
         <section className="grid gap-3">
           <p className="eyebrow text-accent">Trust and security</p>
-          <h1 className="max-w-[26ch] text-[34px] font-medium leading-tight">Sovereign by construction, not by contract.</h1>
+          <h1 className="max-w-[26ch] text-[28px] font-medium leading-tight">Sovereign by construction, not by contract.</h1>
           <p className="max-w-[60ch] text-[16px] text-ink-muted">TIGERIS is built to run inside the institution's boundary, with the institution holding the data, the models and the keys. This page says what is in place today and what is planned, without rounding up.</p>
         </section>
         <div className="grid gap-4 sm:grid-cols-2">

@@ -34,7 +34,7 @@ export function ReportsModule() {
       <PageHeader nav="nav.reports" description="Case briefs, back-test results and the governance report. Each carries its classification; exports are checked against the active policy and recorded on the audit trail." />
       {err && <Panel role="alert" className="mb-4 border-crit/40 bg-crit-soft p-3 text-[13px] text-crit">{err}</Panel>}
       {!d ? <div className="h-60 animate-pulse rounded-lg bg-surface-2" /> : (
-        <div className="grid gap-5">
+        <div className="grid gap-4">
           <Panel>
             <PanelHeader eyebrow="Executive briefs" title="Latest brief per case" actions={<Badge className="tabular">{d.briefs.length}</Badge>} />
             {!d.briefs.length ? <p className="geo-pattern p-8 text-center text-ink-muted">No briefs yet. A brief is written each time the agent analysis runs on a case.</p> : (
@@ -54,7 +54,7 @@ export function ReportsModule() {
               </div>
             )}
           </Panel>
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <Panel>
               <PanelHeader eyebrow="Back-testing" title="Calibration reports" actions={<FlaskConical className="size-4 text-accent" />} />
               <ul className="grid gap-2 p-4 text-[13px]">
@@ -129,7 +129,7 @@ export function ArchitecturePage() {
           <text x="20" y="276" fontSize="12" fill="var(--ink-muted)">Foreign models: {st ? (st.foreignModels ? "allowed by policy" : "cut") : "…"} · Outbound access: {st ? (st.outbound ? "allowed" : "off") : "…"} · Local model and embeddings run on this host</text>
         </svg>
       </Panel>
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
+      <div className="mt-5 grid gap-4 lg:grid-cols-3">
         <Panel className="p-4 text-[13px]">
           <h3 className="mb-2 font-medium">Built on</h3>
           <ul className="grid gap-1 text-ink-muted">

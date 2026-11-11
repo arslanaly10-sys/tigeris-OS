@@ -81,8 +81,8 @@ export function CommandCentre() {
   return (
     <>
       <PageHeader nav="nav.command-centre" description={`Good to see you, ${s.principal.name.split(" ")[0]}. This is where items that need your attention will appear, with the reason each one is surfaced.`} />
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-        <div className="grid content-start gap-5">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <div className="grid content-start gap-4">
           <Panel>
             <PanelHeader eyebrow={t("cc.attentionEyebrow")} title={t("cc.attention")} />
             <AttentionQueue />

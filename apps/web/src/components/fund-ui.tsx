@@ -69,7 +69,7 @@ function Screening({ selected, onSelect, onMemo }: { selected: string; onSelect:
   const screens = DEALS.map((d) => screenDeal(d));
   const s = screens.find((x) => x.deal.key === selected)!;
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <Panel>
         <PanelHeader eyebrow="Pipeline" title={`${DEALS.length} deals screened against the mandate`} />
         <ul className="grid">
@@ -145,7 +145,7 @@ function Memo({ dealKey, onSelect }: { dealKey: string; onSelect: (k: string) =>
 function Monitoring() {
   const f = fundSummary();
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[["Portfolio value", usd(f.value), `${f.qoq >= 0 ? "+" : ""}${pct(f.qoq)} this quarter`], ["Invested", usd(f.invested), `${f.moic.toFixed(2)}x multiple on invested capital`], ["In breach", String(f.breaches.length), f.breaches.map((x) => x.holding.name).join(", ") || "none"], ["On watch", String(f.watch.length), f.watch.map((x) => x.holding.name).join(", ") || "none"]].map(([k, v, sub]) => (
           <Panel key={k} className="p-4"><div className="text-[13px] text-ink-faint">{k}</div><div className="tabular text-[24px] font-medium">{v}</div><div className="text-[13px] text-ink-muted">{sub}</div></Panel>

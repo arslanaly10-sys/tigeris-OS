@@ -24,14 +24,14 @@ export function About() {
       <PageHeader nav="nav.about" description={t("product.descriptor")} />
       <div className="geo-pattern rounded-lg border border-line bg-surface px-6 py-10 sm:px-10">
         <p className="eyebrow text-accent">TIGERIS</p>
-        <p className="mt-3 max-w-[30ch] font-serif text-[30px] leading-tight">{t("product.tagline")}</p>
+        <p className="mt-3 max-w-[30ch] font-serif text-[24px] leading-tight">{t("product.tagline")}</p>
       </div>
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <Panel className="p-5">
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <Panel className="p-4">
           <h2 className="text-[18px] font-medium">What it does</h2>
           <ul className="mt-3 grid gap-2.5 text-[14px] text-ink">{DOES.map((d) => <li key={d}>{d}</li>)}</ul>
         </Panel>
-        <Panel className="p-5">
+        <Panel className="p-4">
           <h2 className="text-[18px] font-medium">What this demonstration does not claim</h2>
           <ul className="mt-3 grid gap-2.5 text-[14px] text-ink">{DOES_NOT.map((d) => <li key={d}>{d}</li>)}</ul>
           <p className="mt-4 text-[13px] text-ink-faint">Institutions and people in this build are fictional. Target institutions are referred to by buyer category only.</p>

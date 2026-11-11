@@ -107,7 +107,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
   const cm = CASCADE_METRICS.find((m) => m.key === cascadeMetric)!;
 
   return (
-    <div className="grid gap-5">
+    <div className="grid gap-4">
       <Panel>
         <PanelHeader eyebrow={`Template: ${template.replace("_", " ")} · ${tpl.model_version}`} title="Drivers" actions={
           <div className="flex flex-wrap gap-2">
@@ -199,7 +199,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
             <p className="border-t border-line px-4 py-2.5 text-[13px] text-ink-muted">Bars show the P10–P90 range from the Monte Carlo draws; the tick is the deterministic value. Horizons are comparison windows, not forecasts. Click any value to see its formula, facts and assumptions.</p>
           </Panel>
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             <Panel>
               <PanelHeader eyebrow="Day by day to day 150" title="Cascade" actions={
                 <select id="cascade-metric" aria-label="Cascade measure" value={cascadeMetric} onChange={(e) => setCascadeMetric(e.target.value as typeof cascadeMetric)} className="h-8 rounded-md border border-line bg-surface-2 px-2 text-[13px]">
@@ -221,7 +221,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
                   {runs.map((r, i) => (
                     <div key={r.id} className="grid gap-0.5">
                       <SeriesKey index={i} label={r.name} className="text-[13px] text-ink-muted" />
-                      <span className="font-serif text-[32px] leading-none tabular">{num(r.resilience.score, 0)}<span className="text-[14px] text-ink-faint"> / 100</span></span>
+                      <span className="font-serif text-[26px] leading-none tabular">{num(r.resilience.score, 0)}<span className="text-[14px] text-ink-faint"> / 100</span></span>
                     </div>
                   ))}
                 </div>
@@ -238,7 +238,7 @@ export function ScenarioWorkspace({ caseKey }: { caseKey: string }) {
             </Panel>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <Panel>
               <PanelHeader eyebrow={`${runs[0]!.name} · 90-day value at risk`} title="What moves the result most" />
               <div className="p-4">
@@ -278,7 +278,7 @@ export function ResultLineage({ id, onClose }: { id: string | null; onClose: () 
   return (
     <Drawer open={!!id} onClose={onClose} eyebrow="Scenario lineage" title={d ? `${d.result.label} · ${d.result.horizon}` : "Loading"}>
       {!d ? <div className="h-64 animate-pulse rounded bg-surface-2" /> : (
-        <div className="grid gap-5 text-[13px]">
+        <div className="grid gap-4 text-[13px]">
           <div className="rounded-lg border border-line bg-surface-2 p-4">
             <Badge>Calculated</Badge>
             <div className="mt-2 font-serif text-[28px] tabular">{fmtUnit(d.result.value, d.result.unit)}</div>

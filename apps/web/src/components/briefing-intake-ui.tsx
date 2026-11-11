@@ -48,11 +48,11 @@ export function BriefingIntakeModule() {
   return (
     <>
       <PageHeader nav="nav.briefing" description="Private institutional briefing intake. The fields follow the client's briefing form; the stated challenge and areas of interest seed the diagnosis, and the approximate mandate feeds the value model." />
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Panel>
           <PanelHeader eyebrow={WELCOME.eyebrow} title="Request a private briefing"
             actions={can("diagnostic.run") && <Button size="sm" variant="ghost" type="button" onClick={() => setF(FUND_B)}><Sparkles />Fill a synthetic example</Button>} />
-          <form onSubmit={submit} className="grid gap-6 p-5">
+          <form onSubmit={submit} className="grid gap-5 p-4">
             <fieldset className="grid gap-3 sm:grid-cols-2"><legend className="eyebrow mb-2">Executive identity</legend>
               <L label="Full name"><input required className={field} value={f.fullName} onChange={(e) => setF({ ...f, fullName: e.target.value })} /></L>
               <L label="Official designation or title"><input required className={field} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></L>
@@ -85,7 +85,7 @@ export function BriefingIntakeModule() {
             </div>
           </form>
         </Panel>
-        <div className="grid content-start gap-5">
+        <div className="grid content-start gap-4">
           <Panel>
             <PanelHeader eyebrow="Engagements" title="Briefing → workshop → report → blueprint → pilot" />
             {!list ? <div className="m-4 h-20 animate-pulse bg-surface-2" /> : (
