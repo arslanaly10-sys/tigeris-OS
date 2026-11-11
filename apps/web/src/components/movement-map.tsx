@@ -74,6 +74,10 @@ const LABELS: Array<[string, number, number, boolean?]> = [
   ["Iran", 54.5, 30.5], ["Iraq", 44.5, 32.5], ["Yemen", 47.5, 15.6], ["Strait of Hormuz", 56.55, 26.85], ["Bab el-Mandeb", 43.4, 12.2], ["Red Sea", 38.6, 20.0], ["Arabian Gulf", 51.4, 27.3], ["Gulf of Oman", 58.3, 24.5], ["Arabian Sea", 62.5, 17.5],
 ];
 
+/** Dash patterns stepped each frame so a dashed line appears to flow (MapLibre cannot animate a dash offset). */
+const DASH_SEQ: number[][] = [[0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0], [0, 0.5, 3, 3.5], [0, 1, 3, 3], [0, 1.5, 3, 2.5], [0, 2, 3, 2], [0, 2.5, 3, 1.5], [0, 3, 3, 1], [0, 3.5, 3, 0.5]];
+/** Simulated minutes sampled behind each ship for its wake (newest last in the drawn line). */
+const WAKE_MIN = [0, 30, 60, 90, 120, 150, 180];
 const fc = (features: GeoJSON.Feature[]): GeoJSON.FeatureCollection => ({ type: "FeatureCollection", features });
 const line = (points: [number, number][], props: Record<string, unknown>): GeoJSON.Feature => ({ type: "Feature", properties: props, geometry: { type: "LineString", coordinates: points } });
 
@@ -128,13 +132,14 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   const ripples = useRef<maplibregl.Marker[]>([]);
   const [ready, setReady] = useState(false);
   const [data, setData] = useState<{ entities: MapEntity[]; signals: MapSignal[] } | null>(null);
-  const [mode, setMode] = useState<"replay" | "live">("live");
+  // Opens in replay at 60× from the current Riyadh minute so the simulated traffic visibly moves; "Live clock" keeps the wall clock.
+  const [mode, setMode] = useState<"replay" | "live">("replay");
   const [minutes, setMinutes] = useState(() => riyadhMinutes(Date.now()));
   const [playing, setPlaying] = useState(true);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const reduced = useReducedMotion();
   const lastFrame = useRef(0);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(2);
   const [scenario, setScenario] = useState<Scenario>("baseline");
   // Industry lens: the industry's own layers start switched on, plus the context layers; the rest are one click away.
   const session = useSession();
@@ -163,11 +168,20 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
   useEffect(() => { api<ObservedAirData>("/map/observed-aircraft").then((r) => r.ok && setObservedAir(r.data)); }, []);
   useEffect(() => { api<AnomalyData>("/anomalies").then((r) => r.ok && setAnomalies(r.data)); }, []);
 
-  // Clock on Motion's frame loop (about 12 frames a second): live follows the wall clock in Riyadh time and
+  // Clock on Motion's frame loop (about 15 frames a second): live follows the wall clock in Riyadh time and
   // moves ships smoothly between seconds; replay advances by the chosen speed. Reduced motion: one step a second.
   useAnimationFrame((t, delta) => {
-    const step = reduced ? 1000 : 80;
+    const step = reduced ? 1000 : 66;
     if (t - lastFrame.current < step) return;
+    // Living layers: sea lanes and pipelines flow (cycling dash pattern), chokepoints pulse. Skipped under reduced motion.
+    const mm = map.current;
+    if (!reduced && mm && ready) {
+      const k = Math.floor(t / 90) % DASH_SEQ.length;
+      if (mm.getLayer("lanes-flow")) mm.setPaintProperty("lanes-flow", "line-dasharray", DASH_SEQ[k]);
+      if (mm.getLayer("pipes-flow")) mm.setPaintProperty("pipes-flow", "line-dasharray", DASH_SEQ[(k + 7) % DASH_SEQ.length]);
+      const ph = (t % 2400) / 2400;
+      if (mm.getLayer("choke-pulse")) { mm.setPaintProperty("choke-pulse", "circle-radius", 8 + ph * 26); mm.setPaintProperty("choke-pulse", "circle-stroke-opacity", 0.75 * (1 - ph)); }
+    }
     const dt = t - lastFrame.current;
     lastFrame.current = t;
     const now = Date.now();
@@ -218,6 +232,14 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       m.addLayer({ id: "roads", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "road"], paint: { "line-color": "#a08a6a", "line-width": 1.3, "line-dasharray": [2, 1.5] } });
       m.addLayer({ id: "air-routes", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "air"], paint: { "line-color": "#6e519d", "line-width": 1, "line-opacity": 0.3, "line-dasharray": [1, 3] } });
       m.addLayer({ id: "pipelines", type: "line", source: "pipelines", paint: { "line-color": "#c9a45c", "line-width": 2, "line-dasharray": [4, 2] } });
+      m.addLayer({ id: "lanes-flow", type: "line", source: "lanes", filter: ["==", ["get", "kind"], "sea"], paint: { "line-color": "#fffaf0", "line-width": 1.6, "line-opacity": 0.85, "line-dasharray": DASH_SEQ[0]! } });
+      m.addLayer({ id: "pipes-flow", type: "line", source: "pipelines", paint: { "line-color": "#7a5822", "line-width": 1.4, "line-opacity": 0.7, "line-dasharray": DASH_SEQ[0]! } });
+      m.addSource("wakes", { type: "geojson", data: fc([]), lineMetrics: true });
+      m.addLayer({ id: "wakes", type: "line", source: "wakes", layout: { "line-cap": "round", "line-join": "round" }, paint: {
+        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 1.4, 6, 2.4, 9, 4],
+        "line-gradient": ["interpolate", ["linear"], ["line-progress"], 0, "rgba(255,255,255,0)", 0.6, "rgba(255,255,255,0.55)", 1, "rgba(255,255,255,0.95)"],
+      } });
+      m.addLayer({ id: "choke-pulse", type: "circle", source: "assets", filter: ["==", ["get", "layer"], "chokepoints"], paint: { "circle-radius": 10, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#9a3328", "circle-stroke-width": 1.6, "circle-stroke-opacity": 0.5 } });
       m.addLayer({ id: "assets", type: "symbol", source: "assets", layout: {
         "icon-image": ["concat", "infra-", ["get", "layer"]], "icon-allow-overlap": true, "icon-ignore-placement": true,
         "icon-size": ["interpolate", ["linear"], ["zoom"], 3, ["case", ["==", ["get", "layer"], "chokepoints"], 0.9, 0.6], 8, ["case", ["==", ["get", "layer"], "chokepoints"], 1.3, 1.05]],
@@ -277,7 +299,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     const m = map.current;
     if (!ready || !m) return;
     const vis = (id: string, show: boolean) => m.getLayer(id) && m.setLayoutProperty(id, "visibility", show ? "visible" : "none");
-    vis("lanes", on.has("lanes")); vis("cape", on.has("lanes")); vis("roads", on.has("roads")); vis("pipelines", on.has("pipelines")); vis("borders", on.has("borders")); vis("air-routes", on.has("air_routes"));
+    vis("lanes", on.has("lanes")); vis("lanes-flow", on.has("lanes") && !reduced); vis("cape", on.has("lanes")); vis("pipes-flow", on.has("pipelines") && !reduced); vis("wakes", on.has("vessels")); vis("choke-pulse", on.has("chokepoints") && !reduced); vis("roads", on.has("roads")); vis("pipelines", on.has("pipelines")); vis("borders", on.has("borders")); vis("air-routes", on.has("air_routes"));
     const assetLayers = (["ports", "refineries", "desal", "power", "airports", "chokepoints"] as LayerKey[]).filter((k) => on.has(k));
     m.setFilter("assets", ["in", ["get", "layer"], ["literal", assetLayers]]);
     const kinds = [on.has("vessels") ? "vessel" : "", on.has("trucks") ? "truck" : "", on.has("aircraft") ? "aircraft" : ""].filter(Boolean);
@@ -293,7 +315,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
       el.removeAttribute("role"); el.removeAttribute("tabindex"); el.removeAttribute("aria-label"); el.setAttribute("aria-hidden", "true");
       return mk;
     }) : [];
-  }, [ready, on]);
+  }, [ready, on, reduced]);
 
   // Signal ripples (one bounded wave, then a held ring; reduced motion shows the ring only).
   useEffect(() => {
@@ -319,6 +341,27 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     if (!ready || !m) return;
     (m.getSource("movers") as GeoJSONSource).setData(fc(movers.map((p) => ({ type: "Feature", properties: { id: p.id, name: p.name, kind: p.kind, type: p.type, status: p.status, bearing: p.bearing, sub: `${moverLabel(p)} · ${p.speedLabel} · synthetic` }, geometry: { type: "Point", coordinates: p.lngLat } }))));
   }, [ready, movers]);
+
+  // Wakes: each simulated ship under way trails its own last three simulated hours along its lane, fading out.
+  useEffect(() => {
+    const m = map.current;
+    if (!ready || !m || !on.has("vessels")) return;
+    const back = WAKE_MIN.map((k) => positionsAt(fleet, [], minutes - k, scenario));
+    const feats: GeoJSON.Feature[] = [];
+    back[0]!.forEach((p, i) => {
+      if (p.status === "holding") return;
+      const pts: [number, number][] = [];
+      for (let j = back.length - 1; j >= 0; j--) {
+        const q = back[j]![i]!;
+        if (q.status === "holding" || q.lane !== p.lane) { pts.length = 0; continue; }
+        const last = pts[pts.length - 1];
+        if (last && Math.hypot(q.lngLat[0] - last[0], q.lngLat[1] - last[1]) > 1.2) pts.length = 0; // lane wrapped: start the wake again
+        pts.push(q.lngLat);
+      }
+      if (pts.length > 1) feats.push(line(pts, { id: p.id }));
+    });
+    (m.getSource("wakes") as GeoJSONSource).setData(fc(feats));
+  }, [ready, on, fleet, minutes, scenario]);
 
   // Real AIS tracks captured in the snapshot window, drawn as a faint trail behind each ship.
   useEffect(() => {
@@ -390,7 +433,7 @@ export function MovementMap({ compact = false, height }: { compact?: boolean; he
     <div className="grid gap-3">
       {/* Status strip: mode, time, data labels and key counts are always visible (MAP §2, §6). */}
       <div className="flex flex-wrap items-center gap-2 text-[13px]">
-        <Badge tone={mode === "live" ? "ok" : "info"} className="text-[13px] font-medium">{mode === "live" ? "Simulated live" : "Replay"}</Badge>
+        <Badge tone={mode === "live" ? "ok" : "info"} className="text-[13px] font-medium">{mode === "live" ? "Simulated live" : `Replay · ${SPEEDS[speed]!.label}${playing ? "" : " · paused"}`}</Badge>
         <Badge tone="gold" className="text-[13px] font-medium">Synthetic movement</Badge>
         {observed?.capture && <Badge tone="info" className="text-[13px] font-medium" title={observed.capture.summary ?? undefined}>Observed AIS · {observed.vessels.length} ships · {formatDate(observed.capture.retrievedAt, true)}</Badge>}
         {scenario !== "baseline" && <Badge tone="warn" className="text-[13px] font-medium">Scenario · {SCENARIOS.find((s) => s.key === scenario)!.label}</Badge>}
