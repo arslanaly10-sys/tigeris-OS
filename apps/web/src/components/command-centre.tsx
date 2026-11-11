@@ -11,6 +11,7 @@ import { usePrefs } from "./prefs";
 import { useSession } from "./session-context";
 import { AnimatePresence, motion } from "motion/react";
 import { CountUp, Stagger, StaggerItem, spring } from "./motion-kit";
+import { MapMotion } from "./cc-map-motion";
 
 const MotionLink = motion.create(Link);
 
@@ -244,8 +245,10 @@ function Body({ b, narrow }: { b: Block; narrow?: boolean }) {
             {b.legend && <div className="cc-legend" aria-label="Legend">{b.legend.map((l, i) => <div key={l.title} className={i === 0 && l.title.startsWith("All") ? "on" : ""}><Ic n={l.icon} />{tr(l.title)}</div>)}</div>}
             <button type="button" className="cc-map-img" onClick={() => ask({ title: b.title!, kind: "map", card: b.title! })} aria-label={`${tr(b.alt)}. ${tr("Open Movement Map")}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <motion.img src={b.img} alt={`${tr(b.alt)}. Illustrative, not live data.`} width={1000} height={Math.round(1000 / b.ratio)} loading="lazy"
-                initial={{ opacity: 0, scale: 1.08 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} whileHover={{ scale: 1.03 }} />
+              <motion.div className="cc-map-stage" initial={{ opacity: 0, scale: 1.08 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} whileHover={{ scale: 1.03 }}>
+                <img src={b.img} alt={`${tr(b.alt)}. Illustrative, not live data.`} width={1000} height={Math.round(1000 / b.ratio)} loading="lazy" />
+                <MapMotion img={b.img} />
+              </motion.div>
             </button>
             {b.sideList && <div className="cc-sidelist">{b.sideList.map((l) => <button key={l.title} type="button" onClick={() => ask({ title: l.title, kind: "data", card })}><Ic n={l.icon} /><span>{tr(l.title)}</span><small>— | {tr("Source not connected")}</small></button>)}</div>}
           </div>

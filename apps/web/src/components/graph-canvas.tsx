@@ -31,28 +31,59 @@ export function GraphCanvas({ nodes, edges, origin, onSelect, height = 520 }: { 
     const css = getComputedStyle(document.documentElement);
     const v = (t: string) => css.getPropertyValue(t).trim();
     cy.current?.destroy();
+    // Labels: the origin and the best-connected nodes keep theirs; the rest show on hover, so a dense neighbourhood stays legible.
+    const deg = new Map<string, number>();
+    for (const e of edges) { deg.set(e.source, (deg.get(e.source) ?? 0) + 1); deg.set(e.target, (deg.get(e.target) ?? 0) + 1); }
+    const keep = new Set([...nodes].sort((a, b) => (deg.get(b.id) ?? 0) - (deg.get(a.id) ?? 0)).slice(0, nodes.length > 24 ? 10 : nodes.length).map((n) => n.id));
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     cy.current = cytoscape({
       container: ref.current,
       elements: [
-        ...nodes.map((n) => ({ data: { id: n.id, key: n.key, label: n.name.length > 30 ? `${n.name.slice(0, 28)}…` : n.name, type: n.type, claim: n.claim_class, origin: n.id === origin ? 1 : 0 } })),
+        ...nodes.map((n) => ({ data: { id: n.id, key: n.key, label: n.name.length > 30 ? `${n.name.slice(0, 28)}…` : n.name, type: n.type, claim: n.claim_class, origin: n.id === origin ? 1 : 0, lab: n.id === origin || keep.has(n.id) ? 1 : 0 } })),
         ...edges.map((e) => ({ data: { id: e.id, source: e.source, target: e.target, label: e.predicate_label, cls: e.relationship_class } })),
       ],
       style: [
-        { selector: "node", style: { "background-color": v("--surface-3"), "border-width": 1.5, "border-color": v("--line-strong"), label: "data(label)", color: v("--ink"), "font-size": 9, "text-valign": "bottom", "text-margin-y": 4, width: 18, height: 18, "font-family": "Inter Variable, Arial, sans-serif", "text-outline-width": 2, "text-outline-color": v("--bg"), shape: (el: cytoscape.NodeSingular) => TYPE_SHAPE[el.data("type")] ?? "ellipse" } as cytoscape.Css.Node },
+        { selector: "node", style: { "background-color": v("--surface-3"), "border-width": 1.5, "border-color": v("--line-strong"), label: "data(label)", color: v("--ink"), "font-size": 9, "text-valign": "bottom", "text-margin-y": 4, width: 18, height: 18, "font-family": "Inter Variable, Arial, sans-serif", "text-outline-width": 2, "text-outline-color": v("--bg"), "transition-property": "border-color, border-width, text-opacity", "transition-duration": 0.3, shape: (el: cytoscape.NodeSingular) => TYPE_SHAPE[el.data("type")] ?? "ellipse" } as cytoscape.Css.Node },
+        { selector: "node[lab = 0]", style: { "text-opacity": 0 } },
+        { selector: "node.hover", style: { "text-opacity": 1, "z-index": 20, "border-color": v("--primary"), "border-width": 2.5 } },
+        { selector: "edge.hover", style: { width: 2.6, opacity: 1, "z-index": 10 } },
+        { selector: "edge.wave", style: { width: 3, opacity: 1 } },
+        { selector: "node.wave", style: { "border-color": v("--gold"), "border-width": 3 } },
+        { selector: "node[origin = 1].wave", style: { "border-color": v("--gold"), "border-width": 9, "border-opacity": 0.45 } },
         { selector: "node[claim = 'synthetic']", style: { "border-color": v("--accent"), "border-style": "dashed" } },
         { selector: "node[type = 'chokepoint']", style: { "background-color": v("--crit-soft"), "border-color": v("--crit"), width: 26, height: 26 } },
         { selector: "node[origin = 1]", style: { "background-color": v("--primary"), "border-color": v("--primary"), width: 30, height: 30, "font-weight": "bold" } },
-        { selector: "edge", style: { width: 1.2, "curve-style": "bezier", "target-arrow-shape": "triangle", "arrow-scale": 0.7, opacity: 0.85 } },
+        { selector: "edge", style: { width: 1.2, "curve-style": "bezier", "target-arrow-shape": "triangle", "arrow-scale": 0.7, opacity: 0.7, "transition-property": "width, opacity", "transition-duration": 0.35 } as cytoscape.Css.Edge },
         ...Object.entries(EDGE_STYLE).map(([cls, s]) => ({ selector: `edge[cls = '${cls}']`, style: { "line-color": v(s.token), "target-arrow-color": v(s.token), "line-style": s.line } })),
         { selector: "edge:selected, node:selected", style: { "overlay-opacity": 0.12, "overlay-color": v("--primary") } },
       ],
       wheelSensitivity: 0.2,
     });
-    const layout = cy.current.layout({ name: "cose", animate: false, nodeRepulsion: () => 9000, idealEdgeLength: () => 80, padding: 20 } as cytoscape.LayoutOptions);
+    // Nodes start gathered at the centre and settle outward (animated layout), unless reduced motion is asked for.
+    if (!reduce) cy.current.nodes().positions(() => ({ x: (Math.random() - 0.5) * 20, y: (Math.random() - 0.5) * 20 }));
+    const layout = cy.current.layout({ name: "cose", animate: !reduce, animationDuration: 1400, animationEasing: "ease-out-cubic", randomize: false, nodeRepulsion: () => 16000, idealEdgeLength: () => 95, nodeOverlap: 14, padding: 24, fit: true } as cytoscape.LayoutOptions);
     layout.run();
     cy.current.on("tap", "node", (e) => onSelect?.(e.target.data("key")));
+    cy.current.on("mouseover", "node", (e) => { e.target.addClass("hover"); e.target.connectedEdges().addClass("hover"); e.target.neighborhood("node").addClass("hover"); });
+    cy.current.on("mouseout", "node", () => cy.current?.elements().removeClass("hover"));
     const instance = cy.current;
+    // Live: a pulse leaves the origin every few seconds and ripples outward edge by edge (breadth-first).
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let alive = true;
+    const wave = () => {
+      if (!alive || reduce || document.visibilityState !== "visible") return;
+      const o = origin ? instance.getElementById(origin) : instance.nodes().max((n) => n.degree(false)).ele;
+      if (!o || o.empty()) return;
+      instance.elements().bfs({ roots: o, directed: false, visit: (n, e, _u, i, depth) => {
+        const at = depth * 380 + (i % 6) * 40;
+        timers.push(setTimeout(() => { if (!alive) return; n.addClass("wave"); e?.addClass("wave"); }, at));
+        timers.push(setTimeout(() => { if (!alive) return; n.removeClass("wave"); e?.removeClass("wave"); }, at + 520));
+      } });
+    };
+    timers.push(setTimeout(wave, 1600));
+    const iv = setInterval(wave, 4200);
     return () => {
+      alive = false; clearInterval(iv); timers.forEach(clearTimeout);
       // Stop the running layout before destroying, so its animation never touches a destroyed graph.
       layout.stop();
       instance.destroy();

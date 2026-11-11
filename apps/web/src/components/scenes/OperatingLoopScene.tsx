@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "motion/react";
 import { DATA_SPRING } from "@/lib/motion/tokens";
-import { DISPLAY, FLOW, MONO, SANS, Scene, type Run } from "./kit";
+import { Beads, DISPLAY, FLOW, MONO, SANS, Scene, type Run } from "./kit";
 import type { SceneProps } from "./primitives";
 
 /**
@@ -17,8 +17,27 @@ const at = (k: number, r: number) => { const a = (-90 + k * 30) * (Math.PI / 180
 function Body({ run, active }: { run: Run; active: number }) {
   const { from, t, loop } = run;
   const ring = `M${C.x} ${C.y - R}A${R} ${R} 0 1 1 ${C.x - 0.01} ${C.y - R}`;
+  // Live layer: the completed arc carries gold signals forward, the open arc a faint trickle, a sweep scans the dial.
+  const e = at(active - 1, R), rest = at(11, R);
+  const doneArc = active > 1 ? `M${C.x} ${C.y - R}A${R} ${R} 0 ${(active - 1) * 30 > 180 ? 1 : 0} 1 ${e.x} ${e.y}` : null;
+  const openArc = `M${e.x} ${e.y}A${R} ${R} 0 ${(12 - active) * 30 > 180 ? 1 : 0} 1 ${rest.x} ${rest.y}`;
+  const sweep = `M${C.x} ${C.y}L${C.x} ${C.y - 440}A440 440 0 0 1 ${C.x + 440 * Math.sin(Math.PI / 7)} ${C.y - 440 * Math.cos(Math.PI / 7)}Z`;
   return (
     <>
+      <defs>
+        <radialGradient id={`${run.uid}-sw`} cx={C.x} cy={C.y} r="440" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor={FLOW.gold} stopOpacity="0.16" /><stop offset="1" stopColor={FLOW.gold} stopOpacity="0" /></radialGradient>
+      </defs>
+      {loop && (
+        <motion.g style={{ transformOrigin: `${C.x}px ${C.y}px` }} animate={{ rotate: 360 }} transition={{ duration: 9, repeat: Infinity, ease: "linear" }} aria-hidden="true">
+          <path d={sweep} fill={`url(#${run.uid}-sw)`} />
+          <line x1={C.x} y1={C.y} x2={C.x} y2={C.y - 440} stroke={FLOW.gold} strokeOpacity="0.35" strokeWidth="1.2" />
+        </motion.g>
+      )}
+      {loop && [120, 237].map((rr, i) => (
+        <motion.circle key={rr} cx={C.x} cy={C.y} r={rr} fill="none" stroke="#86581d" strokeOpacity="0.28" strokeDasharray="3 14" style={{ transformOrigin: `${C.x}px ${C.y}px` }}
+          animate={{ rotate: i ? -360 : 360 }} transition={{ duration: i ? 80 : 50, repeat: Infinity, ease: "linear" }} />
+      ))}
+      {loop && <motion.circle cx={C.x} cy={C.y} r="52" fill="none" stroke={FLOW.gold} initial={{ scale: 0.6, opacity: 0.6 }} animate={{ scale: 2.4, opacity: 0 }} style={{ transformOrigin: `${C.x}px ${C.y}px` }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut" }} />}
       {[52, 117, 177, 237, 385, 430].map((r, i) => <circle key={r} cx={C.x} cy={C.y} r={r} fill="none" stroke="#86581d" strokeOpacity={i === 0 ? 0.35 : 0.08} />)}
       <circle cx={C.x} cy={C.y} r="3" fill="#86581d" />
       <circle cx={C.x} cy={C.y} r={R} fill="none" stroke="#6c4e30" strokeOpacity="0.35" />
@@ -38,6 +57,8 @@ function Body({ run, active }: { run: Run; active: number }) {
       {/* Progress arc to the active step (spring on data change) */}
       <motion.path d={ring} fill="none" stroke={FLOW.gold} strokeWidth="2.6" initial={from({ pathLength: 0 })} animate={{ pathLength: (active - 1) / 12 }}
         transition={run.entry ? t(1.4, 0.9) : DATA_SPRING} />
+      {doneArc && <Beads d={doneArc} count={4} pxPerSec={120} color={FLOW.gold} r={4.2} loop={loop} />}
+      {active < 12 && <Beads d={openArc} count={3} pxPerSec={45} color="#6c4e30" r={2.6} loop={loop} offset={40} />}
       {LOOP_STEPS.map((name, k) => {
         const p = at(k, R), l = at(k, 360), n = k + 1, isActive = n === active, done = n < active;
         const side = Math.abs(Math.cos(l.a)) < 0.2 ? "middle" : Math.cos(l.a) > 0 ? "start" : "end";

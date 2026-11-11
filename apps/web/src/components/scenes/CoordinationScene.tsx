@@ -37,6 +37,21 @@ function Body({ run, resolved, highlight }: { run: Run; resolved: boolean; highl
           animate={{ strokeOpacity: resolved ? 0.12 : 0.45, strokeDashoffset: loop && !resolved ? [0, 30] : 0 }}
           transition={{ strokeOpacity: run.t(0.7, resolved ? 0 : 0.2), strokeDashoffset: loop && !resolved ? { duration: 6 + (i % 5), repeat: Infinity, ease: "linear" } : { duration: 0 } }} />;
       })}
+      {/* Fragmented: signals set off along the chords and fade before they arrive; no owner at the centre to route them. */}
+      {!resolved && loop && chords.filter((_, i) => i % 2 === 0).map(([a, b], i) => {
+        const p = pos(a, R - 4), q = pos(b, R - 4), m = { x: p.x + (q.x - p.x) * 0.55, y: p.y + (q.y - p.y) * 0.55 };
+        const col = INSTITUTIONS[a]!.color;
+        return <motion.circle key={`lost-${i}`} r="4" fill={col} initial={{ cx: p.x, cy: p.y, opacity: 0 }} animate={{ cx: [p.x, m.x], cy: [p.y, m.y], opacity: [0, 0.9, 0] }}
+          transition={{ duration: 2.6, delay: i * 0.45, repeat: Infinity, repeatDelay: 1.2, ease: "easeOut" }} />;
+      })}
+      {!resolved && loop && (
+        <motion.circle cx={C.x} cy={C.y} r="96" fill="none" stroke={FLOW.risk} strokeOpacity="0.45" strokeDasharray="4 10" style={{ transformOrigin: `${C.x}px ${C.y}px` }}
+          animate={{ rotate: 360, opacity: [0.3, 0.8, 0.3] }} transition={{ rotate: { duration: 24, repeat: Infinity, ease: "linear" }, opacity: { duration: 2.4, repeat: Infinity } }} />
+      )}
+      {resolved && loop && (
+        <motion.circle cx={C.x} cy={C.y} r="70" fill="none" stroke={FLOW.gold} initial={{ scale: 1, opacity: 0.5 }} animate={{ scale: 4.4, opacity: 0 }} style={{ transformOrigin: `${C.x}px ${C.y}px` }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeOut" }} />
+      )}
       {/* Spokes, drawn clockwise from the hub */}
       {INSTITUTIONS.map((inst, k) => {
         const a = pos(k, 66), b = pos(k, R - 10), d = `M${a.x} ${a.y}L${b.x} ${b.y}`;
@@ -65,11 +80,13 @@ function Body({ run, resolved, highlight }: { run: Run; resolved: boolean; highl
         const lx = Math.abs(c) < 0.2 ? p.x : Math.abs(s) < 0.2 ? l.x - (c > 0 ? 10 : -10) : p.x + (c > 0 ? 26 : -26);
         const ly = Math.abs(c) < 0.2 ? (s < 0 ? p.y - 42 : p.y + 55) : Math.abs(s) < 0.2 ? p.y + 6 : p.y + (s < 0 ? -18 : 32);
         return (
-          <g key={inst.id} opacity={highlight && highlight !== inst.id ? 0.35 : 1}>
-            <Node x={p.x} y={p.y} color={inst.color} r={11} core={4} appear={{ initial: from({}), delay: 0.2 + k * 0.05, run }} />
+          <motion.g key={inst.id} opacity={highlight && highlight !== inst.id ? 0.35 : 1}
+            animate={loop && !resolved ? { x: [0, Math.cos(k * 1.7) * 7, 0], y: [0, Math.sin(k * 2.3) * 7, 0] } : { x: 0, y: 0 }}
+            transition={loop && !resolved ? { duration: 5 + (k % 3), repeat: Infinity, ease: "easeInOut" } : { duration: 0.8 }}>
+            <Node x={p.x} y={p.y} color={inst.color} r={11} core={4} pulse loop={loop} phase={k * 0.4} appear={{ initial: from({}), delay: 0.2 + k * 0.05, run }} />
             <motion.text x={lx} y={ly} textAnchor={anchor} fill="var(--ink)" initial={from({ opacity: 0 })} animate={{ opacity: 1 }} transition={t(0.5, 0.5 + k * 0.05)}
               style={{ ...MONO, fontSize: 13, letterSpacing: "0.2em" }}>{inst.label}</motion.text>
-          </g>
+          </motion.g>
         );
       })}
     </>
