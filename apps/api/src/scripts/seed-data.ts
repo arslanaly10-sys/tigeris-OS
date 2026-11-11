@@ -21,8 +21,9 @@ import { withTenant, type Tx } from "../db";
 import { saveAssessment } from "../routes/diagnostic";
 import { seedStoryline } from "../workflow/storyline";
 
-const PUBKEY = path.resolve(import.meta.dirname, "../../../../data/keys/collector-ed25519.pub.pem");
-const PACKAGES = path.resolve(import.meta.dirname, "../../../../data/packages");
+const ROOT = process.env.TIGERIS_ROOT ?? path.resolve(import.meta.dirname, "../../../..");
+const PUBKEY = path.join(ROOT, "data/keys/collector-ed25519.pub.pem");
+const PACKAGES = path.join(ROOT, "data/packages");
 
 /**
  * Demo institutions are fictional (Q025). They are labelled by buyer category only (Q123).

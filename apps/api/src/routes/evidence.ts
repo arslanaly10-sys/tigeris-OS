@@ -8,7 +8,7 @@ import { requirePermission } from "../session";
 import { enqueue } from "../evidence/jobs";
 import { MAX_DOCUMENT_BYTES } from "../evidence/validate";
 
-const DATA_DIR = path.resolve(import.meta.dirname, "../../../../data");
+const DATA_DIR = path.join(process.env.TIGERIS_ROOT ?? path.resolve(import.meta.dirname, "../../../.."), "data");
 const PACKAGES = path.join(DATA_DIR, "packages");
 const DEMO_DOCS = path.join(DATA_DIR, "demo-documents");
 

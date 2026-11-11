@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { ownerPool, closePools } from "../db";
 
-const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../db/migrations");
+const dir = path.join(process.env.TIGERIS_ROOT ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.."), "db/migrations");
 
 export async function migrate(log = console.log) {
   const pool = ownerPool();
