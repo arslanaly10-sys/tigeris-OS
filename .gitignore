@@ -23,3 +23,4 @@ data/packages/ais-hormuz-*.tigpkg
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
 data/packages/adsb-gulf-*.tigpkg
+.vercel
