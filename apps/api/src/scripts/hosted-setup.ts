@@ -20,7 +20,7 @@ export async function hostedSetup(log = console.log) {
   const quoted = `'${pw.replace(/'/g, "''")}'`;
   const exists = (await pool.query("SELECT 1 FROM pg_roles WHERE rolname = 'tigeris_app'")).rowCount;
   await pool.query(exists
-    ? `ALTER ROLE tigeris_app WITH LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD ${quoted}`
+    ? `ALTER ROLE tigeris_app WITH LOGIN PASSWORD ${quoted}` // attributes were set at creation; hosted owners may not alter BYPASSRLS
     : `CREATE ROLE tigeris_app WITH LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD ${quoted}`);
   log(`hosted setup: application role ${exists ? "updated" : "created"}`);
   await migrate(log);
