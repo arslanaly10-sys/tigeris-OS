@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 
 /** Institution-controlled evidence store. Content-addressed and write-once (TRD §4 Evidence Vault). */
-const ROOT = path.resolve(process.env.VAULT_DIR ?? path.join(import.meta.dirname, "../../../../data/vault"));
+const ROOT = path.resolve(process.env.VAULT_DIR ?? (process.env.VERCEL ? "/tmp/tigeris-vault" : path.join(import.meta.dirname, "../../../../data/vault")));
 
 export const sha256 = (b: Buffer) => createHash("sha256").update(b).digest("hex");
 

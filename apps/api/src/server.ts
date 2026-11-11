@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import { ZodError } from "zod";
+import { config } from "./config";
 import { healthRoutes } from "./routes/health";
 import { authRoutes } from "./routes/auth";
 import { governanceRoutes } from "./routes/governance";
@@ -26,6 +27,13 @@ import { sectorRoutes } from "./routes/sectors";
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info", redact: ["req.headers.cookie"] } });
   await app.register(cookie);
+  // Hosted deployments: only the TIGERIS web app (which holds the shared key) may call the API. Health stays open.
+  if (config.sharedKey) {
+    app.addHook("onRequest", async (req, reply) => {
+      if (req.url === "/health" || req.url.startsWith("/health?")) return;
+      if (req.headers["x-tigeris-key"] !== config.sharedKey) return reply.code(401).send({ error: "unauthorised", message: "This API only answers the TIGERIS web app." });
+    });
+  }
   app.setErrorHandler((err, _req, reply) => {
     if (err instanceof ZodError) {
       return reply.code(400).send({ error: "invalid_request", message: "Some fields are missing or invalid.", issues: err.issues.map((i) => i.path.join(".")) });

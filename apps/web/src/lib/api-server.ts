@@ -9,7 +9,7 @@ export async function serverApi<T>(path: string): Promise<{ status: number; data
   const jar = await cookies();
   const session = jar.get("tigeris_session")?.value;
   const res = await fetch(`${API_URL}${path}`, {
-    headers: session ? { cookie: `tigeris_session=${session}` } : {},
+    headers: { ...(session ? { cookie: `tigeris_session=${session}` } : {}), ...(process.env.TIGERIS_SHARED_KEY ? { "x-tigeris-key": process.env.TIGERIS_SHARED_KEY } : {}) },
     cache: "no-store",
   }).catch(() => undefined);
   if (!res) return { status: 503 };
