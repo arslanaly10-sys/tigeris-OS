@@ -6,7 +6,7 @@ import { closePools, withTenant } from "../src/db";
 
 const [GSF, ANIA] = DEMO_INSTITUTIONS;
 let app: FastifyInstance;
-async function signIn(role: string, inst = GSF): Promise<string> {
+async function signIn(role: string, inst: { id: string } = GSF): Promise<string> {
   const dir = (await app.inject({ method: "GET", url: "/auth/demo-directory" })).json().institutions;
   const person = dir.find((i: { id: string }) => i.id === inst.id).people.find((p: { role: string }) => p.role === role);
   const res = await app.inject({ method: "POST", url: "/auth/sign-in", payload: { institutionId: inst.id, principalId: person.id, method: "demo_entry" } });
