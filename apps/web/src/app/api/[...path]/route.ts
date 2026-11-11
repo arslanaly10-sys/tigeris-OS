@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { sharedKey } from "@/lib/shared-key";
 
 /**
  * Same-origin proxy to the TIGERIS API (replaces the old /api rewrite). The browser only ever talks to this origin, so the
@@ -6,7 +7,6 @@ import type { NextRequest } from "next/server";
  */
 export const dynamic = "force-dynamic";
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
-const KEY = process.env.TIGERIS_SHARED_KEY ?? "";
 const HOP = new Set(["connection", "keep-alive", "transfer-encoding", "upgrade", "host", "content-length", "content-encoding"]);
 
 async function forward(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
@@ -14,7 +14,8 @@ async function forward(req: NextRequest, ctx: { params: Promise<{ path: string[]
   const url = `${API_URL}/${path.map(encodeURIComponent).join("/")}${req.nextUrl.search}`;
   const headers = new Headers();
   req.headers.forEach((v, k) => { if (!HOP.has(k.toLowerCase())) headers.set(k, v); });
-  if (KEY) headers.set("x-tigeris-key", KEY);
+  const key = sharedKey();
+  if (key) headers.set("x-tigeris-key", key);
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
   const res = await fetch(url, { method: req.method, headers, body: hasBody ? await req.arrayBuffer() : undefined, redirect: "manual", cache: "no-store" }).catch(() => null);
   if (!res) return Response.json({ error: "unreachable", message: "The TIGERIS service is not reachable." }, { status: 503 });

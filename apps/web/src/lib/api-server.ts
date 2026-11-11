@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { AuthContext } from "./api";
+import { sharedKey } from "./shared-key";
 
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 
@@ -9,7 +10,7 @@ export async function serverApi<T>(path: string): Promise<{ status: number; data
   const jar = await cookies();
   const session = jar.get("tigeris_session")?.value;
   const res = await fetch(`${API_URL}${path}`, {
-    headers: { ...(session ? { cookie: `tigeris_session=${session}` } : {}), ...(process.env.TIGERIS_SHARED_KEY ? { "x-tigeris-key": process.env.TIGERIS_SHARED_KEY } : {}) },
+    headers: { ...(session ? { cookie: `tigeris_session=${session}` } : {}), ...(sharedKey() ? { "x-tigeris-key": sharedKey() } : {}) },
     cache: "no-store",
   }).catch(() => undefined);
   if (!res) return { status: 503 };
