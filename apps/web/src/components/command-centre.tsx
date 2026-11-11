@@ -9,6 +9,10 @@ import { CC_AR } from "@/lib/command-centres-ar";
 import { api } from "@/lib/api";
 import { usePrefs } from "./prefs";
 import { useSession } from "./session-context";
+import { AnimatePresence, motion } from "motion/react";
+import { CountUp, Stagger, StaggerItem, spring } from "./motion-kit";
+
+const MotionLink = motion.create(Link);
 
 /**
  * Sector Command Centres inside the OS (Command Centres brief, phase 2). The mockup layout is kept; what changed:
@@ -240,7 +244,8 @@ function Body({ b, narrow }: { b: Block; narrow?: boolean }) {
             {b.legend && <div className="cc-legend" aria-label="Legend">{b.legend.map((l, i) => <div key={l.title} className={i === 0 && l.title.startsWith("All") ? "on" : ""}><Ic n={l.icon} />{tr(l.title)}</div>)}</div>}
             <button type="button" className="cc-map-img" onClick={() => ask({ title: b.title!, kind: "map", card: b.title! })} aria-label={`${tr(b.alt)}. ${tr("Open Movement Map")}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={b.img} alt={`${tr(b.alt)}. Illustrative, not live data.`} width={1000} height={Math.round(1000 / b.ratio)} loading="lazy" />
+              <motion.img src={b.img} alt={`${tr(b.alt)}. Illustrative, not live data.`} width={1000} height={Math.round(1000 / b.ratio)} loading="lazy"
+                initial={{ opacity: 0, scale: 1.08 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} whileHover={{ scale: 1.03 }} />
             </button>
             {b.sideList && <div className="cc-sidelist">{b.sideList.map((l) => <button key={l.title} type="button" onClick={() => ask({ title: l.title, kind: "data", card })}><Ic n={l.icon} /><span>{tr(l.title)}</span><small>— | {tr("Source not connected")}</small></button>)}</div>}
           </div>
@@ -333,7 +338,7 @@ function Body({ b, narrow }: { b: Block; narrow?: boolean }) {
           {b.items.map((k) => (
             <Link key={k.title} href="/cases" className="cc-cell">
               <Ic n={k.icon} /><b>{tr(k.title)}</b>
-              {n[k.title] !== undefined ? <><span className="cc-dash tabular">{n[k.title]}</span><span className="cc-na">{tr("Cases in this sector")}</span></> : <><span className="cc-dash">—</span><NA /></>}
+              {n[k.title] !== undefined ? <><CountUp className="cc-dash tabular" value={n[k.title]!} /><span className="cc-na">{tr("Cases in this sector")}</span></> : <><span className="cc-dash">—</span><NA /></>}
             </Link>
           ))}
           {b.button && <button type="button" className="cc-btn" style={{ alignSelf: "center" }} onClick={() => go("approval")}>{tr(b.button)}<Ic n="arrow-right" className="cc-arrow" /></button>}
@@ -372,17 +377,21 @@ function LiveStrip() {
       </div>
       <div className="cc-live-grid">
         <div className="cc-live-tiles">
-          {tiles.map((t) => <Link key={t.label} href={t.href} className="cc-kpi"><Ic n={t.icon} /><b>{tr(t.label)}</b><span className="cc-dash tabular">{t.n}</span></Link>)}
+          {tiles.map((t, i) => (
+            <MotionLink key={t.label} href={t.href} className="cc-kpi" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 0.08 * i }} whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }}>
+              <Ic n={t.icon} /><b>{tr(t.label)}</b><CountUp className="cc-dash tabular" value={t.n} />
+            </MotionLink>
+          ))}
         </div>
         <div className="cc-live-sig">
           <div className="cc-live-sig-h"><b>{tr("Latest signals")}</b><Link href="/signals" className="cc-link">{tr("View all")}<Ic n="arrow-right" /></Link></div>
-          {data.signals.length === 0 ? <p className="cc-na">{tr("No signals in this sector.")}</p> : data.signals.slice(0, 3).map((s) => (
-            <Link key={s.id} href={`/signals?focus=${s.id}`} className="cc-sig">
+          {data.signals.length === 0 ? <p className="cc-na">{tr("No signals in this sector.")}</p> : <AnimatePresence initial={true} mode="popLayout">{data.signals.slice(0, 3).map((s, i) => (
+            <MotionLink key={s.id} href={`/signals?focus=${s.id}`} className="cc-sig" layout initial={{ opacity: 0, x: 28 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -28 }} transition={{ ...spring, delay: 0.25 + 0.1 * i }}>
               <span className={`cc-pill ${s.urgency === "critical" || s.urgency === "high" ? "high" : s.urgency === "medium" ? "medium" : "low"}`}>{tr(s.urgency)}</span>
               <span className="cc-sig-t">{s.title}</span>
               <span className="cc-pill neutral">{tr(s.data_mode)}</span>
-            </Link>
-          ))}
+            </MotionLink>
+          ))}</AnimatePresence>}
         </div>
       </div>
     </section>
@@ -429,14 +438,15 @@ export function CommandCentre({ sectorKey }: { sectorKey: string }) {
           <div className="cc-head">
             <div className="cc-head-l">
               {s.eyebrow && <p className={`cc-eyebrow${s.eyebrowCaps ? "" : " plain"}`}>{tr(s.eyebrow)}</p>}
-              <h1>{tr(s.title)}{s.badge && s.right.hero && <> <span className="cc-badge" style={{ verticalAlign: "middle" }}>{tr("Proposed interface")}</span></>}</h1>
-              <p className="cc-sub">{tr(s.subtitle)}</p>
+              <motion.h1 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={spring}>{tr(s.title)}{s.badge && s.right.hero && <> <span className="cc-badge" style={{ verticalAlign: "middle" }}>{tr("Proposed interface")}</span></>}</motion.h1>
+              <motion.p className="cc-sub" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 0.9, y: 0 }} transition={{ ...spring, delay: 0.08 }}>{tr(s.subtitle)}</motion.p>
             </div>
             {(s.right.hero || s.right.meta || s.badge) && !s.right.metaTabs && (
               <div className="cc-head-r">
                 {((s.badge && !s.right.hero) || s.right.meta) && <div className="cc-meta">{s.badge && !s.right.hero && <span className="cc-badge">{tr("Proposed interface")}</span>}{s.right.meta && <span>{tr(s.right.meta)}</span>}</div>}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {s.right.hero && <img className="cc-hero" src={s.right.hero} alt={`${tr(s.right.heroAlt ?? "")}. Illustrative.`} width={520} height={130} />}
+                {s.right.hero && <motion.img className="cc-hero" src={s.right.hero} alt={`${tr(s.right.heroAlt ?? "")}. Illustrative.`} width={520} height={130}
+                  initial={{ opacity: 0, x: 40, scale: 1.06 }} animate={{ opacity: 1, x: 0, scale: 1 }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }} />}
               </div>
             )}
           </div>
@@ -448,17 +458,17 @@ export function CommandCentre({ sectorKey }: { sectorKey: string }) {
           )}
           {s.pageTabs && <div className="cc-pagetabs" role="tablist">{s.pageTabs.map((t, i) => <button key={t} type="button" role="tab" aria-selected={tab === i} onClick={() => (i === 0 ? setTab(0) : setAsk({ title: t, kind: "data", card: s.label }))}>{tr(t)}</button>)}</div>}
 
-          <LiveStrip />
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 0.12 }}><LiveStrip /></motion.div>
 
           {s.rows.map((row, ri) => (
-            <div key={ri} className="cc-grid">
+            <Stagger key={ri} className="cc-grid">
               {row.map((b, bi) => (
-                <div key={bi} className={`cc-col${b.span >= 7 ? " wide" : ""}`} style={{ gridColumn: `span ${b.span}` }}>
+                <StaggerItem key={bi} className={`cc-col${b.span >= 7 ? " wide" : ""}`} style={{ gridColumn: `span ${b.span}` }}>
                   <Card b={b} />
                   {b.stack && <Card b={b.stack} />}
-                </div>
+                </StaggerItem>
               ))}
-            </div>
+            </Stagger>
           ))}
 
           <footer className="cc-foot"><div>{s.footer.map((f) => <span key={f}>{tr(f)}</span>)}</div><span><Link href={`/command-centres-original/${s.key}`} className="cc-link" style={{ display: "inline", marginInlineEnd: 16 }}>{tr("Mockup version")}</Link>{tr(s.footerRight)}</span></footer>

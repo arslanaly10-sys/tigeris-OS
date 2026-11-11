@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { spring } from "./motion-kit";
 import * as Icons from "lucide-react";
 import { MODULES } from "@/lib/modules";
 import { sectorByIndustry } from "@/lib/command-centres";
@@ -33,6 +35,7 @@ export function Sidebar() {
   const { t } = usePrefs();
   const s = useSession();
   const path = usePathname();
+  const navId = useId();
   const sector = sectorByIndustry(s.principal.industry);
   // Collapsible groups; the group holding the current page always stays open. Remembered per browser.
   const [closed, setClosed] = useState<Record<string, boolean>>({});
@@ -47,12 +50,13 @@ export function Sidebar() {
           href={`/${m.slug}`}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex items-center gap-2.5 rounded-md px-2.5 py-[6px] text-[13px] transition-colors",
-            active ? "bg-primary font-semibold text-primary-ink" : "text-ink hover:bg-[color-mix(in_oklab,var(--primary)_7%,transparent)]",
+            "relative flex items-center gap-2.5 rounded-md px-2.5 py-[6px] text-[13px] transition-colors",
+            active ? "font-semibold text-primary-ink" : "text-ink hover:bg-[color-mix(in_oklab,var(--primary)_7%,transparent)]",
           )}
         >
-          <Icon strokeWidth={1.6} className={cn("size-4 shrink-0", active ? "text-primary-ink" : "text-primary")} />
-          <span className="truncate">{t(m.nav)}</span>
+          {active && <motion.span layoutId={`nav-active-${navId}`} aria-hidden className="absolute inset-0 -z-0 rounded-md bg-primary" transition={spring} />}
+          <Icon strokeWidth={1.6} className={cn("relative size-4 shrink-0", active ? "text-primary-ink" : "text-primary")} />
+          <span className="relative truncate">{t(m.nav)}</span>
         </Link>
       </li>
     );
@@ -70,9 +74,15 @@ export function Sidebar() {
               <button type="button" onClick={() => toggle(g.key)} aria-expanded={open} disabled={holdsCurrent}
                 className="eyebrow flex w-full items-center justify-between rounded px-2.5 py-1 text-[10px] disabled:cursor-default">
                 <span>{t(g.label)}</span>
-                {!holdsCurrent && <Icons.ChevronDown aria-hidden className={cn("size-3.5 transition-transform motion-reduce:transition-none", open ? "" : "-rotate-90 rtl:rotate-90")} />}
+                {!holdsCurrent && <Icons.ChevronDown aria-hidden className={cn("size-3.5 transition-transform duration-300 motion-reduce:transition-none", open ? "" : "-rotate-90 rtl:rotate-90")} />}
               </button>
-              {open && <ul className="grid gap-px">{items.map(link)}</ul>}
+              <AnimatePresence initial={false}>
+                {open && (
+                  <motion.ul key="items" className="grid gap-px overflow-hidden" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ ...spring, opacity: { duration: 0.18 } }}>
+                    {items.map(link)}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
             </div>
           );
         })}

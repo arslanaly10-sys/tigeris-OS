@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { CountUp, Flash, Stagger, StaggerItem, spring } from "./motion-kit";
 import { DEFAULT_SHOCK, simulate, type Diagnosis, type Valuation } from "@tigeris/shared";
 import { api } from "@/lib/api";
 import { PageHeader } from "./page-header";
@@ -65,28 +66,38 @@ export function BoardroomModule() {
         <div className="flex flex-wrap items-center gap-2 text-[13px]">
           <span className="sys text-ink-muted">{d.engagement.title}</span>{d.engagement.data_mode === "synthetic" && <DataLabel kind="SYNTHETIC" />}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Stagger className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {cards.map((c) => (
-            <Panel key={c.k} className="grid content-start gap-1 p-4">
+            <StaggerItem key={c.k} className="h-full" whileHover={{ y: -4, transition: spring }}>
+            <Flash trigger={c.v} className="h-full rounded-lg">
+            <Panel className="grid h-full content-start gap-1 p-4">
               <span className="eyebrow">{c.k}</span>
-              <span className="tabular font-serif text-[28px] font-bold leading-none">{c.v}</span>
+              <CountUp className="tabular font-serif text-[28px] font-bold leading-none" value={c.v} duration={1.4} />
               <span className="text-[12.5px] text-ink-muted">{c.formula} · {c.better}</span>
               <span><DataLabel kind="MODELLED" /></span>
             </Panel>
+            </Flash>
+            </StaggerItem>
           ))}
-          <Panel className="grid content-start gap-2 p-4">
+          <StaggerItem className="h-full">
+          <Panel className="grid h-full content-start gap-2 p-4">
             <span className="eyebrow">Lens</span>
             <div role="radiogroup" aria-label="Lens" className="flex flex-wrap gap-1">
               {(["opportunity", "friction", "value"] as Lens[]).map((l) => <button key={l} role="radio" aria-checked={lens === l} onClick={() => setLens(l)} className={`border px-2.5 py-1 text-[13px] capitalize ${lens === l ? "border-primary bg-primary-soft" : "border-line"}`}>{l}</button>)}
             </div>
-            <ul className="grid gap-1 text-[13px]">{lensRows.map(([a, b]) => <li key={a} className="flex justify-between gap-2"><span>{a}</span><span className="tabular">{b}</span></li>)}</ul>
+            <ul className="relative grid gap-1 text-[13px]">
+              <AnimatePresence mode="popLayout" initial={false}>
+                {lensRows.map(([a, b], i) => <motion.li key={`${lens}-${a}`} layout initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ ...spring, delay: 0.04 * i }} className="flex justify-between gap-2"><span>{a}</span><span className="tabular">{b}</span></motion.li>)}
+              </AnimatePresence>
+            </ul>
           </Panel>
-        </div>
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Panel className="overflow-hidden"><PanelHeader eyebrow="Operating loop" title="Where the institution is now" /><OperatingLoopScene activeStep={coord !== null && coord < 50 ? 8 : 7} chrome={false} className="block h-auto w-full" /></Panel>
-          <Panel className="overflow-hidden"><PanelHeader eyebrow="L3 orchestration" title={coord !== null && coord < 50 ? "Coordination debt, resolved" : "Coordination debt, rising: no owner assigned"} actions={<DataLabel kind="MODELLED" />} />
-            <CoordinationScene state={coord !== null && coord < 50 ? "resolved" : "fragmented"} chrome={false} className="block h-auto w-full" /></Panel>
-        </div>
+          </StaggerItem>
+        </Stagger>
+        <Stagger className="grid gap-4 xl:grid-cols-2">
+          <StaggerItem><Panel className="overflow-hidden"><PanelHeader eyebrow="Operating loop" title="Where the institution is now" /><OperatingLoopScene activeStep={coord !== null && coord < 50 ? 8 : 7} chrome={false} className="block h-auto w-full" /></Panel></StaggerItem>
+          <StaggerItem><Panel className="overflow-hidden"><PanelHeader eyebrow="L3 orchestration" title={coord !== null && coord < 50 ? "Coordination debt, resolved" : "Coordination debt, rising: no owner assigned"} actions={<DataLabel kind="MODELLED" />} />
+            <CoordinationScene state={coord !== null && coord < 50 ? "resolved" : "fragmented"} chrome={false} className="block h-auto w-full" /></Panel></StaggerItem>
+        </Stagger>
       </div>
     </>
   );

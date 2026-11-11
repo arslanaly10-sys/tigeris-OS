@@ -223,7 +223,7 @@ html[lang="ar"] .cc :is(.cc-eyebrow, .eyebrow) { letter-spacing: 0; }
 @media (max-width: 640px) {
   .cc-grid, .cc-pair { grid-template-columns: minmax(0, 1fr); }
   .cc h1 { font-size: 26px; }
-  .cc-sub { font-size: 15.5px; }
+  .cc-sub { font-size: 14px; }
   .cc-kpis { grid-template-columns: minmax(0, 1fr); }
   .cc-map.left, .cc-map.right { grid-template-columns: minmax(0, 1fr); }
   .cc-map.left .cc-legend { order: 2; }
@@ -270,3 +270,9 @@ html[lang="ar"] .cc :is(.cc-eyebrow, .eyebrow) { letter-spacing: 0; }
 .cc-sig-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 1100px) { .cc-live-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 640px) { .cc-live-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Motion: cards lift slightly on hover (transform-free shadow, so fixed dialogs inside keep their viewport). */
+.cc-card { transition: box-shadow .35s cubic-bezier(.16,1,.3,1), border-color .35s; }
+.cc-card:not(.dark):hover { border-color: #d8ccb4; box-shadow: 0 10px 28px -18px rgba(15, 58, 46, .35); }
+.cc-map-img { isolation: isolate; }
+@media (prefers-reduced-motion: reduce) { .cc-card { transition: none; } }

@@ -118,8 +118,8 @@ importers:
         specifier: ^5.24.0
         version: 5.24.0
       motion:
-        specifier: ^14.11.1
-        version: 14.11.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: ^14.12.0
+        version: 14.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       next:
         specifier: ^15.5.29
         version: 15.5.29(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -1670,8 +1670,8 @@ packages:
     resolution: {integrity: sha512-eru+uCPQ2g+nLBkf84MHP/KyNNMar0BDy0j+i8Fb72GF9/YHBZ58q7FODUtfVV7XU9nfRUHXSmaM8NmZcIbZ4Q==}
     engines: {node: '>=20'}
 
-  framer-motion@14.11.1:
-    resolution: {integrity: sha512-kXs+RHzja034QumwdXJubF0az86ueiWtANLB7FbhM+WKNGrgmYHysRRWG+we2KEpWv1+8W4eoMtsKaUldf54nA==}
+  framer-motion@14.12.0:
+    resolution: {integrity: sha512-4m+10xYan0ic8nFI8zyB5hJkW5F8F4Rer617UecOs8esw0he9unDgXaEZ0rUX7oztz1w4iuvyPWhk4jltMX5iw==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -1827,14 +1827,14 @@ packages:
   minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
 
-  motion-dom@14.11.1:
-    resolution: {integrity: sha512-H/12gSe24nuV19IR7jHLObI+5Tm34UA/S5JaUye802l19VoVsT1USE+Suv+G/XO1U+YmXI9Nnbs4Krd4FthSSg==}
+  motion-dom@14.12.0:
+    resolution: {integrity: sha512-YnAY17g8mXRVoXGZbH+v/O2SkNBJqz2TMuqL9yek9Omfhsdjw7gJwNgI5nsGZFpbbm3vINyOo+VtGPryIslatw==}
 
   motion-utils@14.7.0:
     resolution: {integrity: sha512-woO0/Nb7ys75f94fjvQi/6leiHGvZUYkeHUPEZ3vxsV+9OpEVhkxp01x8MlRwX0zt31EqgXsKDAoBoJLC148Tw==}
 
-  motion@14.11.1:
-    resolution: {integrity: sha512-V0AQPpbTlkhXYQGiO6X55KsFHz+fdYlZJVERFEjJpBWZlCggWOcbCA7zd24iYs1q/Le191tAV3J29xBfS5+tWA==}
+  motion@14.12.0:
+    resolution: {integrity: sha512-cxD0c0yGXo/mzPgveXMsXGl138UNsRit9XgInK8kThtDsrvIkhlAR9b6WYoAm7EmKWToMFx6v/G8i0Zjv+2uoA==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -3558,9 +3558,9 @@ snapshots:
       fast-querystring: 1.1.2
       safe-regex2: 5.1.2
 
-  framer-motion@14.11.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+  framer-motion@14.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
     dependencies:
-      motion-dom: 14.11.1
+      motion-dom: 14.12.0
       motion-utils: 14.7.0
       tslib: 2.9.1
     optionalDependencies:
@@ -3695,15 +3695,15 @@ snapshots:
 
   minimist@1.2.8: {}
 
-  motion-dom@14.11.1:
+  motion-dom@14.12.0:
     dependencies:
       motion-utils: 14.7.0
 
   motion-utils@14.7.0: {}
 
-  motion@14.11.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+  motion@14.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
     dependencies:
-      framer-motion: 14.11.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      framer-motion: 14.12.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       tslib: 2.9.1
     optionalDependencies:
       react: 19.3.1

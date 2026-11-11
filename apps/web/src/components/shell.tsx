@@ -9,6 +9,8 @@ import { Header } from "./header";
 import { Guide } from "./guide";
 import { usePrefs } from "./prefs";
 import { cn } from "@/lib/cn";
+import { MotionConfig, motion } from "motion/react";
+import { spring } from "./motion-kit";
 
 export function Shell({ context, children }: { context: AuthContext; children: React.ReactNode }) {
   const { t } = usePrefs();
@@ -16,6 +18,7 @@ export function Shell({ context, children }: { context: AuthContext; children: R
   const path = usePathname();
   useEffect(() => setOpen(false), [path]);
   return (
+    <MotionConfig reducedMotion="user">
     <SessionProvider value={context}>
       <LineageProvider>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-primary-ink">Skip to main content</a>
@@ -29,7 +32,9 @@ export function Shell({ context, children }: { context: AuthContext; children: R
         )}
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-clip overscroll-contain [scroll-padding-top:112px]">
           <Header onMenu={() => setOpen(true)} />
-          <main key={context.principal.industry} id="main" tabIndex={-1} className={cn("outline-none", "mx-auto w-full max-w-[1480px] flex-1 px-4 py-5 sm:px-6", context.density === "spacious" ? "lg:px-8 lg:py-6" : "lg:px-6")}>{children}</main>
+          <main key={context.principal.industry} id="main" tabIndex={-1} className={cn("outline-none", "mx-auto w-full max-w-[1480px] flex-1 px-4 py-5 sm:px-6", context.density === "spacious" ? "lg:px-8 lg:py-6" : "lg:px-6")}>
+            <motion.div key={path} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={spring}>{children}</motion.div>
+          </main>
           <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-6 py-3 pe-36 text-[13px] text-ink-faint">
             <span>{t("footer.notice")}</span>
             <span>TIGERIS · Sovereign Intelligence OS · Demonstration build · Fictional institutions and people</span>
@@ -39,5 +44,6 @@ export function Shell({ context, children }: { context: AuthContext; children: R
       <Guide />
       </LineageProvider>
     </SessionProvider>
+    </MotionConfig>
   );
 }
