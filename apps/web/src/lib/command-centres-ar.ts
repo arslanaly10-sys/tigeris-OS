@@ -627,4 +627,5 @@ export const CC_AR: Record<string, string> = {
   "Your role cannot open cases.": "لا يملك دورك صلاحية فتح الملفات.",
   "Could not open the case.": "تعذّر فتح الملف.",
   "Cases in this sector": "الملفات في هذا القطاع",
+  "Mockup version": "نسخة النموذج",
 };

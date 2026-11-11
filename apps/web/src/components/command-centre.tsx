@@ -461,7 +461,7 @@ export function CommandCentre({ sectorKey }: { sectorKey: string }) {
             </div>
           ))}
 
-          <footer className="cc-foot"><div>{s.footer.map((f) => <span key={f}>{tr(f)}</span>)}</div><span>{tr(s.footerRight)}</span></footer>
+          <footer className="cc-foot"><div>{s.footer.map((f) => <span key={f}>{tr(f)}</span>)}</div><span><Link href={`/command-centres-original/${s.key}`} className="cc-link" style={{ display: "inline", marginInlineEnd: 16 }}>{tr("Mockup version")}</Link>{tr(s.footerRight)}</span></footer>
         </div>
         {a && <Dialog a={a} onClose={() => setAsk(null)} />}
       </div>

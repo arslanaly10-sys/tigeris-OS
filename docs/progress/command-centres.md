@@ -25,3 +25,10 @@
 
 Eight sector screens from the supplied mockups, one config (`lib/command-centres.ts`) and a renderer per block type.
 Screenshots at 1440px from phase 1 are in `docs/progress/command-centres/`.
+
+## Mockup version kept (11 Nov 2026)
+
+The phase 1, mockup-exact Command Centres are restored at `/command-centres-original/<sector>` (public, no sign-in):
+their own sidebar and top bar, no institution data, every figure "—", every button a dialog. Code:
+`components/command-centre-original.tsx` and `command-centre-original.css` (classes renamed `cv1-*` so they never clash with
+the OS version). The welcome page links to it, and each OS Command Centre footer has a "Mockup version" link to its sector.
